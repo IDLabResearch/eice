@@ -33,8 +33,11 @@ class SearchHandler(MainHandler):
         try:
             r = search.search(s1,s2)
         except AttributeError:
-            print (sys.exc_info())
+            logger.error (sys.exc_info())
             r = 'Invalid arguments :/'
+        except:
+            logger.error (traceback.format_stack())
+            r = 'Something went wrong x('
             
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.encode(r)
