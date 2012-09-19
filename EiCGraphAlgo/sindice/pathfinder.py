@@ -1,0 +1,145 @@
+'''
+Created on 10-aug.-2012
+
+@author: ldevocht
+'''
+import numpy as np
+from sindice import worker, resourceretriever, graph
+import time, gc, sys, logging
+
+logger = logging.getLogger('pathFinder')
+
+''' @params
+        source: *
+        property: <name>
+        value: "Guetta"
+        type: foaf:person
+    Query: http://api.sindice.com/v3/search?nq=* <name> "Guetta"fq=class:foaf:person&format=json
+'''
+class PathFinder:
+    resources = dict()
+    resources_by_parent = dict()
+    iteration = 0
+    
+    def __init__(self,s1,s2,threshold=1.1):
+        worker.startQueue(resourceretriever.resourceFetcher, num_of_threads=32)
+        self.resources = dict()
+        self.resources_by_parent = dict()   
+        self.storedResources = dict()  
+        self.initMatrix(s1, s2)
+        self.threshold = threshold
+        
+        
+    def initMatrix(self, s1, s2):
+        s1 = '<'+s1+'>'
+        s2 = '<'+s2+'>'   
+        self.resources[0] = s1
+        self.resources[1] = s2
+        self.stateGraph = np.zeros((2, 2), np.int)
+        self.stateGraph[0] = [1, 0]
+        self.stateGraph[1] = [0, 1]
+        self.iteration += 1
+        return self.stateGraph
+
+    def iterateMatrix(self, blacklist=set()):
+        logger.info ('--- NEW ITERATION ---')
+        logger.info ('Existing resources ' + str(len(self.resources)))
+        logger.info ('Indexed resources by parents ' + str(len(self.resources_by_parent)))
+        logger.info ('Grandmother: '+self.resources[0])
+        logger.info ('Grandfather: '+self.resources[1])
+        logger.info ('--- --- ---')
+        
+        start = time.clock()
+        additionalResources = set()
+        prevResources = set()
+        
+        for key in self.resources:
+            prevResources.add(self.resources[key])
+            
+        for resource in prevResources:
+            item = [resource, self.resources_by_parent, additionalResources, blacklist]
+            worker.getQueue(resourceretriever.resourceFetcher).put(item)
+        
+        worker.getQueue(resourceretriever.resourceFetcher).join()
+        
+        toAddResources = list(additionalResources - prevResources)    
+        #toAddResources = filter(resourceretriever.isResource, toAddResources)
+        
+        gc.collect()
+        
+        logger.info('Updated indexed resources with parents '+str(len(self.resources_by_parent)))    
+        
+        n = len(self.resources)
+        
+        for resource in toAddResources:
+            self.resources[n] = resource
+            n = n + 1
+            
+        logger.info ('Total resources: ' + str(n))
+            
+        halt1 = time.clock()
+        logger.info ('resource gathering: ' + str(halt1 - start))
+        self.stateGraph = np.zeros(shape=(n, n))
+        
+        [self.buildGraph(i, n) for i in range(n)]
+        halt2 = time.clock()
+        logger.info ('graph construction: ' + str(halt2 - halt1))
+        
+        #For next iteration, e.g. if no path was found
+        #Check for singular values to reduce dimensions of existing resources
+        self.storedResources.update(self.resources)
+        
+        if not graph.pathExists(self.stateGraph) and self.iteration > 1:
+            try:
+                u, s, vt = np.linalg.svd(self.stateGraph, full_matrices=False)
+                halt3 = time.clock()
+                logger.info ('rank reducing: ' +str(halt3 - halt2))
+                rank = resourceretriever.rankToKeep(u, s, self.threshold)
+                #unimportant resources are unlikely to provide a path
+                unimportant = resourceretriever.unimportantResources(u, rank, s)
+                
+                self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
+                logger.info('Updated resources amount: '+str(len(self.resources)))
+            except:
+                logger.error ('Graph is empty')
+                logger.error (sys.exc_info())
+        
+        logger.info ('total '+str(time.clock()-start))
+        logger.info ('=== === ===')
+        self.iteration+=1
+        return self.stateGraph
+        
+    def dice(self,nodeA,nodeB):
+        resA = frozenset(self.resources_by_parent[self.resources[nodeA]])
+        resB = frozenset(self.resources_by_parent[self.resources[nodeB]])
+        return len(resA & resB)       
+    
+    def buildGraph(self, i, n):
+        row = np.zeros(n, np.int)
+        [self.matchResource(i, j, row) for j in range(n)]
+        self.stateGraph[i] = row
+        
+    def matchResource(self, i, j, row):
+        try:
+            if i == j:
+                row[j] = 1
+            elif not self.resources[j] in self.resources_by_parent:
+                row[j] = 0
+            elif self.resources[i] in self.resources_by_parent[self.resources[j]]:
+                row[j] = 1
+            else:
+                row[j] = 0
+        
+        except:
+            logger.error ('error ' + str(j))
+            logger.error (self.resources)
+            quit()
+            
+    def getResourcesByParent(self):
+        return self.resources_by_parent
+     
+    def getGraph(self):
+        return self.stateGraph    
+    
+    def getResources(self):
+        return self.storedResources
