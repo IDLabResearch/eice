@@ -69,14 +69,14 @@ def search(s1,s2):
             if len(paths) > 0:
                 break
         
-        logger.info ('=== ' + str(p.iteration) +'-- ===')
+        logger.info ('=== %s-- ===' % str(p.iteration))
         gc.collect()
         m = p.iterateMatrix(blacklist)
         paths = graph.path(p)
     
         if p.iteration == 7:
             break
-    resolvedPaths = dict()
+    resolvedPaths = list()
     
     #FINISH
     if paths:
@@ -87,7 +87,10 @@ def search(s1,s2):
             formattedPath = list()
             for step in resolvedPath:
                 formattedPath.append(step[1:-1])
-            resolvedPaths[tuple(formattedPath)] = resolvedLinks
+            fullPath = dict()
+            fullPath['vertices'] = formattedPath
+            fullPath['edges'] = resolvedLinks
+            resolvedPaths.append(fullPath)
             
     #    graph.visualize(p, path=path)
     finish = int(round((time.clock()-start) * 1000))

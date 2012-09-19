@@ -16,10 +16,10 @@ class PrefixHandler(MainHandler):
         try:
             r =  typeahead.dbPediaPrefix(q)
         except AttributeError:
-            r = 'Invalid argument'
-            print (sys.exc_info())
+            r = 'Invalid argument. Please check the provided argument. Check the server log files if error persists.'
+            logger.error (sys.exc_info())
         except:
-            r = 'Something went wrong'
+            r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.encode(r)
         self.write(response)
@@ -34,10 +34,10 @@ class SearchHandler(MainHandler):
             r = search.search(s1,s2)
         except AttributeError:
             logger.error (sys.exc_info())
-            r = 'Invalid arguments :/'
+            r = 'Invalid arguments :/ Check the server log files if problem persists.'
         except:
             logger.error (traceback.format_stack())
-            r = 'Something went wrong x('
+            r = 'Something went wrong x( Check the server log files for more information.'
             
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.encode(r)

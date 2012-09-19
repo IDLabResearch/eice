@@ -25,7 +25,7 @@ def sindiceFind(source, prop, value, kind):
     
     output = ujson.decode(raw_output)
     link = list(output['entries'])[0]['link']
-    return '<'+link+'>'
+    return '<%(link)s>' % locals()
     
 #    cache = list(output['entries'])[0]['cache']
 #    raw_output = urllib.request.urlopen(cache).read()
@@ -40,7 +40,7 @@ def sindiceFind2(prop, value, kind):
 def dbPediaLookup(value, kind):
     gateway = 'http://lookup.dbpedia.org/api/search.asmx/KeywordSearch?QueryClass={0}&QueryString={1}'.format(kind,value)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
-    logger.debug ('Request'+request)
+    logger.debug ('Request {0}'.format(request))
     raw_output = urllib.request.urlopen(request).read()
     root = lxml.objectify.fromstring(raw_output)
     results = dict()
@@ -48,9 +48,9 @@ def dbPediaLookup(value, kind):
         results[result.Label[0]] = result.URI[0]
 
     if value in results:
-        return '<'+results[value]+'>'
+        return "<%s>" % (results[value])
     else: 
-        return '<'+root.Result.URI[0]+'>'
+        return "<%s>" % (root.Result.URI[0])
  
 def getResource(resource):
     source = resource.strip('<>')

@@ -8,10 +8,8 @@ import os
 from tornado.options import define, options
 from tornado.web import url
 import tornado.httpserver
-import logging
 import logging.config
 from handlers import handlers_module
-import sys, getopt
 
 #logging.basicConfig(filename='example.log',level=logging.INFO)
 logging.config.fileConfig('logging.conf')

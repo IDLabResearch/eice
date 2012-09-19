@@ -13,7 +13,7 @@ logger = logging.getLogger('pathFinder')
 def dbPediaPrefix(prefix):
     gateway = 'http://lookup.dbpedia.org/api/search.asmx/PrefixSearch?QueryString={0}'.format(prefix)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
-    logger.debug('Request '+request)
+    logger.debug('Request %s' % request)
     raw_output = urllib.request.urlopen(request).read()
     root = lxml.objectify.fromstring(raw_output)
     results = dict()
