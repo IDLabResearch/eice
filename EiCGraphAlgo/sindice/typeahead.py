@@ -16,7 +16,7 @@ def dbPediaPrefix(prefix):
     logger.debug('Request %s' % request)
     raw_output = urllib.request.urlopen(request).read()
     root = lxml.objectify.fromstring(raw_output)
-    results = dict()
+    results = list()
     for result in root.Result:
         if hasattr(result.Classes, 'Class'):
             klasses = result.Classes.Class
@@ -24,9 +24,12 @@ def dbPediaPrefix(prefix):
                 klasse = klasses
             else:
                 klasse = klasses[0]
-            results[result.Label[0].text] = dict()
-            results[result.Label[0].text]['type']=klasse.Label.text
-            results[result.Label[0].text]['uri']=result.URI[0].text
-        else:
-            results[result.Label[0].text] = ""
+            item = dict()
+            item['label'] = result.Label[0].text
+            item['type']=klasse.Label.text
+            item['value']=result.URI[0].text
+            results.append(item)
+
     return results
+
+print (dbPediaPrefix('Lon'))
