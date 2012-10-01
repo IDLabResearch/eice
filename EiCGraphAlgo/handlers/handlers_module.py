@@ -13,6 +13,7 @@ class PrefixHandler(MainHandler):
 
     def get(self):
         q = self.get_argument("q", "")
+        callback = self.get_argument("callback", "")
         try:
             r =  typeahead.dbPediaPrefix(q)
         except AttributeError:
@@ -21,8 +22,9 @@ class PrefixHandler(MainHandler):
         except:
             r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
-        response = ujson.encode(r)
-        self.write(response)
+        response = ujson.dumps(r)
+        self.set_header("Content-Type", "application/javascript")
+        self.write('{0}({1})'.format(callback, response))
         
 class SindiceHandler(MainHandler):
 
@@ -30,6 +32,7 @@ class SindiceHandler(MainHandler):
         #p = self.get_argument("property_uri", "")
         o = self.get_argument("object_value", "")
         t = self.get_argument("type", "")
+        callback = self.get_argument("callback", "")
         
         try:
             r =  resourceretriever.sindiceMatch(o, t)
@@ -40,8 +43,9 @@ class SindiceHandler(MainHandler):
             logger.error (sys.exc_info())
             r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
-        response = ujson.encode(r)
-        self.write(response)
+        response = ujson.dumps(r)
+        self.set_header("Content-Type", "application/javascript")
+        self.write('{0}({1})'.format(callback, response))
         
 class SearchHandler(MainHandler):
 
@@ -59,5 +63,6 @@ class SearchHandler(MainHandler):
             r = 'Something went wrong x( Check the server log files for more information.'
             
         #self.render("login.html", notification=self.get_argument("notification","") )
-        response = ujson.encode(r)
+        response = ujson.dumps(r)
+        self.set_header("Content-Type", "application/json")
         self.write(response)
