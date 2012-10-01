@@ -1,6 +1,6 @@
 import tornado
 import ujson
-from sindice import typeahead, search
+from sindice import typeahead, search,resourceretriever
 import sys, traceback,logging
 
 logger = logging.getLogger('root')
@@ -19,6 +19,25 @@ class PrefixHandler(MainHandler):
             r = 'Invalid argument. Please check the provided argument. Check the server log files if error persists.'
             logger.error (sys.exc_info())
         except:
+            r = 'Something went wrong. Check the server log files for more information.'
+        #self.render("login.html", notification=self.get_argument("notification","") )
+        response = ujson.encode(r)
+        self.write(response)
+        
+class SindiceHandler(MainHandler):
+
+    def get(self):
+        #p = self.get_argument("property_uri", "")
+        o = self.get_argument("object_value", "")
+        t = self.get_argument("type", "")
+        
+        try:
+            r =  resourceretriever.sindiceMatch(o, t)
+        except AttributeError:
+            r = 'Invalid argument. Please check the provided argument. Check the server log files if error persists.'
+            logger.error (sys.exc_info())
+        except:
+            logger.error (sys.exc_info())
             r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.encode(r)

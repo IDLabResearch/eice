@@ -23,7 +23,8 @@ class Application(tornado.web.Application):
         handlers = [
                 url(r'/', handlers_module.MainHandler, name='index'),
                 url(r'/findPrefix', handlers_module.PrefixHandler, name='prefix'),
-                url(r'/findPath', handlers_module.SearchHandler, name='path')
+                url(r'/findPath', handlers_module.SearchHandler, name='path'),
+                url(r'/findSubject', handlers_module.SindiceHandler, name = 'subject')
         ]
 
         #xsrf_cookies is for XSS protection add this to all forms: {{ xsrf_form_html() }}

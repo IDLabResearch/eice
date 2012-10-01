@@ -14,11 +14,21 @@ import sys
 
 logger = logging.getLogger('pathfinder')
 
+def sindiceMatch(value, kind):
+    request = "http://api.sindice.com/v3/search?q={0}&fq=domain:dbpedia.org class:{1} format:RDF&format=json".format(value, kind)
+    request = urllib.parse.quote(request, ':/=?<>"*&')
+    logger.debug(request)
+    raw_output = urllib.request.urlopen(request).read()
+    
+    output = ujson.decode(raw_output)
+    link = list(output['entries'])[0]['link']
+    return '<%(link)s>' % locals()
+
 def sindiceFind(source, prop, value, kind):
     if kind != "":
-        request = "http://api.sindice.com/v3/search?nq={0} {1} {2}&fq=-predicate:http://dbpedia.org/ontology/wikiPageWikiLink domain:dbpedia.org format:RDF class:{3}&format=json".format(source, prop, value, kind)
+        request = "http://api.sindice.com/v3/search?nq={0} {1} {2}&fq=-predicate:http://dbpedia.org/ontology/wikiPageWikiLink domain:dbpedia.org class:{3} format:RDF&format=json".format(source, prop, value, kind)
     else:
-        request = "http://api.sindice.com/v3/search?nq={0} {1} {2}&fq=-predicate:http://dbpedia.org/ontology/wikiPageWikiLink domain:dbpedia.org format:RDF &format=json".format(source, prop, value, kind)
+        request = "http://api.sindice.com/v3/search?nq={0} {1} {2}&fq=-predicate:http://dbpedia.org/ontology/wikiPageWikiLink domain:dbpedia.org &format=json format:RDF".format(source, prop, value, kind)
     request = urllib.parse.quote(request, ':/=?<>"*&')
     logger.debug(request)
     raw_output = urllib.request.urlopen(request).read()

@@ -44,8 +44,8 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 # 4 hops
 # s1 = resourceretriever.dbPediaLookup("Barack Obama", "person")
 # s2 = resourceretriever.dbPediaLookup("Osama Bin Laden", "person")
-s1 = resourceretriever.dbPediaLookup("Usain Bolt", "")
-s2 = resourceretriever.dbPediaLookup("Jacques Rogge", "")
+# s1 = resourceretriever.dbPediaLookup("Usain Bolt", "")
+# s2 = resourceretriever.dbPediaLookup("Jacques Rogge", "")
 # 5 hops
 # s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")
 # s2 = resourceretriever.dbPediaLookup("Ireland", "place")
