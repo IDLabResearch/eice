@@ -24,7 +24,7 @@ def sindiceMatch(value, kind):
     output = ujson.decode(raw_output)
     link = list(output['entries'])[0]['link']
     response = dict()
-    response['uri'] = '<%(link)s>' % locals()
+    response['uri'] = '%(link)s' % locals()
     return response
 
 def sindiceFind(source, prop, value, kind):
