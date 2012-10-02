@@ -12,10 +12,11 @@ import lxml.objectify
 import logging
 import sys
 import configparser
+import os
 
 logger = logging.getLogger('pathfinder')
 config = configparser.ConfigParser()
-config.read('config.ini') 
+config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
 
 def sindiceMatch(value, kind):
     request = "http://api.sindice.com/v3/search?q={0}&fq=domain:dbpedia.org class:{1} format:RDF&format=json".format(value, kind)

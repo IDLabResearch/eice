@@ -7,11 +7,17 @@ import urllib.request
 import urllib.parse
 import lxml.objectify
 import logging
+import configparser
+import os
 
+
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
 logger = logging.getLogger('pathFinder')
 
 def dbPediaPrefix(prefix):
-    gateway = 'http://lookup.dbpedia.org/api/search.asmx/PrefixSearch?QueryString={0}'.format(prefix)
+    server = config.get('services', 'lookup')
+    gateway = '{0}/api/search.asmx/PrefixSearch?QueryString={1}'.format(server,prefix)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
     logger.debug('Request %s' % request)
     raw_output = urllib.request.urlopen(request).read()
@@ -32,4 +38,4 @@ def dbPediaPrefix(prefix):
 
     return results
 
-#print (dbPediaPrefix('Lon'))
+print (dbPediaPrefix("den"))
