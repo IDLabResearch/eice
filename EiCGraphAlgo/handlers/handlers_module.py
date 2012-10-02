@@ -7,7 +7,7 @@ logger = logging.getLogger('root')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Hello, world")
+        self.write("Pathfinding Service Version 01-10-2012")
         
 class PrefixHandler(MainHandler):
 
@@ -17,13 +17,15 @@ class PrefixHandler(MainHandler):
         try:
             r =  typeahead.dbPediaPrefix(q)
         except AttributeError:
-            r = 'Invalid argument. Please check the provided argument. Check the server log files if error persists.'
+            r = []
+            logger.info( 'Invalid argument. Please check the provided argument. Check the server log files if error persists.')
             logger.error (sys.exc_info())
         except:
             r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
         self.set_header("Content-Type", "application/javascript")
+        self.set_header("charset", "utf8")
         self.write('{0}({1})'.format(callback, response))
         
 class SindiceHandler(MainHandler):
@@ -45,6 +47,7 @@ class SindiceHandler(MainHandler):
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
         self.set_header("Content-Type", "application/javascript")
+        self.set_header("charset", "utf8")
         self.write('{0}({1})'.format(callback, response))
         
 class SearchHandler(MainHandler):
@@ -65,4 +68,5 @@ class SearchHandler(MainHandler):
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
         self.set_header("Content-Type", "application/json")
+        self.set_header("charset", "utf8")
         self.write(response)
