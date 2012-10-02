@@ -156,4 +156,4 @@ def unimportantResources(u, rank, s):
         unimportant.add(maxindex)
     return unimportant
 
-print (sindiceMatch('David Guetta','person'))
+#print (sindiceMatch('David Guetta','person'))
