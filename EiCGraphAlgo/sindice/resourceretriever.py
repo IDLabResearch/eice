@@ -11,9 +11,11 @@ import urllib.parse
 import lxml.objectify
 import logging
 import sys
+import configparser
 
 logger = logging.getLogger('pathfinder')
-
+config = configparser.ConfigParser()
+config.read('config.ini') 
 
 def sindiceMatch(value, kind):
     request = "http://api.sindice.com/v3/search?q={0}&fq=domain:dbpedia.org class:{1} format:RDF&format=json".format(value, kind)
@@ -39,19 +41,13 @@ def sindiceFind(source, prop, value, kind):
     output = ujson.decode(raw_output)
     link = list(output['entries'])[0]['link']
     return '<%(link)s>' % locals()
-    
-#    cache = list(output['entries'])[0]['cache']
-#    raw_output = urllib.request.urlopen(cache).read()
-#    cache_output = ujson.decode(raw_output)
-#    nt = cache_output[list(cache_output)[0]]['explicit_content']
-#    nt_cleaned = cleanResultSet(nt)
-#    return extractMainResource(nt_cleaned)
 
 def sindiceFind2(prop, value, kind):
     return sindiceFind('*', prop, value, kind)
 
 def dbPediaLookup(value, kind):
-    gateway = 'http://lookup.dbpedia.org/api/search.asmx/KeywordSearch?QueryClass={0}&QueryString={1}'.format(kind,value)
+    server = config.get('services', 'lookup')
+    gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(kind,server)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
     logger.debug ('Request {0}'.format(request))
     raw_output = urllib.request.urlopen(request).read()
