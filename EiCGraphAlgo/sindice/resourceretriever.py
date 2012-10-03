@@ -14,7 +14,7 @@ import sys
 import configparser
 import os
 
-logger = logging.getLogger('pathfinder')
+logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
 
@@ -25,9 +25,17 @@ def sindiceMatch(value, kind):
     raw_output = urllib.request.urlopen(request).read()
     
     output = ujson.decode(raw_output)
-    link = list(output['entries'])[0]['link']
+    results = output['entries']
+    formatted_results = dict()
+    for result in results:
+        formatted_results[result['title'][0]['value']] = result['link']
+    
     response = dict()
-    response['uri'] = '%(link)s' % locals()
+    if value in results:
+        response['uri'] = formatted_results[value]
+    else: 
+        response['uri'] = list(output['entries'])[0]['link']
+    
     return response
 
 def sindiceFind(source, prop, value, kind):
@@ -46,9 +54,9 @@ def sindiceFind(source, prop, value, kind):
 def sindiceFind2(prop, value, kind):
     return sindiceFind('*', prop, value, kind)
 
-def dbPediaLookup(value, kind):
+def dbPediaLookup(value, kind=""):
     server = config.get('services', 'lookup')
-    gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(kind,server)
+    gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(server,kind,value)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
     logger.debug ('Request {0}'.format(request))
     raw_output = urllib.request.urlopen(request).read()
@@ -154,3 +162,4 @@ def unimportantResources(u, rank, s):
     return unimportant
 
 #print (sindiceMatch('David Guetta','person'))
+#print (dbPediaLookup('David Guetta',''))
