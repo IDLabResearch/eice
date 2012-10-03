@@ -46,7 +46,6 @@ def sindiceFind(source, prop, value, kind):
     request = urllib.parse.quote(request, ':/=?<>"*&')
     logger.debug(request)
     raw_output = urllib.request.urlopen(request).read()
-    
     output = ujson.decode(raw_output)
     link = list(output['entries'])[0]['link']
     return '<%(link)s>' % locals()
