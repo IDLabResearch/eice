@@ -68,7 +68,7 @@ def dbPediaLookup(value, kind=""):
         return "<%s>" % (results[value])
     else: 
         return "<%s>" % (root.Result.URI[0])
- 
+
 def getResource(resource):
     source = resource.strip('<>')
     request = 'http://api.sindice.com/v3/cache?pretty=true&url={0}'.format(source)
@@ -77,6 +77,22 @@ def getResource(resource):
         cache_output = ujson.decode(raw_output)
         nt = cache_output[list(cache_output)[0]]['explicit_content']
         nt_cleaned = cleanResultSet(nt)
+        return nt_cleaned
+    except KeyError:
+        #logger.warning ('Request not found: {0}'.format(request))
+        return False
+    except:
+        logger.warning (sys.exc_info())
+        return False
+    
+def getResourceLive(resource):
+    source = resource.strip('<>')
+    request = 'http://api.sindice.com/v2/live?url={0}&output=json'.format(source)
+    try:
+        raw_output = urllib.request.urlopen(request).read()
+        cache_output = ujson.decode(raw_output)
+        nt = cache_output['extractorResults']['metadata']['explicit']['bindings']
+        nt_cleaned = formatResultSet(nt)
         return nt_cleaned
     except KeyError:
         #logger.warning ('Request not found: {0}'.format(request))
@@ -97,6 +113,18 @@ def cleanResultSet(resultSet):
         i += 1
     return nt_cleaned
 
+def formatResultSet(resultSet):
+    nt_cleaned = dict()
+    i = 0
+    for item in resultSet:
+        triple = dict()
+        triple[0] = item['s']['value']
+        triple[1] = item['p']['value']
+        triple[2] = item['o']['value']
+        nt_cleaned[i] = triple
+        i += 1
+    return nt_cleaned
+        
 def extractMainResource(cleanedResultSet):
     return cleanedResultSet[0][0]
 
@@ -161,4 +189,5 @@ def unimportantResources(u, rank, s):
     return unimportant
 
 #print (sindiceMatch('David Guetta','person'))
-#print (dbPediaLookup('David Guetta',''))
+#res = dbPediaLookup('David Guetta','')
+#print (getResource(res))

@@ -4,7 +4,7 @@ import base64
 import tornado.ioloop
 import tornado.options
 import tornado.web
-import os
+import os, sys
 from tornado.options import define, options
 from tornado.web import url
 import tornado.httpserver
@@ -43,9 +43,16 @@ class Application(tornado.web.Application):
 # to redirect log file run python with : --log_file_prefix=mylog
 def main():
     tornado.options.parse_command_line()
-    m_http_server = tornado.httpserver.HTTPServer(Application())
-    m_http_server.listen(options.port)
+#    m_http_server = tornado.httpserver.HTTPServer(Application())
+#    m_http_server.listen(options.port)
+#    tornado.ioloop.IOLoop.instance().start()
+    sockets = tornado.netutil.bind_sockets(options.port)
+    if not 'win' in sys.platform:
+        tornado.process.fork_processes(4, 0)
+    server = tornado.httpserver.HTTPServer(Application())
+    server.add_sockets(sockets)
     tornado.ioloop.IOLoop.instance().start()
+    logging.getLogger('root').info ("Server running on:"+sys.platform)
 
 if __name__ == '__main__':
     main()

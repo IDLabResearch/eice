@@ -28,8 +28,8 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 #Select source and target
 
 # 0 Hops
-# s1 = resourceretriever.dbPediaLookup("Dublin", "place")
-# s2 = resourceretriever.dbPediaLookup("Ireland", "place")
+#s1 = resourceretriever.dbPediaLookup("Dublin", "place")
+#s2 = resourceretriever.dbPediaLookup("Ireland", "place")
 # 1 Hop
 # s1 = resourceretriever.sindiceFind2("<label>", '"Synthesizer"', "")
 # s2 = resourceretriever.sindiceFind2("<name>", '"Guetta"', "person")
@@ -100,9 +100,14 @@ def search(s1,s2):
     logger.debug(r)
     return r
 
-#p, paths, time = search(s1,s2)
+#r = search(s1,s2)
+
+#p = r['paths']
+#time = r['execution_time']
+
 #
-#logger.info (str(time)+' ms')
+#print (str(time)+' ms')
+#print (p)
 #
 #if paths:
 #    graph.visualize(p, path=path)

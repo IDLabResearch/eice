@@ -1,5 +1,6 @@
 import tornado
 import ujson
+import time, sys
 from sindice import typeahead, search,resourceretriever
 import sys, traceback,logging
 
@@ -7,7 +8,7 @@ logger = logging.getLogger('root')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Pathfinding Service Version 02-10-2012")
+        self.write("Pathfinding Service Version 11-10-2012 running on %s" % sys.platform)
         
 class PrefixHandler(MainHandler):
 
@@ -51,7 +52,7 @@ class LookupHandler(MainHandler):
         self.set_header("Content-Type", "application/javascript")
         self.set_header("charset", "utf8")
         self.write('{0}({1})'.format(callback, ujson.dumps(response)))
-        
+     
 class SearchHandler(MainHandler):
 
     def get(self):

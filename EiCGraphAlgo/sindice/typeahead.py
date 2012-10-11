@@ -38,4 +38,4 @@ def dbPediaPrefix(prefix):
 
     return results
 
-print (dbPediaPrefix("den"))
+#print (dbPediaPrefix("den"))
