@@ -4,6 +4,7 @@ Created on 10-aug.-2012
 @author: ldevocht
 '''
 import numpy as np
+import scipy
 from scipy import linalg
 from sindice import worker, resourceretriever, graph
 import time, gc, sys, logging

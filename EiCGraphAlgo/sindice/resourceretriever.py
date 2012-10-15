@@ -6,6 +6,7 @@ Created on 13-sep.-2012
 import numpy as np
 import ujson
 from sindice import worker
+from mysolr import Solr
 import urllib.request
 import urllib.parse
 import lxml.objectify
@@ -17,6 +18,8 @@ import os
 logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
+index_server = config.get('services', 'index')
+solr = Solr(index_server)
 
 def sindiceMatch(value, kind):
     request = "http://api.sindice.com/v3/search?q={0}&fq=domain:dbpedia.org class:{1} format:RDF&format=json".format(value, kind)
@@ -24,7 +27,7 @@ def sindiceMatch(value, kind):
     logger.debug(request)
     raw_output = urllib.request.urlopen(request).read()
     
-    output = ujson.decode(raw_output)
+    output = ujson.loads(raw_output)
     results = output['entries']
     formatted_results = dict()
     for result in results:
@@ -46,7 +49,7 @@ def sindiceFind(source, prop, value, kind):
     request = urllib.parse.quote(request, ':/=?<>"*&')
     logger.debug(request)
     raw_output = urllib.request.urlopen(request).read()
-    output = ujson.decode(raw_output)
+    output = ujson.loads(raw_output)
     link = list(output['entries'])[0]['link']
     return '<%(link)s>' % locals()
 
@@ -70,11 +73,34 @@ def dbPediaLookup(value, kind=""):
         return "<%s>" % (root.Result.URI[0])
 
 def getResource(resource):
+    try:
+        return getResourceLocal(resource)
+    except:
+        logger.warning(sys.exc_info())
+        return getResourceRemote(resource)
+
+def getResourceLocal(resource):
+    source = resource.strip('<>')
+
+    query={'nq':'<%s> * *' % source,'qt':'siren','q':'','fl':'id ntriple'}
+    response = solr.search(**query)
+    if response.status==200:
+        nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+        print(nt)
+        nt_cleaned = cleanResultSet(nt)
+        return nt_cleaned
+    
+    else:
+        raise
+    
+        
+
+def getResourceRemote(resource):
     source = resource.strip('<>')
     request = 'http://api.sindice.com/v3/cache?pretty=true&url={0}'.format(source)
     try:
         raw_output = urllib.request.urlopen(request).read()
-        cache_output = ujson.decode(raw_output)
+        cache_output = ujson.loads(raw_output)
         nt = cache_output[list(cache_output)[0]]['explicit_content']
         nt_cleaned = cleanResultSet(nt)
         return nt_cleaned
@@ -90,7 +116,7 @@ def getResourceLive(resource):
     request = 'http://api.sindice.com/v2/live?url={0}&output=json'.format(source)
     try:
         raw_output = urllib.request.urlopen(request).read()
-        cache_output = ujson.decode(raw_output)
+        cache_output = ujson.loads(raw_output)
         nt = cache_output['extractorResults']['metadata']['explicit']['bindings']
         nt_cleaned = formatResultSet(nt)
         return nt_cleaned
@@ -98,7 +124,7 @@ def getResourceLive(resource):
         #logger.warning ('Request not found: {0}'.format(request))
         return False
     except:
-        logger.warning (sys.exc_info())
+        #logger.warning (sys.exc_info())
         return False
     
 def cleanResultSet(resultSet):
@@ -191,3 +217,4 @@ def unimportantResources(u, rank, s):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
+#print(getResourceLocal('http://example.org/person/jim'))
