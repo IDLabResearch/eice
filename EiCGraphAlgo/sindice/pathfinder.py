@@ -4,6 +4,7 @@ Created on 10-aug.-2012
 @author: ldevocht
 '''
 import numpy as np
+from scipy import linalg
 from sindice import worker, resourceretriever, graph
 import time, gc, sys, logging
 
@@ -35,7 +36,7 @@ class PathFinder:
         s2 = '<%(s2)s>' % locals()
         self.resources[0] = s1
         self.resources[1] = s2
-        self.stateGraph = np.zeros((2, 2), np.int)
+        self.stateGraph = np.zeros((2, 2), np.byte)
         self.stateGraph[0] = [1, 0]
         self.stateGraph[1] = [0, 1]
         self.iteration += 1
@@ -79,7 +80,7 @@ class PathFinder:
             
         halt1 = time.clock()
         logger.info ('resource gathering: %s' % str(halt1 - start))
-        self.stateGraph = np.zeros(shape=(n, n))
+        self.stateGraph = np.zeros(shape=(n, n), dtype=np.byte)
         
         [self.buildGraph(i, n) for i in range(n)]
         halt2 = time.clock()
@@ -91,7 +92,7 @@ class PathFinder:
         
         if not graph.pathExists(self.stateGraph) and self.iteration > 1:
             try:
-                u, s, vt = np.linalg.svd(self.stateGraph, full_matrices=False)
+                u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
                 halt3 = time.clock()
                 logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 rank = resourceretriever.rankToKeep(u, s, self.threshold)
@@ -115,7 +116,7 @@ class PathFinder:
         return len(resA & resB)       
     
     def buildGraph(self, i, n):
-        row = np.zeros(n, np.int)
+        row = np.zeros(n, np.byte)
         [self.matchResource(i, j, row) for j in range(n)]
         self.stateGraph[i] = row
         
