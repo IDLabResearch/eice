@@ -217,4 +217,4 @@ def unimportantResources(u, rank, s):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-#print(getResourceLocal('http://example.org/person/jim'))
+#print(getResourceLocal('http://dbpedia.org/resource/%22Love_and_Theft%22'))
