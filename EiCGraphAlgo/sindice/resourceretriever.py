@@ -81,10 +81,11 @@ def sparqlQuery(value):
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()
+        r=dict()
         for result in results["results"]["bindings"]:
-            resource['uri'] = result['x']['value']
-            resource['wikiPageWikiLinks'] = result['?wikiPageWikiLinks']['value']
-        return "<%s>" % resource
+            r['uri'] = result['x']['value']
+            r['wikiPageWikiLinks'] = result['wikiPageWikiLinks']['value']
+        return r
     else:
         return None
     
@@ -255,7 +256,7 @@ def unimportantResources(u, rank, s):
         unimportant.add(maxindex)
     return unimportant
 
-#print (dbPediaLookup("Coldplay"))
+print (dbPediaLookup("Coldplay"))
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
