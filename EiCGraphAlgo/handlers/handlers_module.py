@@ -8,13 +8,13 @@ logger = logging.getLogger('root')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Pathfinding Service Version 11-10-2012 running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 17-10-2012 running on %s" % sys.platform)
         
 class PrefixHandler(MainHandler):
 
     def get(self):
         q = self.get_argument("q", "")
-        callback = self.get_argument("callback", "")
+        #callback = self.get_argument("callback", "")
         try:
             r =  typeahead.dbPediaPrefix(q)
         except AttributeError:
@@ -25,9 +25,11 @@ class PrefixHandler(MainHandler):
             r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
-        self.set_header("Content-Type", "application/javascript")
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
-        self.write('{0}({1})'.format(callback, response))
+        self.write('{0}'.format(response))
+        #self.write('{0}({1})'.format(callback, response))
         
 class LookupHandler(MainHandler):
 
@@ -35,7 +37,7 @@ class LookupHandler(MainHandler):
         #p = self.get_argument("property_uri", "")
         o = self.get_argument("object_value", "")
         t = self.get_argument("type", "")
-        callback = self.get_argument("callback", "")
+        #callback = self.get_argument("callback", "")
         response = dict()
         try:
             r = resourceretriever.dbPediaLookup(o.strip('"'), t.strip('"'))
@@ -48,10 +50,11 @@ class LookupHandler(MainHandler):
         except:
             logger.error (sys.exc_info())
             response['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
-        
-        self.set_header("Content-Type", "application/javascript")
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
-        self.write('{0}({1})'.format(callback, ujson.dumps(response)))
+        self.write('{0}'.format(ujson.dumps(response)))
+        #self.write('{0}({1})'.format(callback, ujson.dumps(response)))
      
 class SearchHandler(MainHandler):
 
@@ -70,6 +73,7 @@ class SearchHandler(MainHandler):
             
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
+        self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
         self.write(response)
