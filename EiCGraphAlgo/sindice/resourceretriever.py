@@ -7,6 +7,7 @@ import numpy as np
 import ujson
 from sindice import worker
 from mysolr import Solr
+from SPARQLWrapper import SPARQLWrapper, JSON
 import urllib.request
 import urllib.parse
 import lxml.objectify
@@ -19,6 +20,14 @@ logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
 index_server = config.get('services', 'index')
+sparql_server = config.get('services', 'sparql')
+
+try:
+        sparql = SPARQLWrapper(sparql_server)
+except:
+        logger.error ("SPARQL Service down")
+        sparql = None
+        
 solr = Solr(index_server)
 
 def sindiceMatch(value, kind):
@@ -56,7 +65,38 @@ def sindiceFind(source, prop, value, kind):
 def sindiceFind2(prop, value, kind):
     return sindiceFind('*', prop, value, kind)
 
+def sparqlQuery(value):
+    if sparql:
+        query = """
+                PREFIX p: <http://dbpedia.org/property/>
+                PREFIX dbpedia: <http://dbpedia.org/resource/>
+                PREFIX category: <http://dbpedia.org/resource/Category:>
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX dbo: <http://dbpedia.org/ontology/>
+                SELECT ?x WHERE {
+                  ?x rdfs:label "%s"@en .
+                  ?x dbo:wikiPageWikiLink ?y
+                } ORDER BY DESC(count(distinct ?y)) LIMIT 1
+                """ % value
+        sparql.setQuery(query)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+        for result in results["results"]["bindings"]:
+            uri = result['x']['value']
+        return "<%s>" % uri
+    else:
+        return None
+    
+    
+
 def dbPediaLookup(value, kind=""):
+    uri = sparqlQuery(value)
+    if (uri):
+        return uri
+    else:
+        return dbPediaIndexLookup(value, kind)
+
+def dbPediaIndexLookup(value, kind=""):
     server = config.get('services', 'lookup')
     gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(server,kind,value)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
@@ -214,6 +254,7 @@ def unimportantResources(u, rank, s):
         unimportant.add(maxindex)
     return unimportant
 
+print (dbPediaLookup("Coldplay"))
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
