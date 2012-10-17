@@ -73,7 +73,7 @@ def sparqlQuery(value):
                 PREFIX category: <http://dbpedia.org/resource/Category:>
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                 PREFIX dbo: <http://dbpedia.org/ontology/>
-                SELECT ?x WHERE {
+                SELECT ?x (count(distinct ?y) AS ?wikiPageWikiLinks) WHERE {
                   ?x rdfs:label "%s"@en .
                   ?x dbo:wikiPageWikiLink ?y
                 } ORDER BY DESC(count(distinct ?y)) LIMIT 1
@@ -82,17 +82,18 @@ def sparqlQuery(value):
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()
         for result in results["results"]["bindings"]:
-            uri = result['x']['value']
-        return "<%s>" % uri
+            resource['uri'] = result['x']['value']
+            resource['wikiPageWikiLinks'] = result['?wikiPageWikiLinks']['value']
+        return "<%s>" % resource
     else:
         return None
     
     
 
 def dbPediaLookup(value, kind=""):
-    uri = sparqlQuery(value)
-    if (uri):
-        return uri
+    r = sparqlQuery(value)
+    if (r):
+        return r
     else:
         return dbPediaIndexLookup(value, kind)
 

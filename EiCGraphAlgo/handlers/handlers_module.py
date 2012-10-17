@@ -41,8 +41,10 @@ class LookupHandler(MainHandler):
         response = dict()
         try:
             r = resourceretriever.dbPediaLookup(o.strip('"'), t.strip('"'))
-            r = r.strip('<>')
-            response['uri'] = r
+            uri = r['uri'].strip('<>')
+            response['uri'] = uri
+            wikiPageWikiLinks = r['wikiPageWikiLinks'].strip('<>')
+            response['wikiPageWikiLinks'] = wikiPageWikiLinks
         except AttributeError as error:
             response['error'] = 'Invalid argument. Please check the provided argument. Check the server log files if error persists.'
             logger.error (error)
