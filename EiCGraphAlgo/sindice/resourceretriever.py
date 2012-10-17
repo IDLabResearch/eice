@@ -254,7 +254,7 @@ def unimportantResources(u, rank, s):
         unimportant.add(maxindex)
     return unimportant
 
-print (dbPediaLookup("Coldplay"))
+#print (dbPediaLookup("Coldplay"))
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
