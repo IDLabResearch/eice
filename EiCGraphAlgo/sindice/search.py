@@ -17,7 +17,7 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://xmlns.com/foaf/0.1/page>',
              '<http://dbpedia.org/property/wikiPageUsesTemplate>',
              '<http://dbpedia.org/ontology/wikiPageExternalLink>',
-             '<http://dbpedia.org/ontology/wikiPageRedirects>'
+             '<http://dbpedia.org/ontology/wikiPageRedirects>',
              '<http://purl.org/dc/elements/1.1/description>',
              '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
              '<http://www.w3.org/2002/07/owl#sameAs>',
@@ -39,11 +39,11 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 # s1 = resourceretriever.dbPediaLookup("Elton John", "person")
 # s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")
 # 3 hops
-# s1 = resourceretriever.dbPediaLookup("David Guetta", "person")
-# s2 = resourceretriever.dbPediaLookup("Chicago Theatre", "place")
+# s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
+# s2 = resourceretriever.dbPediaLookup("Chicago Theatre", "place")['uri']
 # 4 hops
-# s1 = resourceretriever.dbPediaLookup("Barack Obama", "person")
-# s2 = resourceretriever.dbPediaLookup("Osama Bin Laden", "person")
+# s1 = resourceretriever.dbPediaLookup("Barack Obama", "person")['uri']
+# s2 = resourceretriever.dbPediaLookup("Osama Bin Laden", "person")['uri']
 # s1 = resourceretriever.dbPediaLookup("Usain Bolt", "")
 # s2 = resourceretriever.dbPediaLookup("Jacques Rogge", "")
 # 5 hops

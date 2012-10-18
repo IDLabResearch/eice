@@ -8,7 +8,7 @@ logger = logging.getLogger('root')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Pathfinding Service Version 17-10-2012 running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 18-10-2012 running on %s" % sys.platform)
         
 class PrefixHandler(MainHandler):
 
@@ -48,10 +48,15 @@ class LookupHandler(MainHandler):
         except AttributeError as error:
             response['error'] = 'Invalid argument. Please check the provided argument. Check the server log files if error persists.'
             logger.error (error)
-            response = resourceretriever.sindiceMatch(o, t)
-        except:
-            logger.error (sys.exc_info())
-            response['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
+            
+       
+        if not 'uri' in response:
+            try:
+                response = resourceretriever.sindiceMatch(o, t)
+            except:
+                    logger.error (sys.exc_info())
+                    response['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
+
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")

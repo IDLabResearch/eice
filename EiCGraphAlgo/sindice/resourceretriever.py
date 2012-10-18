@@ -35,7 +35,6 @@ def sindiceMatch(value, kind):
     request = urllib.parse.quote(request, ':/=?<>"*&')
     logger.debug(request)
     raw_output = urllib.request.urlopen(request).read()
-    
     output = ujson.loads(raw_output)
     results = output['entries']
     formatted_results = dict()
@@ -106,19 +105,24 @@ def dbPediaIndexLookup(value, kind=""):
     raw_output = urllib.request.urlopen(request).read()
     root = lxml.objectify.fromstring(raw_output)
     results = dict()
+    
     for result in root.Result:
         results[result.Label[0]] = result.URI[0]
 
+    r = dict()
     if value in results:
-        return "<%s>" % (results[value])
+        r['uri'] = "<%s>" % (results[value])
     else: 
-        return "<%s>" % (root.Result.URI[0])
+        r['uri'] = "<%s>" % (root.Result.URI[0])
+        
+    return r
 
 def getResource(resource):
-    try:
-        return getResourceLocal(resource)
-    except:
-        logger.warning(sys.exc_info())
+    local = getResourceLocal(resource)
+    if local:
+        return local
+    else:
+        #logger.warning("resource %s not in local index" % resource)
         return getResourceRemote(resource)
 
 def getResourceLocal(resource):
@@ -126,14 +130,13 @@ def getResourceLocal(resource):
 
     query={'nq':'<%s> * *' % source,'qt':'siren','q':'','fl':'id ntriple'}
     response = solr.search(**query)
-    if response.status==200:
+    if response.status==200 and len(response.documents):
         nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-        print(nt)
         nt_cleaned = cleanResultSet(nt)
         return nt_cleaned
     
     else:
-        raise
+        return None
     
         
 
@@ -150,7 +153,8 @@ def getResourceRemote(resource):
         #logger.warning ('Request not found: {0}'.format(request))
         return False
     except:
-        logger.warning (sys.exc_info())
+        #logger.warning (sys.exc_info())
+        logger.warning ('Resource N/A remotely: %s' % resource)
         return False
     
 def getResourceLive(resource):
@@ -247,6 +251,13 @@ def rankToKeep(u, singularValues, threshold):
         if sVal < threshold:
             return i
         i += 1
+        
+def rankToRemove(u, singularValues, threshold):
+    i = 0
+    for sVal in singularValues:      
+        if sVal > threshold:
+            return i
+        i += 1
 
 def unimportantResources(u, rank, s):
     unimportant = set()
@@ -256,8 +267,15 @@ def unimportantResources(u, rank, s):
         unimportant.add(maxindex)
     return unimportant
 
-print (dbPediaLookup("Coldplay"))
+def importantResources(u, rank):
+    important = set()
+    for i in range(0, rank):
+        u_abs = np.absolute (u[i])
+        maxindex = u_abs.argmax()
+        important.add(maxindex)
+    return important
+
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-#print(getResourceLocal('http://dbpedia.org/resource/%22Love_and_Theft%22'))
+#print(getResourceLocal('http://dbpedia.org/resource/%C3%86lle_of_Sussex'))
