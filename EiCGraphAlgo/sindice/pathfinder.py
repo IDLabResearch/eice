@@ -5,6 +5,7 @@ Created on 10-aug.-2012
 '''
 import numpy as np
 import scipy
+import networkx as nx
 from scipy import linalg
 from sindice import worker, resourceretriever, graph
 import time, gc, sys, logging
@@ -93,14 +94,26 @@ class PathFinder:
         
         if not graph.pathExists(self.stateGraph) and self.iteration > 1:
             try:
-                u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
+                k = np.log10(len(self.stateGraph))
+                h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=50, tol=1e-05))
+                res = list(sorted(h, key=h.__getitem__, reverse=True))
+                
+                print(k)
+                
+                #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
+                
+                
+                #rank = resourceretriever.rankToKeep(u, s, self.threshold)
+                #unimportant resources are unlikely to provide a path
+                #unimportant = resourceretriever.unimportantResources(u, rank, s)
+                #important = resourceretriever.importantResources(u, rank)
+
+                #print ('error ratio:')                
+                #print (np.divide(len(unimportant & important)*100,len(important)))
+                unimportant = res[k:]
+                self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
                 halt3 = time.clock()
                 logger.info ('rank reducing: %s' % str(halt3 - halt2))
-                rank = resourceretriever.rankToKeep(u, s, self.threshold)
-                #unimportant resources are unlikely to provide a path
-                unimportant = resourceretriever.unimportantResources(u, rank, s)
-                
-                self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
                 logger.info('Updated resources amount: %s' % str(len(self.resources)))
             except:
                 logger.error ('Graph is empty')
