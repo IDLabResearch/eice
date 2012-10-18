@@ -95,10 +95,10 @@ class PathFinder:
         if not graph.pathExists(self.stateGraph) and self.iteration > 1:
             try:
                 k = np.log10(len(self.stateGraph))
-                h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=50, tol=1e-05))
+                h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
                 
-                print(k)
+                logger.debug(k)
                 
                 #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
                 
