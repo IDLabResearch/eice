@@ -3,6 +3,7 @@ import ujson
 import time, sys
 from sindice import typeahead, search,resourceretriever
 import sys, traceback,logging
+from sindice import cached_pathfinder
 
 logger = logging.getLogger('root')
 
@@ -62,6 +63,20 @@ class LookupHandler(MainHandler):
         self.set_header("charset", "utf8")
         self.write('{0}'.format(ujson.dumps(response)))
         #self.write('{0}({1})'.format(callback, ujson.dumps(response)))
+     
+class CachedPathHandler(MainHandler):   
+    def get(self):
+        cpf = cached_pathfinder.CachedPathFinder()
+        destination = self.get_argument("d", "")
+        r = dict()
+        try:
+            r = cpf.getPaths(destination)
+        except:
+            logger.error (sys.exc_info())
+            r['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
+        response = ujson.dumps(r)
+        self.write(response)
+            
      
 class SearchHandler(MainHandler):
 
