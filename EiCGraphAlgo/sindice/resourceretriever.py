@@ -118,19 +118,22 @@ def dbPediaIndexLookup(value, kind=""):
     return r
 
 def getResource(resource):
-    local = getResourceLocal(resource)
+    try:
+        local = getResourceLocal(resource)
+    except:
+        logger.warn ('connection error')
     if local:
         return local
     else:
-        #logger.warning("resource %s not in local index" % resource)
+        logger.warning("resource %s not in local index" % resource)
         return getResourceRemote(resource)
 
 def getResourceLocal(resource):
     source = resource.strip('<>')
 
-    query={'nq':'<%s> * *' % source,'qt':'siren','q':'','fl':'id ntriple'}
+    query={'nq':'<%s> * *' % source,'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'10'}
     response = solr.search(**query)
-    if response.status==200 and len(response.documents):
+    if response.status==200 and len(response.documents) > 0:
         nt = response.documents[0]['ntriple'].split('.\n')[:-1]
         nt_cleaned = cleanResultSet(nt)
         return nt_cleaned

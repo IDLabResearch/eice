@@ -33,9 +33,9 @@ class PathFinder:
         self.threshold = threshold
         
         
-    def initMatrix(self, s1, s2):
-        s1 = '<%(s1)s>' % locals()
-        s2 = '<%(s2)s>' % locals()
+    def initMatrix(self, source1, source2):
+        s1 = '<%s>' % source1
+        s2 = '<%s>' % source2
         self.resources[0] = s1
         self.resources[1] = s2
         self.stateGraph = np.zeros((2, 2), np.byte)
@@ -110,7 +110,7 @@ class PathFinder:
 
                 #print ('error ratio:')                
                 #print (np.divide(len(unimportant & important)*100,len(important)))
-                unimportant = res[k:]
+                unimportant = res[k:].remove(0).remove(1)
                 self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
                 halt3 = time.clock()
                 logger.info ('rank reducing: %s' % str(halt3 - halt2))

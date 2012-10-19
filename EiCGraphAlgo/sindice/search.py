@@ -28,8 +28,8 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 #Select source and target
 
 # 0 Hops
-#s1 = resourceretriever.dbPediaLookup("Dublin", "place")
-#s2 = resourceretriever.dbPediaLookup("Ireland", "place")
+#s1 = resourceretriever.dbPediaLookup("Dublin", "place")['uri']
+#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 # 1 Hop
 # s1 = resourceretriever.sindiceFind2("<label>", '"Synthesizer"', "")
 # s2 = resourceretriever.sindiceFind2("<name>", '"Guetta"', "person")
@@ -39,8 +39,8 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 # s1 = resourceretriever.dbPediaLookup("Elton John", "person")
 # s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")
 # 3 hops
-# s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
-# s2 = resourceretriever.dbPediaLookup("Chicago Theatre", "place")['uri']
+#s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
+#s2 = resourceretriever.dbPediaLookup("France", "place")['uri']
 # 4 hops
 # s1 = resourceretriever.dbPediaLookup("Barack Obama", "person")['uri']
 # s2 = resourceretriever.dbPediaLookup("Osama Bin Laden", "person")['uri']
