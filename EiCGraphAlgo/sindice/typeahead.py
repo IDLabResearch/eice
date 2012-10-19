@@ -33,7 +33,7 @@ def dbPediaPrefix(prefix):
             item = dict()
             item['label'] = result.Label[0].text
             item['category']=klasse.Label.text.capitalize()
-            item['value']=result.URI[0].text
+            item['uri']=result.URI[0].text
             results.append(item)
 
     return results
