@@ -21,6 +21,7 @@ config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
 index_server = config.get('services', 'index')
 sparql_server = config.get('services', 'sparql')
+use_remote = config.get('services', 'use_remote')
 
 try:
         sparql = SPARQLWrapper(sparql_server)
@@ -125,8 +126,12 @@ def getResource(resource):
     if local:
         return local
     else:
-        logger.warning("resource %s not in local index" % resource)
-        return getResourceRemote(resource)
+        logger.warning("resource %s not in local index" % resource)        
+        if use_remote == 'True':
+            logger.warning("Fetching %s remotely instead" % resource)
+            return getResourceRemote(resource)
+        else:
+            return False
 
 def getResourceLocal(resource):
     source = resource.strip('<>')
