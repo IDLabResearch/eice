@@ -1,9 +1,12 @@
 import tornado
 import ujson
+import signal
 import time, sys
 from sindice import typeahead, search,resourceretriever
 import sys, traceback,logging
 from sindice import cached_pathfinder
+import handlers.time_out
+from handlers.time_out import TimeoutException
 
 logger = logging.getLogger('root')
 
@@ -83,9 +86,12 @@ class SearchHandler(MainHandler):
     def get(self):
         s1 = self.get_argument("s1", "")
         s2 = self.get_argument("s2", "")
-        
+
         try:
-            r = search.search(s1,s2)
+            with handlers.time_out.time_limit(60):
+                r = search.search(s1,s2)
+        except TimeoutException:
+            r = 'Your process was killed after 60 seconds, sorry! x(' 
         except AttributeError:
             logger.error (sys.exc_info())
             r = 'Invalid arguments :/ Check the server log files if problem persists.'
@@ -99,3 +105,5 @@ class SearchHandler(MainHandler):
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
         self.write(response)
+        self.finish()
+            
