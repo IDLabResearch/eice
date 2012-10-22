@@ -228,7 +228,7 @@ def fetchResource(resource, resourcesByParent, additionalResources, blacklist):
         for tripleKey, triple in newResources.items():
             targetRes = triple[2]
             predicate = triple[1]
-            if isResource(targetRes) and (predicate not in blacklist):
+            if isResource(targetRes) and (predicate not in blacklist) and 'dbpedia' in targetRes:
                 #Add forward link  
                 addDirectedLink(resource, targetRes, predicate, resourcesByParent)
                 #Add backward link

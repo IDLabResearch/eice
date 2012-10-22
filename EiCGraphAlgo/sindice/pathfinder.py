@@ -94,10 +94,10 @@ class PathFinder:
         
         if not graph.pathExists(self.stateGraph) and self.iteration > 1:
             try:
-                k = np.log10(len(self.stateGraph))
+                logger.debug (len(self.stateGraph))
+                k = np.int((1-np.divide(1,self.iteration))*200)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
-                
                 logger.debug(k)
                 
                 #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
@@ -110,7 +110,7 @@ class PathFinder:
 
                 #print ('error ratio:')                
                 #print (np.divide(len(unimportant & important)*100,len(important)))
-                unimportant = res[k:].remove(0).remove(1)
+                unimportant = res[k:]
                 self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
                 halt3 = time.clock()
                 logger.info ('rank reducing: %s' % str(halt3 - halt2))

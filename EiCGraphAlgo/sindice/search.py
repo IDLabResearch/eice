@@ -22,8 +22,13 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
              '<http://www.w3.org/2002/07/owl#sameAs>',
              '<http://purl.org/dc/terms/subject>',
+             '<http://dbpedia.org/property/website>',
              '<http://dbpedia.org/property/label>',
-             '<http://dbpedia.org/ontology/wikiPageDisambiguates>'])
+             '<http://xmlns.com/foaf/0.1/homepage>'
+             '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
+             '<http://dbpedia.org/ontology/thumbnail>',
+             '<http://xmlns.com/foaf/0.1/depiction>'
+             ])
 
 #Select source and target
 
@@ -47,8 +52,8 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 # s1 = resourceretriever.dbPediaLookup("Usain Bolt", "")
 # s2 = resourceretriever.dbPediaLookup("Jacques Rogge", "")
 # 5 hops
-# s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")
-# s2 = resourceretriever.dbPediaLookup("Ireland", "place")
+#s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
+#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
 def search(s1,s2):
     #START
@@ -74,7 +79,7 @@ def search(s1,s2):
         m = p.iterateMatrix(blacklist)
         paths = graph.path(p)
     
-        if p.iteration == 7:
+        if p.iteration == 8:
             break
     resolvedPaths = list()
     
@@ -101,11 +106,11 @@ def search(s1,s2):
     return r
 
 #r = search(s1,s2)
-
+#
 #p = r['paths']
 #time = r['execution_time']
-
 #
+##
 #print (str(time)+' ms')
 #print (p)
 #
