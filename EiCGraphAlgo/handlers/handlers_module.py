@@ -13,6 +13,27 @@ logger = logging.getLogger('root')
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("Pathfinding Service Version 19-10-2012 running on %s" % sys.platform)
+
+class CacheLookupHandler(MainHandler):
+
+    def get(self):
+        q = self.get_argument("q", "")
+        #callback = self.get_argument("callback", "")
+        try:
+            r =  resourceretriever.getResource(q)
+        except AttributeError:
+            r = []
+            logger.info( 'Invalid argument. Please check the provided argument. Check the server log files if error persists.')
+            logger.error (sys.exc_info())
+        except:
+            r = 'Something went wrong. Check the server log files for more information.'
+        #self.render("login.html", notification=self.get_argument("notification","") )
+        response = ujson.dumps(r)
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
+        self.set_header("charset", "utf8")
+        self.write('{0}'.format(response))
+        #self.write('{0}({1})'.format(callback, response))
         
 class PrefixHandler(MainHandler):
 
@@ -36,7 +57,29 @@ class PrefixHandler(MainHandler):
         #self.write('{0}({1})'.format(callback, response))
         
 class LookupHandler(MainHandler):
-
+    
+    def post(self):
+        items = ujson.loads(self.request.body)
+        responses = dict()
+        for item in items: 
+            try:
+                o = item['object_value'].strip('"')
+                if 'type' in item:
+                    t = item['type'].strip('"')
+                else:
+                    t = ""
+                uri = resourceretriever.dbPediaLookup(o, t)['uri'].strip('<>')
+                links = resourceretriever.dbPediaLookup(o, t)['links']
+                responses[uri] = links
+            except:
+                logger.error()
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
+        self.set_header("charset", "utf8")
+        #responses = sorted(responses, key=responses.__getitem__, reverse=True)
+        self.write('{0}'.format(ujson.dumps(responses)))
+        
+        
     def get(self):
         #p = self.get_argument("property_uri", "")
         o = self.get_argument("object_value", "")
@@ -46,15 +89,13 @@ class LookupHandler(MainHandler):
         try:
             r = resourceretriever.dbPediaLookup(o.strip('"'), t.strip('"'))
             uri = r['uri'].strip('<>')
-            response['uri'] = uri
-            wikiPageWikiLinks = r['wikiPageWikiLinks'].strip('<>')
-            response['wikiPageWikiLinks'] = wikiPageWikiLinks
+            response[uri] = r['links']
         except AttributeError as error:
             response['error'] = 'Invalid argument. Please check the provided argument. Check the server log files if error persists.'
             logger.error (error)
             
        
-        if not 'uri' in response:
+        if not 'uri' in r:
             try:
                 response = resourceretriever.sindiceMatch(o, t)
             except:

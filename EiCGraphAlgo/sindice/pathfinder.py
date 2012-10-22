@@ -11,6 +11,7 @@ from sindice import worker, resourceretriever, graph
 import time, gc, sys, logging
 
 logger = logging.getLogger('pathFinder')
+query_log = logging.getLogger('query')
 
 ''' @params
         source: *
@@ -34,6 +35,7 @@ class PathFinder:
         
         
     def initMatrix(self, source1, source2):
+        query_log.info('Path between {0} and {1}'.format(source1,source2))
         s1 = '<%s>' % source1
         s2 = '<%s>' % source2
         self.resources[0] = s1

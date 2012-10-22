@@ -9,6 +9,7 @@ import gc
 import logging
 
 logger = logging.getLogger('pathFinder')
+query_log = logging.getLogger('query')
 
 #Define properties to ignore:
 blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
@@ -102,6 +103,7 @@ def search(s1,s2):
     r = dict()
     r['execution_time'] = finish
     r['paths'] = resolvedPaths
+    query_log.info(r)
     logger.debug(r)
     return r
 

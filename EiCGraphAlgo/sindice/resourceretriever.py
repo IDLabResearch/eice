@@ -84,7 +84,7 @@ def sparqlQuery(value):
         r=dict()
         for result in results["results"]["bindings"]:
             r['uri'] = result['x']['value']
-            r['wikiPageWikiLinks'] = result['wikiPageWikiLinks']['value']
+            r['links'] = result['wikiPageWikiLinks']['value']
         return r
     else:
         return None
@@ -92,11 +92,8 @@ def sparqlQuery(value):
     
 
 def dbPediaLookup(value, kind=""):
-    r = sparqlQuery(value)
-    if (r):
-        return r
-    else:
-        return dbPediaIndexLookup(value, kind)
+    return dbPediaIndexLookup(value, kind)
+    # return sparqlQuery(value)
 
 def dbPediaIndexLookup(value, kind=""):
     server = config.get('services', 'lookup')
@@ -106,16 +103,25 @@ def dbPediaIndexLookup(value, kind=""):
     raw_output = urllib.request.urlopen(request).read()
     root = lxml.objectify.fromstring(raw_output)
     results = dict()
-    
-    for result in root.Result:
-        results[result.Label[0]] = result.URI[0]
 
     r = dict()
+
+    for result in root.Result:
+        results[result.Label[0]] = result.URI[0]
+            
     if value in results:
         r['uri'] = "<%s>" % (results[value])
     else: 
         r['uri'] = "<%s>" % (root.Result.URI[0])
         
+    try:
+        links = len(getResourceLocal(r['uri']))
+    except:
+        links = 0
+        
+    r['links'] = links
+    
+
     return r
 
 def getResource(resource):
