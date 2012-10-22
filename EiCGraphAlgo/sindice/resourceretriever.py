@@ -144,7 +144,7 @@ def getResourceLocal(resource):
         return nt_cleaned
     
     else:
-        return None
+        return False
     
         
 
