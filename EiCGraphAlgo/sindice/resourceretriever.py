@@ -65,7 +65,34 @@ def sindiceFind(source, prop, value, kind):
 def sindiceFind2(prop, value, kind):
     return sindiceFind('*', prop, value, kind)
 
-def sparqlQuery(value):
+def sparqlQueryByUri(uri):
+    if sparql:
+        query = " \
+                PREFIX p: <http://dbpedia.org/property/> \
+                PREFIX dbpedia: <http://dbpedia.org/resource/> \
+                PREFIX category: <http://dbpedia.org/resource/Category:> \
+                PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \
+                PREFIX dbo: <http://dbpedia.org/ontology/> \
+                SELECT ?label ?abstract WHERE { \
+                  <%s> rdfs:label ?label . \
+                  ?x rdfs:label ?label . \
+                  ?x dbo:abstract ?abstract . \
+                  FILTER (lang(?abstract) = \"en\") . \
+                  FILTER (lang(?label) = \"en\") . \
+                } LIMIT 1 \
+                " % uri
+        sparql.setQuery(query)
+        sparql.setReturnFormat(JSON)
+        results = sparql.query().convert()
+        r=dict()
+        for result in results["results"]["bindings"]:
+            r['label'] = result['label']['value']
+            r['abstract'] = result['abstract']['value']
+        return r
+    else:
+        return None
+    
+def sparqlQueryByLabel(value):
     if sparql:
         query = """
                 PREFIX p: <http://dbpedia.org/property/>
@@ -139,10 +166,27 @@ def getResource(resource):
         else:
             return False
 
+def describeResource(resource):
+    label='<http://www.w3.org/2000/01/rdf-schema#label>'
+    abstract='<http://dbpedia.org/ontology/abstract>'
+    r = getResource(resource)
+    response = dict()
+    if r:
+        properties = dict()
+        [properties.update({triple[1]:triple[2]}) for triple in r.values()]  
+        print (properties)
+        if label in properties:
+            response['label'] = properties[label]
+        if abstract in properties:
+            response['abstract'] = properties[label]
+    if not r or 'label' not in response or 'abstract' not in response:
+        response = sparqlQueryByUri(resource)
+    return response      
+
 def getResourceLocal(resource):
     source = resource.strip('<>')
 
-    query={'nq':'<%s> * *' % source,'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'10'}
+    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'10'}
     response = solr.search(**query)
     if response.status==200 and len(response.documents) > 0:
         nt = response.documents[0]['ntriple'].split('.\n')[:-1]
@@ -289,6 +333,7 @@ def importantResources(u, rank):
         important.add(maxindex)
     return important
 
+#describeResource('http://dbpedia.org/resource/Belgium')
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))

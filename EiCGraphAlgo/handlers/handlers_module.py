@@ -12,15 +12,32 @@ logger = logging.getLogger('root')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Pathfinding Service Version 23-10-2012 running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 23-10-2012(b) running on %s" % sys.platform)
 
 class CacheLookupHandler(MainHandler):
-
+    def post(self):
+        items = ujson.loads(self.request.body)
+        responses = dict()
+        for item in items: 
+            try:
+                q = item['q'].strip('<>')
+                r =  resourceretriever.describeResource(q)
+                responses[q] = r
+            except:
+                self.set_status(500)
+                responses['error'] = 'Something went wrong x( Check the log files for more information.'
+                logger.error()
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
+        self.set_header("charset", "utf8")
+        #responses = sorted(responses, key=responses.__getitem__, reverse=True)
+        self.write('{0}'.format(ujson.dumps(responses)))
+        
     def get(self):
         q = self.get_argument("q", "")
         #callback = self.get_argument("callback", "")
         try:
-            r =  resourceretriever.getResource(q)
+            r =  resourceretriever.describeResource(q)
         except AttributeError:
             self.set_status(400)
             r = []
@@ -29,6 +46,10 @@ class CacheLookupHandler(MainHandler):
         except:
             self.set_status(500)
             r = 'Something went wrong. Check the server log files for more information.'
+        if not r:
+            r = 'Resource not found %s, sorry. Try again later, update the index or look for something else.' % q
+            self.set_status(404)
+        
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
         self.set_header("Access-Control-Allow-Origin", "*")
@@ -115,7 +136,7 @@ class LookupHandler(MainHandler):
         
         if o == "":
             self.set_status(400)
-            response['error'] = 'Please provide an object_value parameter'
+            response['error'] = 'Please provide an object_value parameter.'
             
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
@@ -149,7 +170,7 @@ class SearchHandler(MainHandler):
                 r = search.search(source,destination)
         except TimeoutException:
             self.set_status(503)
-            r = 'Your process was killed after 60 seconds, sorry! x(' 
+            r = 'Your process was killed after 60 seconds, sorry! x( Try again' 
         except AttributeError:
             self.set_status(400)
             logger.error (sys.exc_info())
