@@ -12,7 +12,7 @@ logger = logging.getLogger('root')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Pathfinding Service Version 19-10-2012 running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 23-10-2012 running on %s" % sys.platform)
 
 class CacheLookupHandler(MainHandler):
 
@@ -22,10 +22,12 @@ class CacheLookupHandler(MainHandler):
         try:
             r =  resourceretriever.getResource(q)
         except AttributeError:
+            self.set_status(400)
             r = []
             logger.info( 'Invalid argument. Please check the provided argument. Check the server log files if error persists.')
             logger.error (sys.exc_info())
         except:
+            self.set_status(500)
             r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
@@ -44,9 +46,11 @@ class PrefixHandler(MainHandler):
             r =  typeahead.dbPediaPrefix(q)
         except AttributeError:
             r = []
+            self.set_status(400)
             logger.info( 'Invalid argument. Please check the provided argument. Check the server log files if error persists.')
             logger.error (sys.exc_info())
         except:
+            self.set_status(500)
             r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
@@ -72,6 +76,8 @@ class LookupHandler(MainHandler):
                 links = resourceretriever.dbPediaLookup(o, t)['links']
                 responses[uri] = links
             except:
+                self.set_status(500)
+                responses['error'] = 'Something went wrong x( Check the log files for more information.'
                 logger.error()
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
@@ -86,11 +92,14 @@ class LookupHandler(MainHandler):
         t = self.get_argument("type", "")
         #callback = self.get_argument("callback", "")
         response = dict()
+        r = dict()
+
         try:
             r = resourceretriever.dbPediaLookup(o.strip('"'), t.strip('"'))
             uri = r['uri'].strip('<>')
             response[uri] = r['links']
         except AttributeError as error:
+            self.set_status(400)
             response['error'] = 'Invalid argument. Please check the provided argument. Check the server log files if error persists.'
             logger.error (error)
             
@@ -99,9 +108,15 @@ class LookupHandler(MainHandler):
             try:
                 response = resourceretriever.sindiceMatch(o, t)
             except:
-                    logger.error (sys.exc_info())
-                    response['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
+                self.set_status(500)
+                logger.error (sys.exc_info())
+                response['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
 
+        
+        if o == "":
+            self.set_status(400)
+            response['error'] = 'Please provide an object_value parameter'
+            
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
@@ -116,6 +131,7 @@ class CachedPathHandler(MainHandler):
         try:
             r = cpf.getPaths(destination)
         except:
+            self.set_status(500)
             logger.error (sys.exc_info())
             r['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
         response = ujson.dumps(r)
@@ -132,11 +148,14 @@ class SearchHandler(MainHandler):
             with handlers.time_out.time_limit(60):
                 r = search.search(s1,s2)
         except TimeoutException:
+            self.set_status(503)
             r = 'Your process was killed after 60 seconds, sorry! x(' 
         except AttributeError:
+            self.set_status(400)
             logger.error (sys.exc_info())
             r = 'Invalid arguments :/ Check the server log files if problem persists.'
         except:
+            self.set_status(500)
             logger.error (traceback.format_stack())
             r = 'Something went wrong x( Check the server log files for more information.'
             
