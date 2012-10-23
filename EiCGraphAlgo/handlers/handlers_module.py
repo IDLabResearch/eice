@@ -141,12 +141,12 @@ class CachedPathHandler(MainHandler):
 class SearchHandler(MainHandler):
 
     def get(self):
-        s1 = self.get_argument("s1", "")
-        s2 = self.get_argument("s2", "")
+        source = self.get_argument("from", "")
+        destination = self.get_argument("to", "")
 
         try:
             with handlers.time_out.time_limit(60):
-                r = search.search(s1,s2)
+                r = search.search(source,destination)
         except TimeoutException:
             self.set_status(503)
             r = 'Your process was killed after 60 seconds, sorry! x(' 
