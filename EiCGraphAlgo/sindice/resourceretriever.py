@@ -155,7 +155,7 @@ def getResource(resource):
     try:
         local = getResourceLocal(resource)
     except:
-        logger.warn ('connection error')
+        logger.error ('connection error: could not connect to index. Check the index log files for more info.')
     if local:
         return local
     else:
@@ -337,4 +337,4 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-#print(getResourceLocal('http://dbpedia.org/resource/%C3%86lle_of_Sussex'))
+#print(getResourceLocal('http://dbpedia.org/resource/Ireland'))

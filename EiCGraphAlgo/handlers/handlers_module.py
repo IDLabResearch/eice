@@ -12,7 +12,19 @@ logger = logging.getLogger('root')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.write("Pathfinding Service Version 23-10-2012(b) running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 23-10-2012(c) running on %s" % sys.platform)
+
+class AnalysisHandler(MainHandler):
+    def initialize(self):
+        self.cpf = cached_pathfinder.CachedPathFinder()
+        self.cpf.buildMatrix()
+        
+    def get(self):
+        file = self.cpf.visualize()
+        f = open(file, "rb").read()
+        self.set_header("Content-Type", "image/png")
+        self.write(f)
+        self.finish()
 
 class CacheLookupHandler(MainHandler):
     def post(self):
@@ -32,11 +44,14 @@ class CacheLookupHandler(MainHandler):
         self.set_header("charset", "utf8")
         #responses = sorted(responses, key=responses.__getitem__, reverse=True)
         self.write('{0}'.format(ujson.dumps(responses)))
+        self.finish()
         
     def get(self):
         q = self.get_argument("q", "")
         #callback = self.get_argument("callback", "")
         try:
+            if q == "":
+                raise AttributeError
             r =  resourceretriever.describeResource(q)
         except AttributeError:
             self.set_status(400)
@@ -46,9 +61,11 @@ class CacheLookupHandler(MainHandler):
         except:
             self.set_status(500)
             r = 'Something went wrong. Check the server log files for more information.'
+        
         if not r:
-            r = 'Resource not found %s, sorry. Try again later, update the index or look for something else.' % q
             self.set_status(404)
+            r = 'Resource not found %s, sorry. Try again later, update the index or look for something else.' % q
+            
         
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
@@ -56,6 +73,7 @@ class CacheLookupHandler(MainHandler):
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
         self.write('{0}'.format(response))
+        self.finish()
         #self.write('{0}({1})'.format(callback, response))
         
 class PrefixHandler(MainHandler):
@@ -80,6 +98,7 @@ class PrefixHandler(MainHandler):
         self.set_header("charset", "utf8")
         self.write('{0}'.format(response))
         #self.write('{0}({1})'.format(callback, response))
+        self.finish()
         
 class LookupHandler(MainHandler):
     
@@ -105,7 +124,7 @@ class LookupHandler(MainHandler):
         self.set_header("charset", "utf8")
         #responses = sorted(responses, key=responses.__getitem__, reverse=True)
         self.write('{0}'.format(ujson.dumps(responses)))
-        
+        self.finish()
         
     def get(self):
         #p = self.get_argument("property_uri", "")
@@ -142,22 +161,25 @@ class LookupHandler(MainHandler):
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
         self.write('{0}'.format(ujson.dumps(response)))
+        self.finish()
         #self.write('{0}({1})'.format(callback, ujson.dumps(response)))
      
 class CachedPathHandler(MainHandler):   
-    def get(self):
-        cpf = cached_pathfinder.CachedPathFinder()
+    def initialize(self):
+        self.cpf = cached_pathfinder.CachedPathFinder()
+        
+    def get(self): 
         destination = self.get_argument("d", "")
         r = dict()
         try:
-            r = cpf.getPaths(destination)
+            r = self.cpf.getPaths(destination)
         except:
             self.set_status(500)
             logger.error (sys.exc_info())
             r['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
         response = ujson.dumps(r)
         self.write(response)
-            
+        self.finish()
      
 class SearchHandler(MainHandler):
 

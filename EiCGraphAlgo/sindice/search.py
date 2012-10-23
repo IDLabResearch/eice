@@ -7,6 +7,8 @@ from sindice import pathfinder,resourceretriever,graph
 import time
 import gc
 import logging
+import pickle
+import os, sys
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -42,14 +44,14 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 # 2 hops
 # s1 = resourceretriever.dbPediaLookup("Gerry Breen", "")
 # s2 = resourceretriever.dbPediaLookup("Ireland", "place")
-# s1 = resourceretriever.dbPediaLookup("Elton John", "person")
-# s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")
+# s1 = resourceretriever.dbPediaLookup("Elton John", "person")['uri']
+# s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")['uri']
 # 3 hops
-#s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
-#s2 = resourceretriever.dbPediaLookup("France", "place")['uri']
+# s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
+# s2 = resourceretriever.dbPediaLookup("France", "place")['uri']
 # 4 hops
-# s1 = resourceretriever.dbPediaLookup("Barack Obama", "person")['uri']
-# s2 = resourceretriever.dbPediaLookup("Osama Bin Laden", "person")['uri']
+#s1 = resourceretriever.dbPediaLookup("Barack Obama", "person")['uri']
+#s2 = resourceretriever.dbPediaLookup("Osama Bin Laden", "person")['uri']
 # s1 = resourceretriever.dbPediaLookup("Usain Bolt", "")
 # s2 = resourceretriever.dbPediaLookup("Jacques Rogge", "")
 # 5 hops
@@ -103,6 +105,11 @@ def search(s1,s2):
     r = dict()
     r['execution_time'] = finish
     r['paths'] = resolvedPaths
+    r['source'] = s1
+    r['destination'] = s2
+    path = os.path.dirname(os.path.abspath(__file__))
+    file = hash('{0}_{1}_{2}'.format(s1,s2,time.time()))
+    pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
     query_log.info(r)
     logger.debug(r)
     return r

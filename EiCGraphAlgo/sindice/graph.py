@@ -132,4 +132,4 @@ def visualize(pathFinder, path=None):
     
     #logger.debug(G.nodes)
     plt.axis('off')
-    plt.show()
+    plt.show(G)

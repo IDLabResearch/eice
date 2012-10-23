@@ -2,7 +2,7 @@ from __future__ import with_statement
 from contextlib import contextmanager
 import signal
 
-class TimeoutException(Exception): pass
+class TimeoutException(BaseException): pass
 
 @contextmanager
 def time_limit(seconds):
