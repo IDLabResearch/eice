@@ -13,6 +13,22 @@ logger = logging.getLogger('handler')
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("Pathfinding Service Version 24-10-2012(a) running on %s" % sys.platform)
+        self.finish()
+        
+class NodeDataHandler(MainHandler):
+    def initialize(self):
+        self.cpf = cached_pathfinder.CachedPathFinder()
+    
+    def get(self):
+        response = ujson.dumps(self.cpf.getNodeData())
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
+        self.write(response)
+        self.finish()
+
+class VisualizationHandler(MainHandler):
+    def get(self):
+        self.render("index.html")
 
 class AnalysisHandler(MainHandler):
     def initialize(self):
@@ -22,8 +38,8 @@ class AnalysisHandler(MainHandler):
     def get(self):
         file = self.cpf.visualize()
         f = open(file, "rb").read()
-        self.set_header("Content-Type", "image/png")
         self.write(f)
+        self.set_header("Content-Type", "image/png")
         self.finish()
 
 class CacheLookupHandler(MainHandler):

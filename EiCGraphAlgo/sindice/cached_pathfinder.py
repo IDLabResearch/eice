@@ -20,6 +20,7 @@ class CachedPathFinder:
         self.properties_counts = dict()
         self.properties_by_parent = dict()
         self.stateGraph = False
+        self.loaded = False
         self.path = os.path.dirname(os.path.abspath(sys.modules[CachedPathFinder.__module__].__file__))
         for root, dirs, files in os.walk('{0}/cached_paths'.format(self.path)):
             print (root)
@@ -30,9 +31,8 @@ class CachedPathFinder:
     def getPaths(self, destination):
         return self.paths[destination]
     
-    def buildMatrix(self, blacklist=set()):
+    def loadStoredPaths(self, blacklist=set()):
         for root, dirs, files in os.walk('{0}/stored_paths'.format(self.path)):
-            print (root)
             for f in files:
                 dump = pickle.load(open('{0}/{1}'.format(root,f),'rb'))
                 if 'paths' in dump:
@@ -66,12 +66,48 @@ class CachedPathFinder:
                                 resourceretriever.addDirectedLink(steps[0], steps[1], path['edges'][i], self.resources_by_parent)
                                 resourceretriever.addDirectedLink(steps[1], steps[0], path['edges'][i], self.resources_by_parent)
                                 i += 1
-                    
-        #print (self.resources)
-        #print (self.resources)    
-        #print (self.properties)
-        #print (self.properties)
-            
+        self.loaded = True
+    
+    def getNodeData(self, blacklist=set()):
+        if not self.loaded:
+            self.loadStoredPaths(blacklist)
+        node_data = dict()
+        nodes = list()
+        links = list()
+        loaded = set()
+        
+        res = list(sorted(self.resources_counts, key=self.resources_counts.__getitem__, reverse=True))
+        important = frozenset(res[:250])
+        
+        for resource in self.resources:
+            if self.resources[resource] in important:
+                node = dict()
+                label = self.resources[resource].strip('<>')
+                splitted = label.split("/")
+                final_label = splitted[len(splitted)-1]
+                node['match'] = 1
+                node['name'] = final_label
+                node['artist'] = resourceretriever.dbPediaIndexLookup(final_label)['type']
+                node['id'] = "id%s" % hash(label)
+                loaded.add(label)
+                node['playcount'] = self.resources_counts[self.resources[resource]]
+                nodes.append(node)
+        
+        for resource in self.resources_by_parent:
+            for parent in self.resources_by_parent[resource]:
+                if resource in loaded and parent in loaded:
+                    link = dict()
+                    link['source'] = "id%s" % hash(resource)
+                    link['target'] = "id%s" % hash(parent)
+                    links.append(link)
+        
+        node_data['nodes'] = nodes
+        node_data['links'] = links
+        return node_data
+    
+    def buildMatrix(self, blacklist=set()):
+        if not self.loaded:
+            self.loadStoredPaths(blacklist)
         n = len(self.resources)      
         #print(n)
         self.stateGraph = np.zeros((n, n), np.byte)

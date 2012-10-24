@@ -2,11 +2,17 @@ from sindice import search
 import pickle
 import ujson
 
-sources = ['http://dbpedia.org/resource/David_Guetta']
+sources = [
+           'http://dbpedia.org/resource/David_Guetta',
+           'http://dbpedia.org/resource/Germany',
+           'http://dbpedia.org/resource/Spain',
+           'http://dbpedia.org/resource/China',
+           'http://dbpedia.org/resource/San_Francisco',
+           'http://dbpedia.org/resource/Rio_de_Janeiro',
+]
 
 destinations = ['http://dbpedia.org/resource/France',
                 'http://dbpedia.org/resource/New_York',
-                'http://dbpedia.org/resource/United_States_of_America',
                 'http://dbpedia.org/resource/Paris',
                 'http://dbpedia.org/resource/Jimi_Hendrix',
                 'http://dbpedia.org/resource/Elvis_Presley',

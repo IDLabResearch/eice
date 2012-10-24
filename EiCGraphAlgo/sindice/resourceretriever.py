@@ -135,14 +135,23 @@ def dbPediaIndexLookup(value, kind=""):
     results = dict()
 
     r = dict()
-
+    klasse = "Miscelaneaous"
     for result in root.Result:
         results[result.Label[0]] = result.URI[0]
-            
+
+    try:
+        klasse = root.Result[0].Classes.Class[0].Label[0].text
+    except:
+        klasse = "misc"
+    
     if value in results:
         r['uri'] = "<%s>" % (results[value])
+        r['label'] = value
     else: 
         r['uri'] = "<%s>" % (root.Result.URI[0])
+        r['label'] = value
+        
+    r['type'] = klasse
         
     try:
         links = len(getResourceLocal(r['uri']))
