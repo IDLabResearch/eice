@@ -96,6 +96,7 @@ class PathFinder:
         
         if not graph.pathExists(self.stateGraph) and self.iteration > 1:
             try:
+                logger.info ('reducing matrix')
                 logger.debug (len(self.stateGraph))
                 k = np.int((1-np.divide(1,self.iteration))*200)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
