@@ -80,6 +80,7 @@ def search(s1,s2):
         logger.info ('=== %s-- ===' % str(p.iteration))
         gc.collect()
         m = p.iterateMatrix(blacklist)
+        logger.info ('Looking for path')
         paths = graph.path(p)
     
         if p.iteration == 8:
