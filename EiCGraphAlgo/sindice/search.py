@@ -107,9 +107,12 @@ def search(s1,s2):
     r['paths'] = resolvedPaths
     r['source'] = s1
     r['destination'] = s2
-    path = os.path.dirname(os.path.abspath(__file__))
-    file = hash('{0}_{1}_{2}'.format(s1,s2,time.time()))
-    pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
+    try:
+        path = os.path.dirname(os.path.abspath(__file__))
+        file = hash('{0}_{1}_{2}'.format(s1,s2,time.time()))
+        pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
+    except:
+        logger.warning('could not log and store path between {0} and {1}'.format(s1,s2))
     query_log.info(r)
     logger.debug(r)
     return r

@@ -199,7 +199,7 @@ class SearchHandler(MainHandler):
             r = 'Invalid arguments :/ Check the server log files if problem persists.'
         except:
             self.set_status(500)
-            logger.error (traceback.format_stack())
+            logger.error (sys.exc_info())
             r = 'Something went wrong x( Check the server log files for more information.'
             
         #self.render("login.html", notification=self.get_argument("notification","") )
