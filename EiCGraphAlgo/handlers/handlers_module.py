@@ -30,11 +30,11 @@ class CacheLookupHandler(MainHandler):
     
     def get(self):
         uris = self.get_argument("uri", "")
-        items = uris.split(",")
+        items = uris.split(",http://")
         responses = dict()
         for item in items: 
             try:
-                uri = item.strip('<>')
+                uri = 'http://%s' % item.strip('<>')
                 r =  resourceretriever.describeResource(uri)
                 responses[uri] = r
             except:
