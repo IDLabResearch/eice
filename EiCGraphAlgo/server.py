@@ -51,7 +51,7 @@ def main():
 #    tornado.ioloop.IOLoop.instance().start()
     sockets = tornado.netutil.bind_sockets(options.port)
     if not 'win' in sys.platform:
-        tornado.process.fork_processes(4, 0)
+        tornado.process.fork_processes(8, 0)
     server = tornado.httpserver.HTTPServer(Application())
     server.add_sockets(sockets)
     tornado.ioloop.IOLoop.instance().start()

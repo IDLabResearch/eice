@@ -90,7 +90,7 @@ def sparqlQueryByUri(uri):
             r['abstract'] = result['abstract']['value']
         return r
     else:
-        return None
+        return False
     
 def sparqlQueryByLabel(value):
     if sparql:
@@ -114,13 +114,15 @@ def sparqlQueryByLabel(value):
             r['links'] = result['wikiPageWikiLinks']['value']
         return r
     else:
-        return None
-    
-    
+        return False
 
 def dbPediaLookup(value, kind=""):
-    return dbPediaIndexLookup(value, kind)
-    # return sparqlQuery(value)
+    s = sparqlQueryByLabel(value)
+    if s:
+        s['links'] = len(getResourceLocal(s['uri'].strip("<>")))
+    else:
+        s = dbPediaIndexLookup(value, kind)
+    return s
 
 def dbPediaIndexLookup(value, kind=""):
     server = config.get('services', 'lookup')
