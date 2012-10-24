@@ -35,7 +35,7 @@ class CacheLookupHandler(MainHandler):
         for item in items: 
             try:
                 uri = item.strip('<>')
-                r =  resourceretriever.describeResource(q)
+                r =  resourceretriever.describeResource(uri)
                 responses[uri] = r
             except:
                 self.set_status(500)
