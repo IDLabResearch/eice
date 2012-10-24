@@ -51,7 +51,7 @@ class CacheLookupHandler(MainHandler):
 class PrefixHandler(MainHandler):
 
     def get(self):
-        q = self.get_argument("q", "")
+        q = self.get_argument("query", "")
         #callback = self.get_argument("callback", "")
         try:
             r =  typeahead.dbPediaPrefix(q)
@@ -102,7 +102,7 @@ class CachedPathHandler(MainHandler):
         self.cpf = cached_pathfinder.CachedPathFinder()
         
     def get(self): 
-        destination = self.get_argument("d", "")
+        destination = self.get_argument("destination", "")
         r = dict()
         try:
             r = self.cpf.getPaths(destination)
@@ -119,7 +119,7 @@ class SearchHandler(MainHandler):
     def get(self):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
-
+        r = dict()
         try:
             with handlers.time_out.time_limit(60):
                 r = search.search(source,destination)
