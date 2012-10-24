@@ -1,13 +1,2 @@
-EiCGraphAlgo/handlers/__pycache__
-EiCGraphAlgo/sindice/__pycache__
-EiCGraphAlgo/example.log
-EiCGraphAlgo/__pycache__
-EiCGraphAlgo/handlers/__pycache__
-EiCGraphAlgo/sindice/__pycache__
-EiCGraphAlgo/sindice/logging.conf
-EiCGraphAlgo/sindice/logging.conf
-EiCGraphAlgo/sindice/cached_paths
-EiCGraphAlgo/sindice/stored_paths
-EiCGraphAlgo/query.log
-EiCGraphAlgo/sindice/cached_paths
-EiCGraphAlgo/sindice/stored_paths
+*.pyc
+*.log
