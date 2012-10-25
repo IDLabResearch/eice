@@ -81,11 +81,11 @@ class CachedPathFinder:
         logger.debug(len(res))
         logger.debug(len(important))
         
-        for resource in self.resources:
-            if self.resources[resource] in important:
-                res = self.resources[resource]
-                self.addNode(res,nodes)
-                loaded.add(res)
+#        for resource in self.resources:
+#            if self.resources[resource] in important:
+#                res = self.resources[resource]
+#                self.addNode(res,nodes)
+#                loaded.add(res)
         
         for resource in self.resources_by_parent:
             for parent in self.resources_by_parent[resource]:
@@ -95,7 +95,7 @@ class CachedPathFinder:
                 if parent not in loaded:
                     self.addNode(parent, nodes)
                     loaded.add(parent)
-                if resource in loaded and parent in loaded:
+                if resource in loaded and resource in important and parent in loaded and parent in important:
                     link = dict()
                     link['source'] = "id%s" % hash(resource)
                     link['target'] = "id%s" % hash(parent)
