@@ -20,7 +20,7 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://xmlns.com/foaf/0.1/page>',
              '<http://dbpedia.org/property/wikiPageUsesTemplate>',
              '<http://dbpedia.org/ontology/wikiPageExternalLink>',
-             '<http://dbpedia.org/ontology/wikiPageRedirects>',
+             #'<http://dbpedia.org/ontology/wikiPageRedirects>',
              '<http://purl.org/dc/elements/1.1/description>',
              '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
              '<http://www.w3.org/2002/07/owl#sameAs>',
@@ -57,6 +57,8 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 # 5 hops
 #s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
+#s1 = 'http://dbpedia.org/resource/Duran_Duran'
+#s2 = 'http://dbpedia.org/resource/Coca_Cola'
 
 def search(s1,s2):
     #START
@@ -83,7 +85,7 @@ def search(s1,s2):
         logger.info ('Looking for path')
         paths = graph.path(p)
     
-        if p.iteration == 8:
+        if p.iteration == 10:
             break
     resolvedPaths = list()
     
