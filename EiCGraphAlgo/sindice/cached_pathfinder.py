@@ -113,8 +113,8 @@ class CachedPathFinder:
         node['match'] = 1
         node['name'] = final_label
         node['artist'] = resourceretriever.dbPediaIndexLookup(final_label)['type']
-        node['id'] = "id%s" % hash(label)
-        node['playcount'] = self.resources_counts[self.resources[resource]]
+        node['id'] = "id%s" % hash(resource)
+        node['playcount'] = self.resources_counts[resource]
         nodes.append(node)
     
     def buildMatrix(self, blacklist=set()):

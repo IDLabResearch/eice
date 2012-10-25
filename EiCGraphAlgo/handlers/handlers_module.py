@@ -147,9 +147,9 @@ class SearchHandler(MainHandler):
             logger.error (sys.exc_info())
             r = 'Invalid arguments :/ Check the server log files if problem persists.'
         except:
-            self.set_status(500)
+            self.set_status(404)
             logger.error (sys.exc_info())
-            r = 'Something went wrong x( Check the server log files for more information.'
+            r = 'Something went wrong x( Probably either the source or destination is a dead-end. Check the server log files for more information.'
             
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
