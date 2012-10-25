@@ -80,14 +80,15 @@ class LookupHandler(MainHandler):
         type = self.get_argument("type", "")
         labels = label.split(",")
         logger.debug(labels)
-        responses = dict()
+        responses = []
         for label in labels: 
             try:
                 uri = resourceretriever.dbPediaLookup(label, type)['uri'].strip('<>"')
                 links = resourceretriever.dbPediaLookup(label, type)['links']
-                responses[uri] = links
+                responses.append({ 'uri': uri, 'connectivity': links })
             except:
                 self.set_status(500)
+                responses = dict()
                 responses['error'] = 'Something went wrong x( Check the log files for more information.'
                 logger.error(sys.exc_info())
         self.set_header("Access-Control-Allow-Origin", "*")
