@@ -87,9 +87,6 @@ class LookupHandler(MainHandler):
                 links = resourceretriever.dbPediaLookup(label, type)['links']
                 responses.append({ 'label': label, 'uri': uri, 'connectivity': links })
             except:
-                self.set_status(500)
-                responses = dict()
-                responses['error'] = 'Something went wrong x( Check the log files for more information.'
                 logger.error(sys.exc_info())
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
