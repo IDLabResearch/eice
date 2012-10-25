@@ -23,11 +23,11 @@ class Application(tornado.web.Application):
         #self.config = self._get_config()
         handlers = [
                 url(r'/', handlers_module.MainHandler, name='index'),
-                url(r'/prefix', handlers_module.PrefixHandler, name='prefix'),
-                url(r'/path', handlers_module.SearchHandler, name='path'),
-                url(r'/subject', handlers_module.LookupHandler, name = 'subject'),
-                url(r'/cached_path', handlers_module.CachedPathHandler, name = 'cached_path'),
-                url(r'/description', handlers_module.CacheLookupHandler, name = 'description'),
+                url(r'/prefixes', handlers_module.PrefixHandler, name='prefixes'),
+                url(r'/paths', handlers_module.SearchHandler, name='paths'),
+                url(r'/subjects', handlers_module.LookupHandler, name = 'subjects'),
+                url(r'/cached_paths', handlers_module.CachedPathHandler, name = 'cached_paths'),
+                url(r'/descriptions', handlers_module.CacheLookupHandler, name = 'descriptions'),
                 url(r'/analysis', handlers_module.AnalysisHandler, name = 'analysis')
         ]
 
