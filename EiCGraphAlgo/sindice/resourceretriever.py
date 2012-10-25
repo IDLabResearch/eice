@@ -73,13 +73,14 @@ def sparqlQueryByUri(uri):
                 PREFIX category: <http://dbpedia.org/resource/Category:> \
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \
                 PREFIX dbo: <http://dbpedia.org/ontology/> \
-                SELECT ?label ?abstract WHERE { \
+                SELECT ?label ?abstract ?type WHERE { \
                   <%s> rdfs:label ?label . \
                   ?x rdfs:label ?label . \
                   ?x dbo:abstract ?abstract . \
+                  ?x rdf:type ?type . \
                   FILTER (lang(?abstract) = \"en\") . \
                   FILTER (lang(?label) = \"en\") . \
-                } LIMIT 1 \
+                } LIMIT 2 \
                 " % uri
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
@@ -88,6 +89,7 @@ def sparqlQueryByUri(uri):
         for result in results["results"]["bindings"]:
             r['label'] = result['label']['value']
             r['abstract'] = result['abstract']['value']
+            r['type'] = result['type']['value']
         return r
     else:
         return False
@@ -186,14 +188,15 @@ def describeResource(resource):
     if r:
         properties = dict()
         [properties.update({triple[1]:triple[2]}) for triple in r.values()]  
-        print (properties)
         if label in properties:
             response['label'] = properties[label]
         if abstract in properties:
             response['abstract'] = properties[label]
-    if not r or 'label' not in response or 'abstract' not in response:
+    if not r or 'label' not in response or 'abstract' not in response or 'type' not in response:
         response = sparqlQueryByUri(resource)
-    response['type'] = dbPediaIndexLookup(resource)['type']
+        
+    if response['label'] and not 'type' in response:
+        response['type'] = dbPediaIndexLookup(response['label'])['type']
     return response      
 
 def getResourceLocal(resource):
