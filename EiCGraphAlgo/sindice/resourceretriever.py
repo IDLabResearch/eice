@@ -193,6 +193,7 @@ def describeResource(resource):
             response['abstract'] = properties[label]
     if not r or 'label' not in response or 'abstract' not in response:
         response = sparqlQueryByUri(resource)
+    response['type'] = dbPediaIndexLookup(resource)['type']
     return response      
 
 def getResourceLocal(resource):

@@ -1,2 +1,13 @@
 *.pyc
 *.log
+EiCGraphAlgo/static/data
+EiCGraphAlgo/static/data/call_me_al.json
+EiCGraphAlgo/static/data/helplessness_blues.json
+EiCGraphAlgo/static/data/jolene.json
+EiCGraphAlgo/static/data/poker_face.json
+EiCGraphAlgo/static/data/she_said.json
+EiCGraphAlgo/static/data/short_skirt.json
+EiCGraphAlgo/static/data/sledgehammer_2_rounds.json
+EiCGraphAlgo/static/data/sledgehammer.json
+EiCGraphAlgo/static/data/songs.json
+EiCGraphAlgo/static/data/test.json
