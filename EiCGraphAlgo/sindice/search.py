@@ -83,7 +83,7 @@ def search(s1,s2):
         logger.info ('Looking for path')
         paths = graph.path(p)
     
-        if p.iteration == 8:
+        if p.iteration == 12:
             break
     resolvedPaths = list()
     

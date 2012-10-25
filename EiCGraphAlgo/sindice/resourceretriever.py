@@ -202,7 +202,7 @@ def describeResource(resource):
 def getResourceLocal(resource):
     source = resource.strip('<>')
 
-    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'10'}
+    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'50'}
     response = solr.search(**query)
     if response.status==200 and len(response.documents) > 0:
         nt = response.documents[0]['ntriple'].split('.\n')[:-1]
