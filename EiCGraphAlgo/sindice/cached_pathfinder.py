@@ -78,23 +78,23 @@ class CachedPathFinder:
         
         res = list(sorted(self.resources_counts, key=self.resources_counts.__getitem__, reverse=True))
         important = frozenset(res[:250])
+        logger.debug(len(res))
+        logger.debug(len(important))
         
         for resource in self.resources:
             if self.resources[resource] in important:
-                node = dict()
-                label = self.resources[resource].strip('<>')
-                splitted = label.split("/")
-                final_label = splitted[len(splitted)-1]
-                node['match'] = 1
-                node['name'] = final_label
-                node['artist'] = resourceretriever.dbPediaIndexLookup(final_label)['type']
-                node['id'] = "id%s" % hash(label)
-                loaded.add(label)
-                node['playcount'] = self.resources_counts[self.resources[resource]]
-                nodes.append(node)
+                res = self.resources[resource]
+                self.addNode(res,nodes)
+                loaded.add(res)
         
         for resource in self.resources_by_parent:
             for parent in self.resources_by_parent[resource]:
+                if resource not in loaded:
+                    self.addNode(resource,nodes)
+                    loaded.add(resource)
+                if parent not in loaded:
+                    self.addNode(parent, nodes)
+                    loaded.add(parent)
                 if resource in loaded and parent in loaded:
                     link = dict()
                     link['source'] = "id%s" % hash(resource)
@@ -104,6 +104,18 @@ class CachedPathFinder:
         node_data['nodes'] = nodes
         node_data['links'] = links
         return node_data
+    
+    def addNode(self, resource, nodes):
+        label = resource.strip('<>')
+        node = dict()
+        splitted = label.split("/")
+        final_label = splitted[len(splitted)-1]
+        node['match'] = 1
+        node['name'] = final_label
+        node['artist'] = resourceretriever.dbPediaIndexLookup(final_label)['type']
+        node['id'] = "id%s" % hash(label)
+        node['playcount'] = self.resources_counts[self.resources[resource]]
+        nodes.append(node)
     
     def buildMatrix(self, blacklist=set()):
         if not self.loaded:
