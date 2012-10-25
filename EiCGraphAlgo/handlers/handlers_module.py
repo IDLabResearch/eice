@@ -58,8 +58,7 @@ class CacheLookupHandler(MainHandler):
                 r =  resourceretriever.describeResource(uri)
                 responses[uri] = r
             except:
-                self.set_status(500)
-                responses['error'] = 'Something went wrong x( Check the log files for more information.'
+                responses[uri] = {}
                 logger.error(sys.exc_info())
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
