@@ -85,7 +85,7 @@ class LookupHandler(MainHandler):
             try:
                 uri = resourceretriever.dbPediaLookup(label, type)['uri'].strip('<>"')
                 links = resourceretriever.dbPediaLookup(label, type)['links']
-                responses.append({ 'uri': uri, 'connectivity': links })
+                responses.append({ 'label': label, 'uri': uri, 'connectivity': links })
             except:
                 self.set_status(500)
                 responses = dict()
