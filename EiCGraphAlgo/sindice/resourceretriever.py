@@ -301,9 +301,10 @@ def fetchResource(resource, resourcesByParent, additionalResources, blacklist):
             predicate = triple[1]
             if isResource(targetRes) and (predicate not in blacklist) and 'dbpedia' in targetRes:
                 #Add forward link  
-                addDirectedLink(resource, targetRes, predicate, resourcesByParent)
-                #Add backward link
                 addDirectedLink(targetRes, resource, predicate, resourcesByParent)
+                #Add backward link
+                pred_splitted = predicate.rsplit('/', 1)
+                addDirectedLink(resource, targetRes, "{0}/is_{1}_of{2}".format(pred_splitted[0],pred_splitted[1].strip('>'),'>'), resourcesByParent)
                 additionalResources.add(targetRes)      
         
 def removeUnimportantResources(unimportant, resources):
