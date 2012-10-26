@@ -288,10 +288,13 @@ def resourceFetcher():
         q.task_done()
         
 
-def addDirectedLink(source, target, predicate, resourcesByParent):
+def addDirectedLink(source, target, predicate, inverse, resourcesByParent):
     if not target in resourcesByParent:
         resourcesByParent[target] = dict()
-    resourcesByParent[target][source] = predicate
+    link = dict()
+    link['uri'] = predicate
+    link['inverse'] = inverse
+    resourcesByParent[target][source] = link
 
 def fetchResource(resource, resourcesByParent, additionalResources, blacklist):   
     newResources = getResource(resource)
@@ -301,10 +304,9 @@ def fetchResource(resource, resourcesByParent, additionalResources, blacklist):
             predicate = triple[1]
             if isResource(targetRes) and (predicate not in blacklist) and 'dbpedia' in targetRes:
                 #Add forward link  
-                addDirectedLink(targetRes, resource, predicate, resourcesByParent)
+                addDirectedLink(resource, targetRes, predicate, True, resourcesByParent)
                 #Add backward link
-                pred_splitted = predicate.rsplit('/', 1)
-                addDirectedLink(resource, targetRes, "{0}/is_{1}_of{2}".format(pred_splitted[0],pred_splitted[1].strip('>'),'>'), resourcesByParent)
+                addDirectedLink(targetRes, resource, predicate, False, resourcesByParent)
                 additionalResources.add(targetRes)      
         
 def removeUnimportantResources(unimportant, resources):

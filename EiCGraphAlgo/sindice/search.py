@@ -116,16 +116,19 @@ def search(s1,s2):
         logger.warning('could not log and store path between {0} and {1}'.format(s1,s2))
     query_log.info(r)
     logger.debug(r)
-    return r
+    result = dict()
+    result['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
+    result['execution_time'] = r['execution_time']
+    return result
 
-#r = search(s1,s2)
+# r = search(s1,s2)
 #
-#p = r['paths']
-#time = r['execution_time']
+# p = r['paths']
+# time = r['execution_time']
 #
 ##
-#print (str(time)+' ms')
-#print (p)
+# print (str(time)+' ms')
+# print (p)
 #
 #if paths:
 #    graph.visualize(p, path=path)

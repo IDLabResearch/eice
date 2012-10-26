@@ -2,7 +2,7 @@ import tornado
 import ujson
 import signal
 import time, sys
-from sindice import typeahead, search,resourceretriever
+from sindice import typeahead, search,resourceretriever,graph
 import sys, traceback,logging
 from sindice import cached_pathfinder
 import handlers.time_out
@@ -153,10 +153,10 @@ class SearchHandler(MainHandler):
             r = 'Something went wrong x( Probaly either the start or destination URI is a dead end. Check the server log files for more information.'
             
         #self.render("login.html", notification=self.get_argument("notification","") )
-        response = ujson.dumps(r)
+        
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
-        self.write(response)
+        self.write(ujson.dumps(r))
         self.finish()
             

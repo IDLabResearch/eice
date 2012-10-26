@@ -39,9 +39,31 @@ def resolveLinks(resolvedPath,resourcesByParent):
         steps = list(iterator)
         #logger.debug (steps)
         if len(steps) == 2:
-            resolvedLinks.append((resourcesByParent[steps[0]][steps[1]])[1:-1])
+            resolvedLinks.append((resourcesByParent[steps[0]][steps[1]])['uri'][1:-1])
     return resolvedLinks
                                                    
+def listPath(resolvedPath,resourcesByParent):
+    resolvedEdges = list()
+    listedPath = list()
+    for iterator in rolling_window(resolvedPath, 2):
+        steps = list(iterator)
+        #logger.debug (steps)
+        if len(steps) == 2:
+            resolvedEdges.append(resourcesByParent[steps[0]][steps[1]])
+            
+    for node in resolvedPath:
+        step = dict()
+        step['uri'] = node.strip('<>')
+        step['type'] = 'node'
+        listedPath.append(step)
+        if len(resolvedEdges) > 0:
+            step = dict()
+            step['uri'] = resolvedEdges[0]['uri'].strip('<>')
+            step['type'] = 'link'
+            step['inverse'] = resolvedEdges[0]['inverse']
+            listedPath.append(step)
+            del resolvedEdges[0]
+    return listedPath
 
 def pathExists(M):
     G = nx.Graph(M)
