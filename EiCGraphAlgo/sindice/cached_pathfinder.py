@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 import time
 import os, os.path, sys, logging
-from sindice import graph, resourceretriever
+from sindice import graph, resourceretriever, randompathgenerator
 import matplotlib.pyplot as plt
 
 logger = logging.getLogger('pathFinder')
@@ -12,7 +12,7 @@ class CachedPathFinder:
 
     def __init__(self):
         logger.debug('init CPF')
-        self.paths = dict()
+        self.paths = False
         self.resources = dict()
         self.resources_counts = dict()
         self.resources_by_parent = dict()
@@ -22,6 +22,8 @@ class CachedPathFinder:
         self.stateGraph = False
         self.loaded = False
         self.path = os.path.dirname(os.path.abspath(sys.modules[CachedPathFinder.__module__].__file__))
+        
+    def loadCachedPaths(self):
         for root, dirs, files in os.walk('{0}/cached_paths'.format(self.path)):
             #print (root)
             for f in files:
@@ -31,6 +33,10 @@ class CachedPathFinder:
                 self.paths[dump['destination']][dump['source']] = dump
                 
     def getPaths(self, destination, source):
+        if not self.paths:
+            self.paths = dict()
+            self.loadCachedPaths()
+            
         if destination in self.paths and source in self.paths[destination]:
             return self.paths[destination][source]
         else:
@@ -191,6 +197,8 @@ class CachedPathFinder:
         return path
                             
 #cpf = CachedPathFinder()
+#r = randompathgenerator.randomSourceAndDestination()
+#cpf.getPaths(r['destination'], r['source'])
 #cpf.buildMatrix()
 #cpf.visualize()
 #print (cpf.getPaths('http://dbpedia.org/resource/France'))

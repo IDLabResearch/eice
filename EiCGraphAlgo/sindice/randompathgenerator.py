@@ -28,10 +28,8 @@ sources = [
            'http://dbpedia.org/resource/Tina_Turner',
            'http://dbpedia.org/resource/Louis_Armstrong',
            'http://dbpedia.org/resource/Brian_May',
-           'http://dbpedia.org/resource/Georges_Brassens'
-           'http://dbpedia.org/resource/Nelly_Furtado',
-           'http://dbpedia.org/resource/Enrique_Iglesias',
-           'http://dbpedia.org/resource/Jimi_Hendrix',                  
+           'http://dbpedia.org/resource/Georges_Brassens',
+           'http://dbpedia.org/resource/Nelly_Furtado',            
         ]
 
 destinations = ['http://dbpedia.org/resource/New_York',
@@ -90,10 +88,13 @@ def generateCachedPaths():
             print ("Calculation for {0} to {1}".format(s,d)) 
             r = dict()
             try:
-                r = search.search(d,s)
+                r = search.search(s,d)
                 r['source'] =  s
                 r['destination'] = d
                 print("Execution time: %s" % str(r['execution_time']))
                 pickle.dump(r,open( "cached_paths/%s.dump" % hash('{0}_{1}'.format(s,d)), "wb" ))
             except:
                 print("Could not find path between {0} and {1}".format(s,d))
+                
+#generateCachedPaths()
+            

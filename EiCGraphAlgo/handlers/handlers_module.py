@@ -13,7 +13,7 @@ logger = logging.getLogger('handler')
 class MainHandler(tornado.web.RequestHandler):
     
     def get(self):
-        self.write("Pathfinding Service Version 25-10-2012 running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 29-10-2012 running on %s" % sys.platform)
         self.finish()
         
 class NodeDataHandler(MainHandler):
@@ -146,22 +146,24 @@ class SearchHandler(MainHandler):
         try:
             with handlers.time_out.time_limit(60):
                 r = search.search(source,destination)
-                if not r:
-                    r = dict()
-                    hubs = randompathgenerator.randomSourceAndDestination()
-                    path_between_hubs = self.cpf.getPaths(hubs['destination'],hubs['source'])
+                if not r['path']:
+                    logger.info('Using fallback using random hubs, because no path directly found')
+                    path_between_hubs = False
                     while not path_between_hubs:
                         hubs = randompathgenerator.randomSourceAndDestination()
-                        path_between_hubs = self.cpf.getPaths(hubs['destination'],hubs['source'])
+                        path_between_hubs = search.search(hubs['source'],hubs['destination'])
                         path_to_hub_source = search.search(source,hubs['source'])
                         path_to_hub_destination = search.search(hubs['destination'],destination)
-                        if path_to_hub_source == False or path_to_hub_destination == False:
+                        if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
                             path_between_hubs = False
+                            r['execution_time'] += path_to_hub_source['execution_time'] + path_to_hub_destination['execution_time']
                     r['source'] = source
                     r['destination'] = destination
-                    r['execution_time'] = path_to_hub_source['execution_time'] + path_between_hubs['execution_time'] + path_to_hub_destination['execution_time']
+                    r['execution_time'] += path_to_hub_source['execution_time'] + path_between_hubs['execution_time'] + path_to_hub_destination['execution_time']
                     r['path'] = list()
-                    r['path'].append(path_to_hub_source).append(path_between_hubs).append(path_to_hub_destination)
+                    r['path'].extend(path_to_hub_source['path'][:-1])
+                    r['path'].extend(path_between_hubs['path'])
+                    r['path'].extend(path_to_hub_destination['path'][1:])
                         
         except TimeoutException:
             self.set_status(503)

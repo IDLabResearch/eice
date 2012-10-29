@@ -21,6 +21,11 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://dbpedia.org/property/wikiPageUsesTemplate>',
              '<http://dbpedia.org/ontology/wikiPageExternalLink>',
              #'<http://dbpedia.org/ontology/wikiPageRedirects>',
+             '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
+             '<http://dbpedia.org/ontology/governmentType>',
+             '<http://dbpedia.org/ontology/officialLanguage>',
+             '<http://dbpedia.org/ontology/spokenIn>',
+             '<http://dbpedia.org/ontology/language>',
              '<http://purl.org/dc/elements/1.1/description>',
              '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
              '<http://www.w3.org/2002/07/owl#sameAs>',
@@ -30,7 +35,11 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://xmlns.com/foaf/0.1/homepage>'
              '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
              '<http://dbpedia.org/ontology/thumbnail>',
-             '<http://xmlns.com/foaf/0.1/depiction>'
+             '<http://xmlns.com/foaf/0.1/depiction>',
+             '<http://dbpedia.org/ontology/type>',
+             '<http://dbpedia.org/ontology/related>',
+             '<http://dbpedia.org/ontology/populationPlace>',
+             '<http://dbpedia.org/ontology/timeZone>',
              ])
 
 #Select source and target
@@ -83,7 +92,7 @@ def search(s1,s2):
         logger.info ('Looking for path')
         paths = graph.path(p)
     
-        if p.iteration == 12:
+        if p.iteration == 10:
             break
     resolvedPaths = list()
     
@@ -101,7 +110,7 @@ def search(s1,s2):
             fullPath['edges'] = resolvedLinks
             resolvedPaths.append(fullPath)
     else:
-        return False
+        return {'path':False,'execution_time':int(round((time.clock()-start) * 1000))}
             
     #    graph.visualize(p, path=path)
     finish = int(round((time.clock()-start) * 1000))
@@ -110,6 +119,7 @@ def search(s1,s2):
     r['paths'] = resolvedPaths
     r['source'] = s1
     r['destination'] = s2
+    r['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
     try:
         path = os.path.dirname(os.path.abspath(__file__))
         file = hash('{0}_{1}_{2}'.format(s1,s2,time.time()))
@@ -119,7 +129,7 @@ def search(s1,s2):
     query_log.info(r)
     logger.debug(r)
     result = dict()
-    result['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
+    result['path'] = r['path']
     result['execution_time'] = r['execution_time']
     return result
 
