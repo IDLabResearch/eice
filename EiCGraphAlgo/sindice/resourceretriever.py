@@ -73,13 +73,14 @@ def sparqlQueryByUri(uri):
                 PREFIX category: <http://dbpedia.org/resource/Category:> \
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> \
                 PREFIX dbo: <http://dbpedia.org/ontology/> \
-                SELECT ?label ?abstract WHERE { \
+                SELECT ?label ?abstract ?type WHERE { \
                   <%s> rdfs:label ?label . \
                   ?x rdfs:label ?label . \
                   ?x dbo:abstract ?abstract . \
+                  ?x rdf:type ?type . \
                   FILTER (lang(?abstract) = \"en\") . \
                   FILTER (lang(?label) = \"en\") . \
-                } LIMIT 1 \
+                } LIMIT 2 \
                 " % uri
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
@@ -88,6 +89,7 @@ def sparqlQueryByUri(uri):
         for result in results["results"]["bindings"]:
             r['label'] = result['label']['value']
             r['abstract'] = result['abstract']['value']
+            r['type'] = result['type']['value']
         return r
     else:
         return False
@@ -189,19 +191,21 @@ def describeResource(resource):
     if r:
         properties = dict()
         [properties.update({triple[1]:triple[2]}) for triple in r.values()]  
-        print (properties)
         if label in properties:
             response['label'] = properties[label]
         if abstract in properties:
             response['abstract'] = properties[label]
-    if not r or 'label' not in response or 'abstract' not in response:
+    if not r or 'label' not in response or 'abstract' not in response or 'type' not in response:
         response = sparqlQueryByUri(resource)
+        
+    if response['label'] and not 'type' in response:
+        response['type'] = dbPediaIndexLookup(response['label'])['type']
     return response      
 
 def getResourceLocal(resource):
     source = resource.strip('<>')
 
-    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'10'}
+    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'50'}
     response = solr.search(**query)
     if response.status==200 and len(response.documents) > 0:
         nt = response.documents[0]['ntriple'].split('.\n')[:-1]
@@ -287,10 +291,13 @@ def resourceFetcher():
         q.task_done()
         
 
-def addDirectedLink(source, target, predicate, resourcesByParent):
+def addDirectedLink(source, target, predicate, inverse, resourcesByParent):
     if not target in resourcesByParent:
         resourcesByParent[target] = dict()
-    resourcesByParent[target][source] = predicate
+    link = dict()
+    link['uri'] = predicate
+    link['inverse'] = inverse
+    resourcesByParent[target][source] = link
 
 def fetchResource(resource, resourcesByParent, additionalResources, blacklist):   
     newResources = getResource(resource)
@@ -300,9 +307,9 @@ def fetchResource(resource, resourcesByParent, additionalResources, blacklist):
             predicate = triple[1]
             if isResource(targetRes) and (predicate not in blacklist) and 'dbpedia' in targetRes:
                 #Add forward link  
-                addDirectedLink(resource, targetRes, predicate, resourcesByParent)
+                addDirectedLink(resource, targetRes, predicate, True, resourcesByParent)
                 #Add backward link
-                addDirectedLink(targetRes, resource, predicate, resourcesByParent)
+                addDirectedLink(targetRes, resource, predicate, False, resourcesByParent)
                 additionalResources.add(targetRes)      
         
 def removeUnimportantResources(unimportant, resources):

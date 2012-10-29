@@ -9,7 +9,7 @@ import lxml.objectify
 import logging
 import configparser
 import os
-
+from sindice import resourceretriever
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
@@ -34,7 +34,9 @@ def dbPediaPrefix(prefix):
             item['label'] = result.Label[0].text
             item['category']=klasse.Label.text.capitalize()
             item['uri']=result.URI[0].text
-            results.append(item)
+            local_hits = resourceretriever.getResourceLocal(item['uri'].strip("<>"))
+            if len(local_hits > 0):
+                results.append(item)
 
     return results
 

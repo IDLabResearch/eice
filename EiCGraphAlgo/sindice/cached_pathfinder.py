@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 import time
 import os, os.path, sys, logging
-from sindice import graph, resourceretriever
+from sindice import graph, resourceretriever, randompathgenerator
 import matplotlib.pyplot as plt
 
 logger = logging.getLogger('pathFinder')
@@ -12,7 +12,7 @@ class CachedPathFinder:
 
     def __init__(self):
         logger.debug('init CPF')
-        self.paths = dict()
+        self.paths = False
         self.resources = dict()
         self.resources_counts = dict()
         self.resources_by_parent = dict()
@@ -22,54 +22,65 @@ class CachedPathFinder:
         self.stateGraph = False
         self.loaded = False
         self.path = os.path.dirname(os.path.abspath(sys.modules[CachedPathFinder.__module__].__file__))
+        
+    def loadCachedPaths(self):
         for root, dirs, files in os.walk('{0}/cached_paths'.format(self.path)):
-            print (root)
+            #print (root)
             for f in files:
                 dump = pickle.load(open('{0}/{1}'.format(root,f),'rb'))
-                self.paths[dump['destination']] = dump
+                if not dump['destination'] in self.paths:
+                    self.paths[dump['destination']] = dict()
+                self.paths[dump['destination']][dump['source']] = dump
                 
-    def getPaths(self, destination):
-        return self.paths[destination]
-    
+    def getPaths(self, destination, source):
+        if not self.paths:
+            self.paths = dict()
+            self.loadCachedPaths()
+            
+        if destination in self.paths and source in self.paths[destination]:
+            return self.paths[destination][source]
+        else:
+            return False
+        
     def loadStoredPaths(self, blacklist=set()):
         root = '{0}/stored_paths'.format(self.path)
         for root, dirs, files in os.walk(root):
             files = [os.path.join(root, f) for f in files] # add path to each file
             files.sort(key=lambda x: os.path.getmtime(x),reverse=True)
             
-        for f in files[0:250]:
-                dump = pickle.load(open(f,'rb'))
-                if 'paths' in dump:
-                    for path in dump['paths']:
-                        for edge in path['edges']:
-                            if edge in self.properties_counts:
-                                self.properties_counts[edge] += 1
-                            else:
-                                self.properties_counts[edge] = 1
-                                self.properties[len(self.properties)] = edge
+        for f in files[0:150]:
+            dump = pickle.load(open(f,'rb'))
+            if 'paths' in dump:
+                for path in dump['paths']:
+                    for edge in path['edges']:
+                        if edge in self.properties_counts:
+                            self.properties_counts[edge] += 1
+                        else:
+                            self.properties_counts[edge] = 1
+                            self.properties[len(self.properties)] = edge
+                    
+                    for iterator in graph.rolling_window(path['edges'], 2):
+                        i = 0
+                        steps = list(iterator)
+                        if len(steps) == 2:
+                            resourceretriever.addDirectedLink(steps[0], steps[1],  [path['vertices'][i],path['vertices'][i+1]], True, self.properties_by_parent)
+                            resourceretriever.addDirectedLink(steps[1], steps[0], [path['vertices'][i],path['vertices'][i+1]], False, self.properties_by_parent)
+                            i += 1
                         
-                        for iterator in graph.rolling_window(path['edges'], 2):
-                            i = 0
-                            steps = list(iterator)
-                            if len(steps) == 2:
-                                resourceretriever.addDirectedLink(steps[0], steps[1], [path['vertices'][i],path['vertices'][i+1]], self.properties_by_parent)
-                                resourceretriever.addDirectedLink(steps[1], steps[0], [path['vertices'][i],path['vertices'][i+1]], self.properties_by_parent)
-                                i += 1
-                            
-                        for vertex in path['vertices']:
-                            if vertex in self.resources_counts:
-                                self.resources_counts[vertex] += 1
-                            else:
-                                self.resources_counts[vertex] = 1
-                                self.resources[len(self.resources)] = vertex
-                        
-                        for iterator in graph.rolling_window(path['vertices'], 2):
-                            i = 0
-                            steps = list(iterator)
-                            if len(steps) == 2:
-                                resourceretriever.addDirectedLink(steps[0], steps[1], path['edges'][i], self.resources_by_parent)
-                                resourceretriever.addDirectedLink(steps[1], steps[0], path['edges'][i], self.resources_by_parent)
-                                i += 1
+                    for vertex in path['vertices']:
+                        if vertex in self.resources_counts:
+                            self.resources_counts[vertex] += 1
+                        else:
+                            self.resources_counts[vertex] = 1
+                            self.resources[len(self.resources)] = vertex
+                    
+                    for iterator in graph.rolling_window(path['vertices'], 2):
+                        i = 0
+                        steps = list(iterator)
+                        if len(steps) == 2:
+                            resourceretriever.addDirectedLink(steps[0], steps[1], path['edges'][i], True, self.resources_by_parent)
+                            resourceretriever.addDirectedLink(steps[1], steps[0], path['edges'][i], False, self.resources_by_parent)
+                            i += 1
         self.loaded = True
     
     def getNodeData(self, blacklist=set()):
@@ -82,24 +93,24 @@ class CachedPathFinder:
         
         res = list(sorted(self.resources_counts, key=self.resources_counts.__getitem__, reverse=True))
         important = frozenset(res[:250])
-        logger.debug(len(res))
-        logger.debug(len(important))
         
-#        for resource in self.resources:
-#            if self.resources[resource] in important:
-#                res = self.resources[resource]
-#                self.addNode(res,nodes)
-#                loaded.add(res)
+        for resource in self.resources:
+            if self.resources[resource] in important:
+                node = dict()
+                label = self.resources[resource].strip('<>')
+                splitted = label.split("/")
+                final_label = splitted[len(splitted)-1]
+                node['match'] = 1
+                node['name'] = final_label
+                node['artist'] = resourceretriever.dbPediaIndexLookup(final_label)['type']
+                node['id'] = "id%s" % hash(label)
+                loaded.add(label)
+                node['playcount'] = self.resources_counts[self.resources[resource]]
+                nodes.append(node)
         
         for resource in self.resources_by_parent:
             for parent in self.resources_by_parent[resource]:
-                if resource not in loaded:
-                    self.addNode(resource,nodes)
-                    loaded.add(resource)
-                if parent not in loaded:
-                    self.addNode(parent, nodes)
-                    loaded.add(parent)
-                if resource in loaded and resource in important and parent in loaded and parent in important:
+                if resource in loaded and parent in loaded:
                     link = dict()
                     link['source'] = "id%s" % hash(resource)
                     link['target'] = "id%s" % hash(parent)
@@ -108,18 +119,6 @@ class CachedPathFinder:
         node_data['nodes'] = nodes
         node_data['links'] = links
         return node_data
-    
-    def addNode(self, resource, nodes):
-        label = resource.strip('<>')
-        node = dict()
-        splitted = label.split("/")
-        final_label = splitted[len(splitted)-1]
-        node['match'] = 1
-        node['name'] = final_label
-        node['artist'] = resourceretriever.dbPediaIndexLookup(final_label)['type']
-        node['id'] = "id%s" % hash(resource)
-        node['playcount'] = self.resources_counts[resource]
-        nodes.append(node)
     
     def buildMatrix(self, blacklist=set()):
         if not self.loaded:
@@ -201,8 +200,9 @@ class CachedPathFinder:
             
         return path
                             
-cpf = CachedPathFinder()
-cpf.loadStoredPaths()
+#cpf = CachedPathFinder()
+#r = randompathgenerator.randomSourceAndDestination()
+#cpf.getPaths(r['destination'], r['source'])
 #cpf.buildMatrix()
 #cpf.visualize()
 #print (cpf.getPaths('http://dbpedia.org/resource/France'))

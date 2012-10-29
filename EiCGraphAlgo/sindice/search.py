@@ -21,6 +21,11 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://dbpedia.org/property/wikiPageUsesTemplate>',
              '<http://dbpedia.org/ontology/wikiPageExternalLink>',
              #'<http://dbpedia.org/ontology/wikiPageRedirects>',
+             '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
+             '<http://dbpedia.org/ontology/governmentType>',
+             '<http://dbpedia.org/ontology/officialLanguage>',
+             '<http://dbpedia.org/ontology/spokenIn>',
+             '<http://dbpedia.org/ontology/language>',
              '<http://purl.org/dc/elements/1.1/description>',
              '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
              '<http://www.w3.org/2002/07/owl#sameAs>',
@@ -30,7 +35,11 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://xmlns.com/foaf/0.1/homepage>'
              '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
              '<http://dbpedia.org/ontology/thumbnail>',
-             '<http://xmlns.com/foaf/0.1/depiction>'
+             '<http://xmlns.com/foaf/0.1/depiction>',
+             '<http://dbpedia.org/ontology/type>',
+             '<http://dbpedia.org/ontology/related>',
+             '<http://dbpedia.org/ontology/populationPlace>',
+             '<http://dbpedia.org/ontology/timeZone>',
              ])
 
 #Select source and target
@@ -57,8 +66,6 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 # 5 hops
 #s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
-#s1 = 'http://dbpedia.org/resource/Duran_Duran'
-#s2 = 'http://dbpedia.org/resource/Coca_Cola'
 
 def search(s1,s2):
     #START
@@ -102,6 +109,8 @@ def search(s1,s2):
             fullPath['vertices'] = formattedPath
             fullPath['edges'] = resolvedLinks
             resolvedPaths.append(fullPath)
+    else:
+        return {'path':False,'execution_time':int(round((time.clock()-start) * 1000))}
             
     #    graph.visualize(p, path=path)
     finish = int(round((time.clock()-start) * 1000))
@@ -110,6 +119,7 @@ def search(s1,s2):
     r['paths'] = resolvedPaths
     r['source'] = s1
     r['destination'] = s2
+    r['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
     try:
         path = os.path.dirname(os.path.abspath(__file__))
         file = hash('{0}_{1}_{2}'.format(s1,s2,time.time()))
@@ -118,16 +128,19 @@ def search(s1,s2):
         logger.warning('could not log and store path between {0} and {1}'.format(s1,s2))
     query_log.info(r)
     logger.debug(r)
-    return r
+    result = dict()
+    result['path'] = r['path']
+    result['execution_time'] = r['execution_time']
+    return result
 
-#r = search(s1,s2)
+# r = search(s1,s2)
 #
-#p = r['paths']
-#time = r['execution_time']
+# p = r['paths']
+# time = r['execution_time']
 #
 ##
-#print (str(time)+' ms')
-#print (p)
+# print (str(time)+' ms')
+# print (p)
 #
 #if paths:
 #    graph.visualize(p, path=path)

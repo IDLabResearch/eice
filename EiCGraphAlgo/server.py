@@ -22,13 +22,12 @@ class Application(tornado.web.Application):
     def __init__(self, **overrides):
         #self.config = self._get_config()
         handlers = [
-                
                 url(r'/', handlers_module.MainHandler, name='index'),
-                url(r'/prefixes', handlers_module.PrefixHandler, name='prefix'),
-                url(r'/paths', handlers_module.SearchHandler, name='path'),
-                url(r'/subject', handlers_module.LookupHandler, name = 'subject'),
-                url(r'/cached_paths', handlers_module.CachedPathHandler, name = 'cached_path'),
-                url(r'/descriptions', handlers_module.CacheLookupHandler, name = 'description'),
+                url(r'/prefixes', handlers_module.PrefixHandler, name='prefixes'),
+                url(r'/paths', handlers_module.SearchHandler, name='paths'),
+                url(r'/subjects', handlers_module.LookupHandler, name = 'subjects'),
+                url(r'/cached_paths', handlers_module.CachedPathHandler, name = 'cached_paths'),
+                url(r'/descriptions', handlers_module.CacheLookupHandler, name = 'descriptions'),
                 url(r'/analysis', handlers_module.AnalysisHandler, name = 'analysis'),
                 url(r'/visualization', handlers_module.VisualizationHandler, name='visualization'),
                 url(r'/nodedata.json', handlers_module.NodeDataHandler, name='nodedata'),

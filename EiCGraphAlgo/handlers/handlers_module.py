@@ -2,7 +2,7 @@ import tornado
 import ujson
 import signal
 import time, sys
-from sindice import typeahead, search,resourceretriever
+from sindice import typeahead, search,resourceretriever,graph,randompathgenerator
 import sys, traceback,logging
 from sindice import cached_pathfinder
 import handlers.time_out
@@ -11,11 +11,13 @@ from handlers.time_out import TimeoutException
 logger = logging.getLogger('handler')
 
 class MainHandler(tornado.web.RequestHandler):
+    
     def get(self):
-        self.write("Pathfinding Service Version 24-10-2012(a) running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 29-10-2012 running on %s" % sys.platform)
         self.finish()
         
 class NodeDataHandler(MainHandler):
+    
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
     
@@ -31,6 +33,7 @@ class VisualizationHandler(MainHandler):
         self.render("index.html")
 
 class AnalysisHandler(MainHandler):
+    
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
         self.cpf.buildMatrix()
@@ -50,13 +53,16 @@ class CacheLookupHandler(MainHandler):
         responses = dict()
         for item in items: 
             try:
-                uri = 'http://%s' % item.strip('<>')
+                if not 'http://' in item:
+                    uri = 'http://%s' % item.strip('<>')
+                else:
+                    uri = item.strip('<>')
+                    
                 r =  resourceretriever.describeResource(uri)
                 responses[uri] = r
             except:
-                self.set_status(500)
-                responses['error'] = 'Something went wrong x( Check the log files for more information.'
-                logger.error()
+                responses[uri] = {}
+                logger.error(sys.exc_info())
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
@@ -96,15 +102,13 @@ class LookupHandler(MainHandler):
         type = self.get_argument("type", "")
         labels = label.split(",")
         logger.debug(labels)
-        responses = dict()
+        responses = []
         for label in labels: 
             try:
                 uri = resourceretriever.dbPediaLookup(label, type)['uri'].strip('<>"')
                 links = resourceretriever.dbPediaLookup(label, type)['links']
-                responses[uri] = links
+                responses.append({ 'label': label, 'uri': uri, 'connectivity': links })
             except:
-                self.set_status(500)
-                responses['error'] = 'Something went wrong x( Check the log files for more information.'
                 logger.error(sys.exc_info())
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
@@ -117,11 +121,12 @@ class CachedPathHandler(MainHandler):
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
         
-    def get(self): 
+    def get(self):
+        source = randompathgenerator.randomSourceAndDestination()['source'] 
         destination = self.get_argument("destination", "")
         r = dict()
         try:
-            r = self.cpf.getPaths(destination)
+            r = self.cpf.getPaths(destination,source)
         except:
             self.set_status(500)
             logger.error (sys.exc_info())
@@ -131,7 +136,9 @@ class CachedPathHandler(MainHandler):
         self.finish()
      
 class SearchHandler(MainHandler):
-
+    def initialize(self):
+        self.cpf = cached_pathfinder.CachedPathFinder()
+        
     def get(self):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
@@ -139,6 +146,25 @@ class SearchHandler(MainHandler):
         try:
             with handlers.time_out.time_limit(60):
                 r = search.search(source,destination)
+                if not r['path']:
+                    logger.info('Using fallback using random hubs, because no path directly found')
+                    path_between_hubs = False
+                    while not path_between_hubs:
+                        hubs = randompathgenerator.randomSourceAndDestination()
+                        path_between_hubs = search.search(hubs['source'],hubs['destination'])
+                        path_to_hub_source = search.search(source,hubs['source'])
+                        path_to_hub_destination = search.search(hubs['destination'],destination)
+                        if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
+                            path_between_hubs = False
+                            r['execution_time'] += path_to_hub_source['execution_time'] + path_to_hub_destination['execution_time']
+                    r['source'] = source
+                    r['destination'] = destination
+                    r['execution_time'] += path_to_hub_source['execution_time'] + path_between_hubs['execution_time'] + path_to_hub_destination['execution_time']
+                    r['path'] = list()
+                    r['path'].extend(path_to_hub_source['path'][:-1])
+                    r['path'].extend(path_between_hubs['path'])
+                    r['path'].extend(path_to_hub_destination['path'][1:])
+                        
         except TimeoutException:
             self.set_status(503)
             r = 'Your process was killed after 60 seconds, sorry! x( Try again' 
@@ -149,13 +175,13 @@ class SearchHandler(MainHandler):
         except:
             self.set_status(404)
             logger.error (sys.exc_info())
-            r = 'Something went wrong x( Probably either the source or destination is a dead-end. Check the server log files for more information.'
+            r = 'Something went wrong x( Probaly either the start or destination URI is a dead end. Check the server log files for more information.'
             
         #self.render("login.html", notification=self.get_argument("notification","") )
-        response = ujson.dumps(r)
+        
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
-        self.write(response)
+        self.write(ujson.dumps(r))
         self.finish()
             
