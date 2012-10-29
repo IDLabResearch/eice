@@ -100,6 +100,8 @@ def search(s1,s2):
             fullPath['vertices'] = formattedPath
             fullPath['edges'] = resolvedLinks
             resolvedPaths.append(fullPath)
+    else:
+        return False
             
     #    graph.visualize(p, path=path)
     finish = int(round((time.clock()-start) * 1000))

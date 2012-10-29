@@ -2,7 +2,7 @@ import tornado
 import ujson
 import signal
 import time, sys
-from sindice import typeahead, search,resourceretriever,graph
+from sindice import typeahead, search,resourceretriever,graph,randompathgenerator
 import sys, traceback,logging
 from sindice import cached_pathfinder
 import handlers.time_out
@@ -11,11 +11,13 @@ from handlers.time_out import TimeoutException
 logger = logging.getLogger('handler')
 
 class MainHandler(tornado.web.RequestHandler):
+    
     def get(self):
         self.write("Pathfinding Service Version 25-10-2012 running on %s" % sys.platform)
         self.finish()
         
 class NodeDataHandler(MainHandler):
+    
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
     
@@ -31,6 +33,7 @@ class VisualizationHandler(MainHandler):
         self.render("index.html")
 
 class AnalysisHandler(MainHandler):
+    
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
         self.cpf.buildMatrix()
@@ -118,11 +121,12 @@ class CachedPathHandler(MainHandler):
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
         
-    def get(self): 
+    def get(self):
+        source = randompathgenerator.randomSourceAndDestination()['source'] 
         destination = self.get_argument("destination", "")
         r = dict()
         try:
-            r = self.cpf.getPaths(destination)
+            r = self.cpf.getPaths(destination,source)
         except:
             self.set_status(500)
             logger.error (sys.exc_info())
@@ -132,7 +136,9 @@ class CachedPathHandler(MainHandler):
         self.finish()
      
 class SearchHandler(MainHandler):
-
+    def initialize(self):
+        self.cpf = cached_pathfinder.CachedPathFinder()
+        
     def get(self):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
@@ -140,6 +146,23 @@ class SearchHandler(MainHandler):
         try:
             with handlers.time_out.time_limit(60):
                 r = search.search(source,destination)
+                if not r:
+                    r = dict()
+                    hubs = randompathgenerator.randomSourceAndDestination()
+                    path_between_hubs = self.cpf.getPaths(hubs['destination'],hubs['source'])
+                    while not path_between_hubs:
+                        hubs = randompathgenerator.randomSourceAndDestination()
+                        path_between_hubs = self.cpf.getPaths(hubs['destination'],hubs['source'])
+                        path_to_hub_source = search.search(source,hubs['source'])
+                        path_to_hub_destination = search.search(hubs['destination'],destination)
+                        if path_to_hub_source == False or path_to_hub_destination == False:
+                            path_between_hubs = False
+                    r['source'] = source
+                    r['destination'] = destination
+                    r['execution_time'] = path_to_hub_source['execution_time'] + path_between_hubs['execution_time'] + path_to_hub_destination['execution_time']
+                    r['path'] = list()
+                    r['path'].append(path_to_hub_source).append(path_between_hubs).append(path_to_hub_destination)
+                        
         except TimeoutException:
             self.set_status(503)
             r = 'Your process was killed after 60 seconds, sorry! x( Try again' 

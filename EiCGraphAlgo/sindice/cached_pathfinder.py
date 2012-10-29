@@ -23,14 +23,19 @@ class CachedPathFinder:
         self.loaded = False
         self.path = os.path.dirname(os.path.abspath(sys.modules[CachedPathFinder.__module__].__file__))
         for root, dirs, files in os.walk('{0}/cached_paths'.format(self.path)):
-            print (root)
+            #print (root)
             for f in files:
                 dump = pickle.load(open('{0}/{1}'.format(root,f),'rb'))
-                self.paths[dump['destination']] = dump
+                if not dump['destination'] in self.paths:
+                    self.paths[dump['destination']] = dict()
+                self.paths[dump['destination']][dump['source']] = dump
                 
-    def getPaths(self, destination):
-        return self.paths[destination]
-    
+    def getPaths(self, destination, source):
+        if destination in self.paths and source in self.paths[destination]:
+            return self.paths[destination][source]
+        else:
+            return False
+        
     def loadStoredPaths(self, blacklist=set()):
         for root, dirs, files in os.walk('{0}/stored_paths'.format(self.path)):
             for f in files:
