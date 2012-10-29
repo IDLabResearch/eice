@@ -32,9 +32,13 @@ class CachedPathFinder:
         return self.paths[destination]
     
     def loadStoredPaths(self, blacklist=set()):
-        for root, dirs, files in os.walk('{0}/stored_paths'.format(self.path)):
-            for f in files:
-                dump = pickle.load(open('{0}/{1}'.format(root,f),'rb'))
+        root = '{0}/stored_paths'.format(self.path)
+        for root, dirs, files in os.walk(root):
+            files = [os.path.join(root, f) for f in files] # add path to each file
+            files.sort(key=lambda x: os.path.getmtime(x),reverse=True)
+            
+        for f in files[0:250]:
+                dump = pickle.load(open(f,'rb'))
                 if 'paths' in dump:
                     for path in dump['paths']:
                         for edge in path['edges']:
@@ -197,7 +201,8 @@ class CachedPathFinder:
             
         return path
                             
-#cpf = CachedPathFinder()
+cpf = CachedPathFinder()
+cpf.loadStoredPaths()
 #cpf.buildMatrix()
 #cpf.visualize()
 #print (cpf.getPaths('http://dbpedia.org/resource/France'))
