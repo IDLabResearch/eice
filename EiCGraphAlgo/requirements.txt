@@ -1,0 +1,8 @@
+pickle
+tornado
+numpy
+scipy
+networkx
+ujson
+matplotlib
+SPARQLWrapper
