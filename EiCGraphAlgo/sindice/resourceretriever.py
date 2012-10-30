@@ -392,4 +392,4 @@ def importantResources(u, rank):
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
 #print(getResourceLocal('http://dbpedia.org/resource/Ireland'))
-dbPediaLookup('David Guetta')
+#bPediaLookup('Belgium')
