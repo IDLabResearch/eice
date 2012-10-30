@@ -15,6 +15,7 @@ import logging
 import sys
 import configparser
 import os
+from sindice import search
 
 logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
@@ -123,6 +124,9 @@ def dbPediaLookup(value, kind=""):
     l = getResourceLocal(s['uri'].strip("<>"))
     if s and l:
         s['links'] = len(l)
+        for triple in l:
+            if triple[1] in search.blacklist:
+                s['links'] -= 1
     else:
         s = dbPediaIndexLookup(value, kind)
     return s
