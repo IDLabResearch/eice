@@ -1,4 +1,3 @@
-pickle
 tornado
 numpy
 scipy
