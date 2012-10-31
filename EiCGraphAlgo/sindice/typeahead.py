@@ -43,5 +43,3 @@ def dbPediaPrefix(prefix):
                 results.append(item)
 
     return results
-
-print (dbPediaPrefix("den"))
