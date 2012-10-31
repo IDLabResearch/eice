@@ -36,10 +36,11 @@ def dbPediaPrefix(prefix):
             item['uri']=result.URI[0].text
             local_hits = resourceretriever.getResourceLocal(item['uri'].strip("<>"))
             n_hits = 0
-            for triple in local_hits:
-                if local_hits[triple][1] not in resourceretriever.blacklist:
-                    n_hits += 1
-            if n_hits > 0:
-                results.append(item)
+            if local_hits:
+                for triple in local_hits:
+                    if local_hits[triple][1] not in resourceretriever.blacklist:
+                        n_hits += 1
+                if n_hits > 0:
+                    results.append(item)
 
     return results
