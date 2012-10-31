@@ -8,7 +8,7 @@ from threading import Thread
 
 q = dict()
 
-NUM_OF_THREADS = 64
+NUM_OF_THREADS = 24
 
 def functionWorker():
     q = getQueue(functionWorker)
@@ -17,7 +17,7 @@ def functionWorker():
         f = items[0]
         argument = items[1]
         if not argument == None:
-            f(argument)
+            argument[-1] = f(*argument[:-1])
         else:
             f()
         q.task_done()

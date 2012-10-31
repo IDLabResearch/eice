@@ -126,7 +126,12 @@ class PathFinder:
         logger.info ('=== === ===')
         self.iteration+=1
         return self.stateGraph
-        
+    
+    def jaccard_node(self,nodeA,nodeB):
+        resA = frozenset(self.resources_by_parent[self.resources[nodeA]])
+        resB = frozenset(self.resources_by_parent[self.resources[nodeB]])
+        return 1-np.divide(len(resA & resB),len(resA | resB))  
+    
     def jaccard(self,nodeA,nodeB):
         respbA = self.resources_by_parent[self.resources[nodeA]].values()
         respbB = self.resources_by_parent[self.resources[nodeB]].values()

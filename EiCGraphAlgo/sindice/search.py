@@ -3,7 +3,7 @@ Created on 11-sep.-2012
 
 @author: ldevocht
 '''
-from sindice import pathfinder,resourceretriever,graph
+from sindice import pathfinder,resourceretriever,randompath,graph,worker
 import time
 import gc
 import logging
@@ -39,6 +39,9 @@ blacklist = resourceretriever.blacklist
 #s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
+
+
+
 def search(s1,s2):
     #START
     start = time.clock()
@@ -61,7 +64,6 @@ def search(s1,s2):
         logger.info ('=== %s-- ===' % str(p.iteration))
         gc.collect()
         m = p.iterateMatrix(blacklist)
-        
         halt_path = time.clock()
         paths = graph.path(p)
         logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
@@ -111,7 +113,6 @@ def search(s1,s2):
 #p = r['path']
 #time = r['execution_time']
 #
-##
 #print (str(time)+' ms')
 #print (p)
 #
@@ -119,3 +120,47 @@ def search(s1,s2):
 #    graph.visualize(p, path=path)
 #else:
 #    graph.visualize(p)
+
+def searchFallback(source,destination):
+    
+    r= dict()
+    logger.info('Using fallback using random hubs, because no path directly found')
+    path_between_hubs = False
+    while not path_between_hubs:
+        start = time.clock()
+        worker_output = dict()
+        hubs = randompath.randomSourceAndDestination()
+        worker.getQueue(searcher).put([hubs['source'],hubs['destination'],worker_output,'path_between_hubs'])
+        worker.getQueue(searcher).put([source,hubs['source'],worker_output,'path_to_hub_source'])
+        worker.getQueue(searcher).put([hubs['destination'],destination,worker_output,'path_to_hub_destination'])
+        worker.getQueue(searcher).join()
+        path_between_hubs = worker_output['path_between_hubs']
+        path_to_hub_source = worker_output['path_to_hub_source']
+        path_to_hub_destination = worker_output['path_to_hub_destination']
+        if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
+            path_between_hubs = False
+    
+    r['execution_time'] = str((time.clock()-start) * 1000)
+    r['source'] = source
+    r['destination'] = destination
+    r['path'] = list()
+    r['path'].extend(path_to_hub_source['path'][:-1])
+    r['path'].extend(path_between_hubs['path'])
+    r['path'].extend(path_to_hub_destination['path'][1:])
+    return r
+
+def searcher():
+    q = worker.getQueue(searcher)
+    while True:
+        items = q.get()
+        if len(items) == 4:
+            source = items[0]
+            destination = items[1]
+            items[2][items[3]] = search(source,destination)
+        else:
+            pass
+        q.task_done()
+        
+worker.startQueue(searcher, 6)
+print (searchFallback('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
+print (search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
