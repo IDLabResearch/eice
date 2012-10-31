@@ -140,7 +140,7 @@ def searchFallback(source,destination):
         if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
             path_between_hubs = False
     
-    r['execution_time'] = str((time.clock()-start) * 1000)
+    r['execution_time'] = str(int(round((time.clock()-start) * 1000)))
     r['source'] = source
     r['destination'] = destination
     r['path'] = list()
@@ -161,6 +161,19 @@ def searcher():
             pass
         q.task_done()
         
-worker.startQueue(searcher, 6)
-print (searchFallback('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
-print (search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
+def fallback_searcher():
+    q = worker.getQueue(fallback_searcher)
+    while True:
+        items = q.get()
+        if len(items) == 4:
+            source = items[0]
+            destination = items[1]
+            items[2][items[3]] = searchFallback(source,destination)
+        else:
+            pass
+        q.task_done()
+             
+#worker.startQueue(searcher, 16)
+
+#print (searchFallback('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz'))
+#print (search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz'))
