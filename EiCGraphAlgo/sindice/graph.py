@@ -74,7 +74,7 @@ def path(pathFinder):
     try:
         if nx.has_path(G, 0, 1):
             logger.info ('Looking for path')
-            return [nx.astar_path(G,0,1,pathFinder.dice,weight='weight')]
+            return [nx.astar_path(G,0,1,pathFinder.jaccard,weight='weight')]
             #return list(nx.all_simple_paths(G,0,1,cutoff=8))
         else:
             return None

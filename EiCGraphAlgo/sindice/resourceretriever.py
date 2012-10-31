@@ -156,7 +156,8 @@ def sparqlQueryByLabel(value):
 
 def dbPediaLookup(value, kind=""):
     s = sparqlQueryByLabel(value)
-    l = getResourceLocal(s['uri'].strip("<>"))
+    if s:
+        l = getResourceLocal(s['uri'].strip("<>"))
     if s and l:
         s['links'] = len(l)
         for triple in l:

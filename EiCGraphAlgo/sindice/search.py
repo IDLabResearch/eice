@@ -20,13 +20,13 @@ blacklist = resourceretriever.blacklist
 #s1 = resourceretriever.dbPediaLookup("Dublin", "place")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 # 1 Hop
-# s1 = resourceretriever.sindiceFind2("<label>", '"Synthesizer"', "")
-# s2 = resourceretriever.sindiceFind2("<name>", '"Guetta"', "person")
+#s1 = resourceretriever.sindiceFind2("<label>", '"Synthesizer"', "")['uri']
+#s2 = resourceretriever.sindiceFind2("<name>", '"Guetta"', "person")['uri']
 # 2 hops
-# s1 = resourceretriever.dbPediaLookup("Gerry Breen", "")
-# s2 = resourceretriever.dbPediaLookup("Ireland", "place")
-# s1 = resourceretriever.dbPediaLookup("Elton John", "person")['uri']
-# s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")['uri']
+#s1 = resourceretriever.dbPediaLookup("Gerry Breen", "")['uri']
+#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
+#s1 = resourceretriever.dbPediaLookup("Elton John", "person")['uri']
+#s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")['uri']
 # 3 hops
 # s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
 # s2 = resourceretriever.dbPediaLookup("France", "place")['uri']
@@ -105,14 +105,14 @@ def search(s1,s2):
     result['execution_time'] = r['execution_time']
     return result
 
-# r = search(s1,s2)
+#r = search(s1,s2)
 #
-# p = r['paths']
-# time = r['execution_time']
+#p = r['path']
+#time = r['execution_time']
 #
 ##
-# print (str(time)+' ms')
-# print (p)
+#print (str(time)+' ms')
+#print (p)
 #
 #if paths:
 #    graph.visualize(p, path=path)
