@@ -11,8 +11,7 @@ import configparser
 import os
 from sindice import resourceretriever
 
-config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
+config = resourceretriever.config
 logger = logging.getLogger('pathFinder')
 
 def dbPediaPrefix(prefix):

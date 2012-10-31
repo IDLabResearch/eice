@@ -48,7 +48,12 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 
 logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
+
+if os.path.isfile(os.path.dirname(__file__)+'/config_local.ini'):
+    config.read(os.path.join(os.path.dirname(__file__))+'/config_local.ini')
+else:
+    config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
+    
 index_server = config.get('services', 'index')
 sparql_server = config.get('services', 'sparql')
 use_remote = config.get('services', 'use_remote')
