@@ -61,9 +61,10 @@ def search(s1,s2):
         logger.info ('=== %s-- ===' % str(p.iteration))
         gc.collect()
         m = p.iterateMatrix(blacklist)
-        logger.info ('Looking for path')
+        
+        halt_path = time.clock()
         paths = graph.path(p)
-    
+        logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
         if p.iteration == 10:
             break
     resolvedPaths = list()
