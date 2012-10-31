@@ -50,6 +50,7 @@ logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
 
 if os.path.isfile(os.path.dirname(__file__)+'/config_local.ini'):
+    logger.debug('using local config file')
     config.read(os.path.join(os.path.dirname(__file__))+'/config_local.ini')
 else:
     config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
