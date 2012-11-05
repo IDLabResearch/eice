@@ -158,7 +158,7 @@ def searcher():
                 items[2][items[3]] = search(source,destination)
             except:
                 items[2][items[3]] = False
-                logger.error('pPath between {0} and {1} not found.'.format(source, destination))
+                logger.error('path between {0} and {1} not found.'.format(source, destination))
         else:
             pass
         q.task_done()

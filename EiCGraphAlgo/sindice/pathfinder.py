@@ -156,14 +156,18 @@ class PathFinder:
                 row[j] = 1
             elif not self.resources[j] in self.resources_by_parent:
                 row[j] = 0
-            elif self.resources[i] in self.resources_by_parent[self.resources[j]]:
-                row[j] = 1
+            elif i in self.resources:
+                if self.resources[i] in self.resources_by_parent[self.resources[j]]:
+                    row[j] = 1
+                else:
+                    row[j] = 0
             else:
                 row[j] = 0
         
         except:
             logger.error ('error %s' % str(j))
             logger.error (self.resources)
+            logger.error (sys.exc_info())
             quit()
             
     def getResourcesByParent(self):
