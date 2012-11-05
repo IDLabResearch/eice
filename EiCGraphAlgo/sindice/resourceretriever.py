@@ -35,7 +35,7 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://purl.org/dc/terms/subject>',
              '<http://dbpedia.org/property/website>',
              '<http://dbpedia.org/property/label>',
-             '<http://xmlns.com/foaf/0.1/homepage>'
+             '<http://xmlns.com/foaf/0.1/homepage>',
              '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
              '<http://dbpedia.org/ontology/thumbnail>',
              '<http://xmlns.com/foaf/0.1/depiction>',
