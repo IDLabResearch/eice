@@ -157,7 +157,8 @@ def searcher():
             try:
                 items[2][items[3]] = search(source,destination)
             except:
-                items[2][items[3]] = False
+                items[2][items[3]] = dict()
+                items[2][items[3]]['path'] = False
                 logger.error('path between {0} and {1} not found.'.format(source, destination))
         else:
             pass

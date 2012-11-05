@@ -47,8 +47,9 @@ class CachedPathFinder:
         for root, dirs, files in os.walk(root):
             files = [os.path.join(root, f) for f in files] # add path to each file
             files.sort(key=lambda x: os.path.getmtime(x),reverse=True)
-            
-        for f in files[0:150]:
+        
+        files_to_load = files[0:150]    
+        for f in files_to_load:
             dump = pickle.load(open(f,'rb'))
             if 'paths' in dump:
                 for path in dump['paths']:
