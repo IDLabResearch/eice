@@ -23,7 +23,7 @@ def dbPediaPrefix(prefix):
     root = lxml.objectify.fromstring(raw_output)
     results = list()
     for result in root.Result:
-        if prefix in result.Label[0].text and hasattr(result.Classes, 'Class'):
+        if prefix.lower() in result.Label[0].text.lower() and hasattr(result.Classes, 'Class'):
             klasses = result.Classes.Class
             if hasattr(klasses, 'Label'):
                 klasse = klasses
