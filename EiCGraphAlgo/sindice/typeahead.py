@@ -16,7 +16,7 @@ logger = logging.getLogger('pathFinder')
 
 def dbPediaPrefix(prefix):
     server = config.get('services', 'lookup')
-    gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=20&QueryString={1}'.format(server,prefix)
+    gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=12&QueryString={1}'.format(server,prefix)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
     logger.debug('Request %s' % request)
     raw_output = urllib.request.urlopen(request).read()
