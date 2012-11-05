@@ -2,11 +2,11 @@ import tornado
 import ujson
 import signal
 import time, sys
-from sindice import typeahead, search,resourceretriever,graph,randompathgenerator
+from sindice import typeahead, search,resourceretriever,graph,randompath,randompathgenerator
 import sys, traceback,logging
 from sindice import cached_pathfinder
 import handlers.time_out
-from handlers.time_out import TimeoutException
+from handlers.time_out import TimeoutError
 
 logger = logging.getLogger('handler')
 
@@ -122,7 +122,7 @@ class CachedPathHandler(MainHandler):
         self.cpf = cached_pathfinder.CachedPathFinder()
         
     def get(self):
-        source = randompathgenerator.randomSourceAndDestination()['source'] 
+        source = randompath.randomSourceAndDestination()['source'] 
         destination = self.get_argument("destination", "")
         r = dict()
         try:
@@ -144,30 +144,37 @@ class SearchHandler(MainHandler):
         destination = self.get_argument("to", "")
         r = dict()
         try:
-            with handlers.time_out.time_limit(60):
-                r = search.search(source,destination)
-                if not r['path']:
-                    logger.info('Using fallback using random hubs, because no path directly found')
-                    path_between_hubs = False
-                    while not path_between_hubs:
-                        hubs = randompathgenerator.randomSourceAndDestination()
-                        path_between_hubs = search.search(hubs['source'],hubs['destination'])
-                        path_to_hub_source = search.search(source,hubs['source'])
-                        path_to_hub_destination = search.search(hubs['destination'],destination)
-                        if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
-                            path_between_hubs = False
-                            r['execution_time'] += path_to_hub_source['execution_time'] + path_to_hub_destination['execution_time']
-                    r['source'] = source
-                    r['destination'] = destination
-                    r['execution_time'] += path_to_hub_source['execution_time'] + path_between_hubs['execution_time'] + path_to_hub_destination['execution_time']
-                    r['path'] = list()
-                    r['path'].extend(path_to_hub_source['path'][:-1])
-                    r['path'].extend(path_between_hubs['path'])
-                    r['path'].extend(path_to_hub_destination['path'][1:])
+            with handlers.time_out.time_limit(30):
+                try:
+                    with handlers.time_out.time_limit(7):
+                        r = search.search(source,destination)
+#                if not r['path']:
+#                    logger.info('Using fallback using random hubs, because no path directly found')
+#                    path_between_hubs = False
+#                    while not path_between_hubs:
+#                        hubs = randompath.randomSourceAndDestination()
+#                        path_between_hubs = search.search(hubs['source'],hubs['destination'])
+#                        path_to_hub_source = search.search(source,hubs['source'])
+#                        path_to_hub_destination = search.search(hubs['destination'],destination)
+#                        if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
+#                            path_between_hubs = False
+#                            r['execution_time'] += path_to_hub_source['execution_time'] + path_to_hub_destination['execution_time']
+#                    r['source'] = source
+#                    r['destination'] = destination
+#                    r['execution_time'] += path_to_hub_source['execution_time'] + path_between_hubs['execution_time'] + path_to_hub_destination['execution_time']
+#                    r['path'] = list()
+#                    r['path'].extend(path_to_hub_source['path'][:-1])
+#                    r['path'].extend(path_between_hubs['path'])
+#                    r['path'].extend(path_to_hub_destination['path'][1:])
                         
-        except TimeoutException:
+                except TimeoutError:
+                    logger.warning('No path found in 5 seconds, fallback search.')
+                    r = dict()
+                    r = search.searchFallback(source, destination)
+                    r['execution_time'] = str(int(r['execution_time']) + 7000)
+        except TimeoutError:
             self.set_status(503)
-            r = 'Your process was killed after 60 seconds, sorry! x( Try again' 
+            r = 'Your process was killed after 25 seconds, sorry! x( Try again' 
         except AttributeError:
             self.set_status(400)
             logger.error (sys.exc_info())

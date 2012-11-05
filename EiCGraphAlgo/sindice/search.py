@@ -39,9 +39,6 @@ blacklist = resourceretriever.blacklist
 #s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
-
-
-
 def search(s1,s2):
     #START
     start = time.clock()
@@ -122,8 +119,8 @@ def search(s1,s2):
 #    graph.visualize(p)
 
 def searchFallback(source,destination):
-    
-    r= dict()
+    worker.startQueue(searcher, 3)
+    resp = dict()
     logger.info('Using fallback using random hubs, because no path directly found')
     path_between_hubs = False
     while not path_between_hubs:
@@ -140,14 +137,15 @@ def searchFallback(source,destination):
         if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
             path_between_hubs = False
     
-    r['execution_time'] = str(int(round((time.clock()-start) * 1000)))
-    r['source'] = source
-    r['destination'] = destination
-    r['path'] = list()
-    r['path'].extend(path_to_hub_source['path'][:-1])
-    r['path'].extend(path_between_hubs['path'])
-    r['path'].extend(path_to_hub_destination['path'][1:])
-    return r
+    resp['execution_time'] = str(int(round((time.clock()-start) * 1000)))
+    resp['source'] = source
+    resp['destination'] = destination
+    resp['path'] = list()
+    resp['path'].extend(path_to_hub_source['path'][:-1])
+    resp['path'].extend(path_between_hubs['path'])
+    resp['path'].extend(path_to_hub_destination['path'][1:])
+    del worker.q[searcher]
+    return resp
 
 def searcher():
     q = worker.getQueue(searcher)
@@ -156,7 +154,11 @@ def searcher():
         if len(items) == 4:
             source = items[0]
             destination = items[1]
-            items[2][items[3]] = search(source,destination)
+            try:
+                items[2][items[3]] = search(source,destination)
+            except:
+                items[2][items[3]] = False
+                logger.error('pPath between {0} and {1} not found.'.format(source, destination))
         else:
             pass
         q.task_done()
@@ -173,7 +175,7 @@ def fallback_searcher():
             pass
         q.task_done()
              
-#worker.startQueue(searcher, 16)
 
-#print (searchFallback('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz'))
-#print (search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz'))
+
+#print (searchFallback('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
+#print (search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
