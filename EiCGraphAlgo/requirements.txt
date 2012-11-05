@@ -1,0 +1,9 @@
+urllib3
+tornado
+numpy
+scipy
+networkx
+ujson
+matplotlib
+SPARQLWrapper
+mysolr

@@ -69,12 +69,22 @@ def pathExists(M):
     G = nx.Graph(M)
     return nx.has_path(G, 0, 1)
 
+def pathLength(pathFinder):
+    G = buildWeightedGraph(pathFinder)
+    try:
+        if nx.has_path(G, 0, 1):
+            return nx.astar_path_length(G,0,1,pathFinder.jaccard,weight='weight')
+        else:
+            return -1
+    except:
+        logger.error (sys.exc_info())
+        return None
+
 def path(pathFinder):
     G = buildWeightedGraph(pathFinder)
     try:
         if nx.has_path(G, 0, 1):
-            logger.info ('Looking for path')
-            return [nx.astar_path(G,0,1,pathFinder.dice,weight='weight')]
+            return [nx.astar_path(G,0,1,pathFinder.jaccard,weight='weight')]
             #return list(nx.all_simple_paths(G,0,1,cutoff=8))
         else:
             return None

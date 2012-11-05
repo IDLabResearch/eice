@@ -11,20 +11,19 @@ import configparser
 import os
 from sindice import resourceretriever
 
-config = configparser.ConfigParser()
-config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
+config = resourceretriever.config
 logger = logging.getLogger('pathFinder')
 
 def dbPediaPrefix(prefix):
     server = config.get('services', 'lookup')
-    gateway = '{0}/api/search.asmx/PrefixSearch?QueryString={1}'.format(server,prefix)
+    gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=12&QueryString={1}'.format(server,prefix)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
     logger.debug('Request %s' % request)
     raw_output = urllib.request.urlopen(request).read()
     root = lxml.objectify.fromstring(raw_output)
     results = list()
     for result in root.Result:
-        if hasattr(result.Classes, 'Class'):
+        if prefix.lower() in result.Label[0].text.lower() and hasattr(result.Classes, 'Class'):
             klasses = result.Classes.Class
             if hasattr(klasses, 'Label'):
                 klasse = klasses
@@ -35,9 +34,12 @@ def dbPediaPrefix(prefix):
             item['category']=klasse.Label.text.capitalize()
             item['uri']=result.URI[0].text
             local_hits = resourceretriever.getResourceLocal(item['uri'].strip("<>"))
-            if len(local_hits > 0):
-                results.append(item)
+            n_hits = 0
+            if local_hits:
+                for triple in local_hits:
+                    if local_hits[triple][1] not in resourceretriever.blacklist:
+                        n_hits += 1
+                if n_hits > 10:
+                    results.append(item)
 
     return results
-
-#print (dbPediaPrefix("den"))

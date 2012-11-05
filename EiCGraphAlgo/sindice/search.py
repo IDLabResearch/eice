@@ -3,7 +3,7 @@ Created on 11-sep.-2012
 
 @author: ldevocht
 '''
-from sindice import pathfinder,resourceretriever,graph
+from sindice import pathfinder,resourceretriever,randompath,graph,worker
 import time
 import gc
 import logging
@@ -13,48 +13,20 @@ import os, sys
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
 
-#Define properties to ignore:
-blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
-             '<http://dbpedia.org/property/title>',
-             '<http://dbpedia.org/ontology/abstract>',
-             '<http://xmlns.com/foaf/0.1/page>',
-             '<http://dbpedia.org/property/wikiPageUsesTemplate>',
-             '<http://dbpedia.org/ontology/wikiPageExternalLink>',
-             #'<http://dbpedia.org/ontology/wikiPageRedirects>',
-             '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
-             '<http://dbpedia.org/ontology/governmentType>',
-             '<http://dbpedia.org/ontology/officialLanguage>',
-             '<http://dbpedia.org/ontology/spokenIn>',
-             '<http://dbpedia.org/ontology/language>',
-             '<http://purl.org/dc/elements/1.1/description>',
-             '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
-             '<http://www.w3.org/2002/07/owl#sameAs>',
-             '<http://purl.org/dc/terms/subject>',
-             '<http://dbpedia.org/property/website>',
-             '<http://dbpedia.org/property/label>',
-             '<http://xmlns.com/foaf/0.1/homepage>'
-             '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
-             '<http://dbpedia.org/ontology/thumbnail>',
-             '<http://xmlns.com/foaf/0.1/depiction>',
-             '<http://dbpedia.org/ontology/type>',
-             '<http://dbpedia.org/ontology/related>',
-             '<http://dbpedia.org/ontology/populationPlace>',
-             '<http://dbpedia.org/ontology/timeZone>',
-             ])
-
+blacklist = resourceretriever.blacklist
 #Select source and target
 
 # 0 Hops
 #s1 = resourceretriever.dbPediaLookup("Dublin", "place")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 # 1 Hop
-# s1 = resourceretriever.sindiceFind2("<label>", '"Synthesizer"', "")
-# s2 = resourceretriever.sindiceFind2("<name>", '"Guetta"', "person")
+#s1 = resourceretriever.sindiceFind2("<label>", '"Synthesizer"', "")['uri']
+#s2 = resourceretriever.sindiceFind2("<name>", '"Guetta"', "person")['uri']
 # 2 hops
-# s1 = resourceretriever.dbPediaLookup("Gerry Breen", "")
-# s2 = resourceretriever.dbPediaLookup("Ireland", "place")
-# s1 = resourceretriever.dbPediaLookup("Elton John", "person")['uri']
-# s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")['uri']
+#s1 = resourceretriever.dbPediaLookup("Gerry Breen", "")['uri']
+#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
+#s1 = resourceretriever.dbPediaLookup("Elton John", "person")['uri']
+#s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")['uri']
 # 3 hops
 # s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
 # s2 = resourceretriever.dbPediaLookup("France", "place")['uri']
@@ -89,9 +61,9 @@ def search(s1,s2):
         logger.info ('=== %s-- ===' % str(p.iteration))
         gc.collect()
         m = p.iterateMatrix(blacklist)
-        logger.info ('Looking for path')
+        halt_path = time.clock()
         paths = graph.path(p)
-    
+        logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
         if p.iteration == 10:
             break
     resolvedPaths = list()
@@ -133,16 +105,77 @@ def search(s1,s2):
     result['execution_time'] = r['execution_time']
     return result
 
-# r = search(s1,s2)
+#r = search(s1,s2)
 #
-# p = r['paths']
-# time = r['execution_time']
+#p = r['path']
+#time = r['execution_time']
 #
-##
-# print (str(time)+' ms')
-# print (p)
+#print (str(time)+' ms')
+#print (p)
 #
 #if paths:
 #    graph.visualize(p, path=path)
 #else:
 #    graph.visualize(p)
+
+def searchFallback(source,destination):
+    worker.startQueue(searcher, 3)
+    resp = dict()
+    logger.info('Using fallback using random hubs, because no path directly found')
+    path_between_hubs = False
+    while not path_between_hubs:
+        start = time.clock()
+        worker_output = dict()
+        hubs = randompath.randomSourceAndDestination()
+        worker.getQueue(searcher).put([hubs['source'],hubs['destination'],worker_output,'path_between_hubs'])
+        worker.getQueue(searcher).put([source,hubs['source'],worker_output,'path_to_hub_source'])
+        worker.getQueue(searcher).put([hubs['destination'],destination,worker_output,'path_to_hub_destination'])
+        worker.getQueue(searcher).join()
+        path_between_hubs = worker_output['path_between_hubs']
+        path_to_hub_source = worker_output['path_to_hub_source']
+        path_to_hub_destination = worker_output['path_to_hub_destination']
+        if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
+            path_between_hubs = False
+    
+    resp['execution_time'] = str(int(round((time.clock()-start) * 1000)))
+    resp['source'] = source
+    resp['destination'] = destination
+    resp['path'] = list()
+    resp['path'].extend(path_to_hub_source['path'][:-1])
+    resp['path'].extend(path_between_hubs['path'])
+    resp['path'].extend(path_to_hub_destination['path'][1:])
+    del worker.q[searcher]
+    return resp
+
+def searcher():
+    q = worker.getQueue(searcher)
+    while True:
+        items = q.get()
+        if len(items) == 4:
+            source = items[0]
+            destination = items[1]
+            try:
+                items[2][items[3]] = search(source,destination)
+            except:
+                items[2][items[3]] = False
+                logger.error('path between {0} and {1} not found.'.format(source, destination))
+        else:
+            pass
+        q.task_done()
+        
+def fallback_searcher():
+    q = worker.getQueue(fallback_searcher)
+    while True:
+        items = q.get()
+        if len(items) == 4:
+            source = items[0]
+            destination = items[1]
+            items[2][items[3]] = searchFallback(source,destination)
+        else:
+            pass
+        q.task_done()
+             
+
+
+#print (searchFallback('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
+#print (search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))

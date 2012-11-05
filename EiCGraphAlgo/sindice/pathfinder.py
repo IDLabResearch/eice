@@ -126,11 +126,24 @@ class PathFinder:
         logger.info ('=== === ===')
         self.iteration+=1
         return self.stateGraph
-        
-    def dice(self,nodeA,nodeB):
+    
+    def jaccard_node(self,nodeA,nodeB):
         resA = frozenset(self.resources_by_parent[self.resources[nodeA]])
         resB = frozenset(self.resources_by_parent[self.resources[nodeB]])
-        return len(resA & resB)       
+        return 1-np.divide(len(resA & resB),len(resA | resB))  
+    
+    def jaccard(self,nodeA,nodeB):
+        respbA = self.resources_by_parent[self.resources[nodeA]].values()
+        respbB = self.resources_by_parent[self.resources[nodeB]].values()
+        predA = set()
+        predB = set()
+        for link in respbA:
+            predA.add(link['uri'])
+            
+        for link in respbB:
+            predB.add(link['uri'])
+            
+        return 1-np.divide(len(predA & predB),len(predA | predB))       
     
     def buildGraph(self, i, n):
         row = np.zeros(n, np.byte)
@@ -143,14 +156,18 @@ class PathFinder:
                 row[j] = 1
             elif not self.resources[j] in self.resources_by_parent:
                 row[j] = 0
-            elif self.resources[i] in self.resources_by_parent[self.resources[j]]:
-                row[j] = 1
+            elif i in self.resources:
+                if self.resources[i] in self.resources_by_parent[self.resources[j]]:
+                    row[j] = 1
+                else:
+                    row[j] = 0
             else:
                 row[j] = 0
         
         except:
             logger.error ('error %s' % str(j))
             logger.error (self.resources)
+            logger.error (sys.exc_info())
             quit()
             
     def getResourcesByParent(self):

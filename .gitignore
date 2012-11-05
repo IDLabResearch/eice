@@ -96,6 +96,7 @@ EiCGraphAlgo/sindice/stored_paths/-8521768972581796453.dump
 EiCGraphAlgo/sindice/stored_paths/-8994527949282058231.dump
 EiCGraphAlgo/sindice/stored_paths/-987872214354283004.dump
 <<<<<<< HEAD
+<<<<<<< HEAD
 EiCGraphAlgo/sindice/cached_paths/1141434614715634334.dump
 EiCGraphAlgo/sindice/cached_paths/-13222957262089282.dump
 EiCGraphAlgo/sindice/cached_paths/-1545011021285616647.dump
@@ -133,3 +134,6 @@ EiCGraphAlgo/sindice/cached_paths
 >>>>>>> master
 EiCGraphAlgo/sindice/cached_paths
 EiCGraphAlgo/sindice/stored_paths
+=======
+EiCGraphAlgo/sindice/config_local.ini
+>>>>>>> master
