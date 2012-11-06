@@ -39,7 +39,7 @@ def dbPediaPrefix(prefix):
                 for triple in local_hits:
                     if local_hits[triple][1] not in resourceretriever.blacklist:
                         n_hits += 1
-                if n_hits > 10:
+                if n_hits > 8:
                     results.append(item)
 
     return results
