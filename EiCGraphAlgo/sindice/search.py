@@ -98,6 +98,7 @@ def search(s1,s2):
         pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
     except:
         logger.warning('could not log and store path between {0} and {1}'.format(s1,s2))
+        logger.error(sys.exc_info())
     query_log.info(r)
     logger.debug(r)
     result = dict()
