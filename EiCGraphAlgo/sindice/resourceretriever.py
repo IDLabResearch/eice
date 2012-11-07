@@ -140,7 +140,7 @@ def sparqlQueryByLabel(value, type=""):
         types = mappings.get('enabled','types').strip(' ').split(',')
         if type in types:
             type_uri = mappings.get('mappings',type)
-    type_entry = "?x rdf:type %s ." % type_uri
+            type_entry = "?x rdf:type %s ." % type_uri
     
     if sparql:
         query = """
