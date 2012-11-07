@@ -13,7 +13,7 @@ logger = logging.getLogger('handler')
 class MainHandler(tornado.web.RequestHandler):
     
     def get(self):
-        self.write("Pathfinding Service Version 05-11-2012 running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 06-11-2012 running on %s" % sys.platform)
         self.finish()
         
 class NodeDataHandler(MainHandler):
