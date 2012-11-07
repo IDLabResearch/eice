@@ -48,12 +48,16 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 
 logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
+mappings = configparser.ConfigParser()
+mappings.read(os.path.dirname(__file__)+'/mappings.conf')
 
 if os.path.isfile(os.path.dirname(__file__)+'/config_local.ini'):
     logger.debug('using local config file')
     config.read(os.path.join(os.path.dirname(__file__))+'/config_local.ini')
 else:
-    config.read(os.path.join(os.path.dirname(__file__))+'/config.ini') 
+    config.read(os.path.join(os.path.dirname(__file__))+'/config.ini')
+    
+
     
 index_server = config.get('services', 'index')
 sparql_server = config.get('services', 'sparql')
@@ -130,7 +134,14 @@ def sparqlQueryByUri(uri):
     else:
         return False
     
-def sparqlQueryByLabel(value):
+def sparqlQueryByLabel(value, type=""):
+    type_entry = ""
+    if not type == "":
+        types = mappings.get('enabled','types').strip(' ').split(',')
+        if type in types:
+            type_uri = mappings.get('mappings',type)
+    type_entry = "?x rdf:type %s ." % type_uri
+    
     if sparql:
         query = """
                 PREFIX p: <http://dbpedia.org/property/>
@@ -139,10 +150,11 @@ def sparqlQueryByLabel(value):
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                 PREFIX dbo: <http://dbpedia.org/ontology/>
                 SELECT ?x (count(distinct ?y) AS ?wikiPageWikiLinks) WHERE {
-                  ?x rdfs:label "%s"@en .
+                  %(type_entry)s
+                  ?x rdfs:label "%(value)s"@en .
                   ?x dbo:wikiPageWikiLink ?y
                 } ORDER BY DESC(count(distinct ?y)) LIMIT 1
-                """ % value
+                """ % locals()
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()
@@ -155,7 +167,7 @@ def sparqlQueryByLabel(value):
         return False
 
 def dbPediaLookup(value, kind=""):
-    s = sparqlQueryByLabel(value)
+    s = sparqlQueryByLabel(value, kind)
     if s:
         l = getResourceLocal(s['uri'].strip("<>"))
     if s and l:
@@ -193,9 +205,7 @@ def dbPediaIndexLookup(value, kind=""):
         else: 
             r['uri'] = "<%s>" % (root.Result.URI[0])
             r['label'] = value
-            
-        
-            
+       
         try:
             links = len(getResourceLocal(r['uri']))
         except:
