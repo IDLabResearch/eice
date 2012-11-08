@@ -9,6 +9,8 @@ import gc
 import logging
 import pickle
 import os, sys
+import handlers.time_out
+from handlers.time_out import TimeoutError
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -156,7 +158,8 @@ def searcher():
             source = items[0]
             destination = items[1]
             try:
-                items[2][items[3]] = search(source,destination)
+                with handlers.time_out.time_limit(11):
+					items[2][items[3]] = search(source,destination)
             except:
                 items[2][items[3]] = dict()
                 items[2][items[3]]['path'] = False
