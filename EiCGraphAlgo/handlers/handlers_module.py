@@ -13,7 +13,7 @@ logger = logging.getLogger('handler')
 class MainHandler(tornado.web.RequestHandler):
     
     def get(self):
-        self.write("Pathfinding Service Version 06-11-2012 running on %s" % sys.platform)
+        self.write("Pathfinding Service Version 09-11-2012 running on %s" % sys.platform)
         self.finish()
         
 class NodeDataHandler(MainHandler):
@@ -143,13 +143,18 @@ class SearchHandler(MainHandler):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
         r = dict()
+        failed = False
         try:
+            
             try:
                 with handlers.time_out.time_limit(7):
                     r = search.search(source,destination)
             except TimeoutError:
                 logger.warning('No path found in 5 seconds, fallback search.')
                 r = dict()
+                failed = True
+                
+            if failed:
                 try:
                     with handlers.time_out.time_limit(23):
                         r = search.searchFallback(source, destination)
@@ -157,6 +162,7 @@ class SearchHandler(MainHandler):
                 except TimeoutError:
                     self.set_status(503)
                     r = 'Your process was killed after 25 seconds, sorry! x( Try again' 
+                    
         except AttributeError:
             self.set_status(400)
             logger.error (sys.exc_info())
@@ -164,7 +170,7 @@ class SearchHandler(MainHandler):
         except:
             self.set_status(404)
             logger.error (sys.exc_info())
-            r = 'Something went wrong x( Probaly either the start or destination URI is a dead end. Check the server log files for more information.'
+            r = 'Something went wrong x( Probably either the start or destination URI is a dead end. Check the server log files for more information.'
             
         #self.render("login.html", notification=self.get_argument("notification","") )
         

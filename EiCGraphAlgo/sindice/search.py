@@ -139,6 +139,8 @@ def searchFallback(source,destination):
         path_to_hub_destination = worker_output['path_to_hub_destination']
         if path_to_hub_source['path'] == False or path_to_hub_destination['path'] == False:
             path_between_hubs = False
+            gc.collect()
+            time.sleep(1)
     
     resp['execution_time'] = str(int(round((time.clock()-start) * 1000)))
     resp['source'] = source
@@ -158,11 +160,11 @@ def searcher():
             source = items[0]
             destination = items[1]
             try:
-                with handlers.time_out.time_limit(11):
-                    items[2][items[3]] = search(source,destination)
+                items[2][items[3]] = search(source,destination)
             except:
                 items[2][items[3]] = dict()
                 items[2][items[3]]['path'] = False
+                logger.error(sys.exc_info())
                 logger.error('path between {0} and {1} not found.'.format(source, destination))
         else:
             pass

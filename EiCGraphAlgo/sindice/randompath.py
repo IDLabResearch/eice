@@ -19,13 +19,11 @@ sources = [
            'http://dbpedia.org/resource/Stevie_Wonder',
            'http://dbpedia.org/resource/Mike_Oldfield',
            'http://dbpedia.org/resource/Kurt_Cobain',
-           'http://dbpedia.org/resource/Henry_Mancini',
            'http://dbpedia.org/resource/Alice_Cooper',
            'http://dbpedia.org/resource/Ozzy_Osbourne',
            'http://dbpedia.org/resource/Tina_Turner',
            'http://dbpedia.org/resource/Louis_Armstrong',
            'http://dbpedia.org/resource/Brian_May',
-           'http://dbpedia.org/resource/Georges_Brassens',
            'http://dbpedia.org/resource/Nelly_Furtado',            
         ]
 
