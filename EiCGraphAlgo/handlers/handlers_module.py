@@ -143,19 +143,20 @@ class SearchHandler(MainHandler):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
         r = dict()
+        try:
             try:
                 with handlers.time_out.time_limit(7):
                     r = search.search(source,destination)
             except TimeoutError:
                 logger.warning('No path found in 5 seconds, fallback search.')
                 r = dict()
-					try:
-						with handlers.time_out.time_limit(23):
-							r = search.searchFallback(source, destination)
-							r['execution_time'] = str(int(r['execution_time']) + 7000)
-					except TimeoutError:
-						self.set_status(503)
-						r = 'Your process was killed after 25 seconds, sorry! x( Try again' 
+                try:
+                    with handlers.time_out.time_limit(23):
+                        r = search.searchFallback(source, destination)
+                        r['execution_time'] = str(int(r['execution_time']) + 7000)
+                except TimeoutError:
+                    self.set_status(503)
+                    r = 'Your process was killed after 25 seconds, sorry! x( Try again' 
         except AttributeError:
             self.set_status(400)
             logger.error (sys.exc_info())

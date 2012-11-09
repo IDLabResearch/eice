@@ -137,3 +137,6 @@ EiCGraphAlgo/sindice/stored_paths
 =======
 EiCGraphAlgo/sindice/config_local.ini
 >>>>>>> master
+EiCGraphAlgo/debug.log
+EiCGraphAlgo/error.log
+EiCGraphAlgo/query.log
