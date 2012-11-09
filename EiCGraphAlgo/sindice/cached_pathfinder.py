@@ -21,6 +21,7 @@ class CachedPathFinder:
         self.properties_by_parent = dict()
         self.stateGraph = False
         self.loaded = False
+        self.path_lengths = dict()
         self.path = os.path.dirname(os.path.abspath(sys.modules[CachedPathFinder.__module__].__file__))
         
     def loadCachedPaths(self):
@@ -42,17 +43,23 @@ class CachedPathFinder:
         else:
             return False
         
-    def loadStoredPaths(self, blacklist=set()):
+    def loadStoredPaths(self, blacklist=set(), max=150):
         root = '{0}/stored_paths'.format(self.path)
         for root, dirs, files in os.walk(root):
             files = [os.path.join(root, f) for f in files] # add path to each file
             files.sort(key=lambda x: os.path.getmtime(x),reverse=True)
         
-        files_to_load = files[0:150]    
+        files_to_load = files[0:max]    
         for f in files_to_load:
             dump = pickle.load(open(f,'rb'))
             if 'paths' in dump:
                 for path in dump['paths']:
+                    length = len(path['edges'])
+                    if length in self.path_lengths:
+                        self.path_lengths[length] += 1
+                    else:
+                        self.path_lengths[length] = 1
+                        
                     for edge in path['edges']:
                         if edge in self.properties_counts:
                             self.properties_counts[edge] += 1
@@ -83,6 +90,7 @@ class CachedPathFinder:
                             resourceretriever.addDirectedLink(steps[1], steps[0], path['edges'][i], False, self.resources_by_parent)
                             i += 1
         self.loaded = True
+        return len(files_to_load)
     
     def getNodeData(self, blacklist=set()):
         if not self.loaded:
