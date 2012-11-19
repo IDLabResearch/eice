@@ -105,9 +105,11 @@ class LookupHandler(MainHandler):
         responses = []
         for label in labels: 
             try:
-                uri = resourceretriever.dbPediaLookup(label, type)['uri'].strip('<>"')
-                links = resourceretriever.dbPediaLookup(label, type)['links']
-                responses.append({ 'label': label, 'uri': uri, 'connectivity': links })
+                entry = resourceretriever.dbPediaLookup(label, type)
+                if 'uri' in entry and 'links' in entry:
+                    uri = entry['uri'].strip('<>"')
+                    links = entry['links']
+                    responses.append({ 'label': label, 'uri': uri, 'connectivity': links })
             except:
                 logger.error(sys.exc_info())
         self.set_header("Access-Control-Allow-Origin", "*")
