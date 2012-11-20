@@ -18,8 +18,10 @@ for x in cpf.path_lengths:
     for i in range(cpf.path_lengths[x]):
         flattened_lengths.append(x)
         i += 1
+        
 y = list(cpf.path_lengths.values())
 x = list(cpf.path_lengths.keys())
+
 y_n = list()
 for el in y:
     y_n.append(np.divide(el,total_paths))
