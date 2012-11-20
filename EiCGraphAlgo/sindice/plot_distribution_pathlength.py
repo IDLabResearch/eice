@@ -25,9 +25,13 @@ x = list(cpf.path_lengths.keys())
 y_n = list()
 for el in y:
     y_n.append(np.divide(el,total_paths))
+x_n = list()
+for x_el in x:
+    x_n.append(x_el - 0.4)
+    
 variation = spst.tstd(flattened_lengths)
 median = spst.tmean(flattened_lengths)
-print (x)
+print (x_n)
 print (y_n)
 print (median)
 print (variation)
@@ -40,7 +44,7 @@ plt.xlabel('(steps)',fontsize=9)
 
 # Set the Y Axis label.
 plt.ylabel('(fraction)',fontsize=9)
-plt.bar(x,y_n)
+plt.bar(x_n,y_n,alpha=0.5)
 plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='tomato')
 
 try:
