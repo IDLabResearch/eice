@@ -114,6 +114,14 @@ class CachedPathFinder:
         self.loaded = True
         return len(files_to_load)
     
+    def getStoredPath(self, hash):
+        root = '{0}/stored_paths'.format(self.path)
+        f = os.path.join(root, '%s.dump' % hash)
+        try:    
+            return pickle.load(open(f,'rb'))
+        except:
+            return dict()      
+    
     def getNodeData(self, blacklist=set()):
         if not self.loaded:
             self.loadStoredPaths(blacklist)
@@ -236,4 +244,5 @@ class CachedPathFinder:
 #cpf.getPaths(r['destination'], r['source'])
 #cpf.buildMatrix()
 #cpf.visualize()
+#cpf.getStoredPath(1876686441233945763)
 #print (cpf.getPaths('http://dbpedia.org/resource/France'))

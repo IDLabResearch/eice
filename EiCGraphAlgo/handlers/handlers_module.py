@@ -119,6 +119,28 @@ class LookupHandler(MainHandler):
         self.write('{0}'.format(ujson.dumps(responses)))
         self.finish()
      
+class StoredPathHandler(MainHandler):   
+    def initialize(self):
+        self.cpf = cached_pathfinder.CachedPathFinder()
+        
+    def get(self):
+        hash = self.get_argument("hash", "")
+        try:
+            r = self.cpf.getStoredPath(hash)
+            if not r:
+                r = dict()
+                self.set_status(404)
+                r['error'] = 'Stored path not found with hash %s. Try again with another hash.' % hash
+        except:
+            self.set_status(500)
+            logger.error (sys.exc_info())
+            r = dict()
+            r['error'] = 'Something went wrong. Check the server log files for more information.'
+            
+        response = ujson.dumps(r)
+        self.write(response)
+        self.finish()
+
 class CachedPathHandler(MainHandler):   
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()

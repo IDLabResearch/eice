@@ -93,10 +93,12 @@ def search(s1,s2):
     r['paths'] = resolvedPaths
     r['source'] = s1
     r['destination'] = s2
+    r['hash'] = hash('{0}_{1}_{2}'.format(s1,s2,time.time()))
     r['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
+    
     try:
         path = os.path.dirname(os.path.abspath(__file__))
-        file = hash('{0}_{1}_{2}'.format(s1,s2,time.time()))
+        file = r['hash']
         pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
     except:
         logger.warning('could not log and store path between {0} and {1}'.format(s1,s2))
@@ -105,6 +107,7 @@ def search(s1,s2):
     logger.debug(r)
     result = dict()
     result['path'] = r['path']
+    result['hash'] = r['hash']
     result['execution_time'] = r['execution_time']
     return result
 
