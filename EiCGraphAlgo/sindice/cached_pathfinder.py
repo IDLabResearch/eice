@@ -5,6 +5,7 @@ import time
 import os, os.path, sys, logging
 from sindice import graph, resourceretriever, randompathgenerator
 import matplotlib.pyplot as plt
+import glob
 
 logger = logging.getLogger('pathFinder')
 
@@ -22,6 +23,7 @@ class CachedPathFinder:
         self.stateGraph = False
         self.loaded = False
         self.path_lengths = dict()
+        self.path_execution_times = dict()
         self.path = os.path.dirname(os.path.abspath(sys.modules[CachedPathFinder.__module__].__file__))
         
     def loadCachedPaths(self):
@@ -43,6 +45,20 @@ class CachedPathFinder:
         else:
             return False
         
+    def hitrate(self):
+        n = 0
+        found = 0
+        path="{0}/../query.log*".format(self.path)
+        for file in glob.glob(path):
+            with open(file,'rb') as f:
+                prev = None
+                for line in f:
+                    n+=1
+                    current = line[41]
+                    if current == 123:
+                        found += 1
+        return {'found':found,'total':np.int(n/2)+1}
+            
     def loadStoredPaths(self, blacklist=set(), max=150):
         root = '{0}/stored_paths'.format(self.path)
         for root, dirs, files in os.walk(root):
@@ -59,6 +75,12 @@ class CachedPathFinder:
                         self.path_lengths[length] += 1
                     else:
                         self.path_lengths[length] = 1
+                        
+                    if length in self.path_execution_times:
+                        self.path_execution_times[length].append(dump['execution_time'])
+                    else:
+                        self.path_execution_times[length] = list()
+                        self.path_execution_times[length].append(dump['execution_time'])
                         
                     for edge in path['edges']:
                         if edge in self.properties_counts:

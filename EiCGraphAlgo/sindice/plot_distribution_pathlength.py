@@ -30,8 +30,16 @@ print (y_n)
 print (median)
 print (variation)
 l = np.linspace(0,np.max(np.array(x)),np.max(np.array(y)))
+# Set the title.
+plt.title('Distribution of path length',fontsize=12)
+
+# Set the X Axis label.
+plt.xlabel('(steps)',fontsize=9)
+
+# Set the Y Axis label.
+plt.ylabel('(fraction)',fontsize=9)
 plt.bar(x,y_n)
-plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='r')
+plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='tomato')
 
 try:
     path = "/tmp/analysis_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
