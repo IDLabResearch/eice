@@ -1,6 +1,5 @@
 from sindice import cached_pathfinder
 import sys, time
-
 import scipy.stats as spst
 import numpy as np
 import matplotlib.pyplot as plt
@@ -29,74 +28,76 @@ def violin_plot(ax,data,pos, bp=False):
     if bp:
         ax.boxplot(data,notch=0,positions=pos,vert=1, whis=1)
 
-cpf = cached_pathfinder.CachedPathFinder()
-total_paths = cpf.loadStoredPaths(max=None)
-print(total_paths)
-print(cpf.path_execution_times)
-
-x = list()
-y = list()
-
-for length in cpf.path_execution_times:
-    for execution_time in cpf.path_execution_times[length]:
-        x.append(length)
-        y.append(execution_time)
-        
-print (x)
-print (y)
-
-fig = Figure(figsize=(7,6))
-
-# Create a canvas and add the figure to it.
-canvas = FigureCanvas(fig)
-
-# Create a subplot.
-ax = fig.add_subplot(111)
-
-# Set the title.
-ax.set_title('Execution time in function of path length',fontsize=12)
-
-# Set the X Axis label.
-ax.set_xlabel('(steps)',fontsize=9)
-
-# Set the Y Axis label.
-ax.set_ylabel('(ms)',fontsize=9)
-
-ax.set_yscale('log')
-
-#ax.set_ylim([0,(np.int(np.max(y)/10000)+1)*10000])
-ax.set_xlim([0,(np.int(np.max(x))+1)])
-
-# Display Grid.
-ax.grid(True,linestyle='-',color='0.75')
-
-# Generate the Scatter Plot.
-# ax.scatter(x,y,s=4,color='tomato')
-
-# fake up some more data
-datas = list()
-w = 0.5
-
-for length in cpf.path_execution_times:
-    sorted = np.sort(cpf.path_execution_times[length])
-    spread = sorted
-    center = ones(len(sorted)) * np.median(sorted)
-    data = concatenate((spread, center), 0)
-    data.shape = (-1, 1)
-    datas.append(data)
-
-violin_plot(ax,list(cpf.path_execution_times.values()),range(1,len(cpf.path_execution_times)+1),bp=True)
+def plot():
+    cpf = cached_pathfinder.CachedPathFinder()
+    total_paths = cpf.loadStoredPaths(max=None)
+    #print(total_paths)
+    #print(cpf.path_execution_times)
     
-# Making a 2-D array only works if all the columns are the
-# same length.  If they are not, then use a list instead.
-# This is actually more efficient because boxplot converts
-# a 2-D array into a list of vectors internally anyway.
-# multiple box plots on one figure
-# ax.boxplot(datas,0,'rx',1,1.99)
-
-
-try:
-    path = "/tmp/scatter_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
-    canvas.print_figure(path)
-except:
-    print (sys.exc_info())
+    x = list()
+    y = list()
+    
+    for length in cpf.path_execution_times:
+        for execution_time in cpf.path_execution_times[length]:
+            x.append(length)
+            y.append(execution_time)
+            
+    #print (x)
+    #print (y)
+    
+    fig = Figure(figsize=(7,6))
+    
+    # Create a canvas and add the figure to it.
+    canvas = FigureCanvas(fig)
+    
+    # Create a subplot.
+    ax = fig.add_subplot(111)
+    
+    # Set the title.
+    ax.set_title('Execution time in function of path length',fontsize=12)
+    
+    # Set the X Axis label.
+    ax.set_xlabel('(steps)',fontsize=9)
+    
+    # Set the Y Axis label.
+    ax.set_ylabel('(ms)',fontsize=9)
+    
+    ax.set_yscale('log')
+    
+    #ax.set_ylim([0,(np.int(np.max(y)/10000)+1)*10000])
+    ax.set_xlim([0,(np.int(np.max(x))+1)])
+    
+    # Display Grid.
+    ax.grid(True,linestyle='-',color='0.75')
+    
+    # Generate the Scatter Plot.
+    # ax.scatter(x,y,s=4,color='tomato')
+    
+    # fake up some more data
+    datas = list()
+    w = 0.5
+    
+    for length in cpf.path_execution_times:
+        sorted = np.sort(cpf.path_execution_times[length])
+        spread = sorted
+        center = ones(len(sorted)) * np.median(sorted)
+        data = concatenate((spread, center), 0)
+        data.shape = (-1, 1)
+        datas.append(data)
+    
+    violin_plot(ax,list(cpf.path_execution_times.values()),range(1,len(cpf.path_execution_times)+1),bp=True)
+        
+    # Making a 2-D array only works if all the columns are the
+    # same length.  If they are not, then use a list instead.
+    # This is actually more efficient because boxplot converts
+    # a 2-D array into a list of vectors internally anyway.
+    # multiple box plots on one figure
+    # ax.boxplot(datas,0,'rx',1,1.99)
+    
+    
+    try:
+        path = "/tmp/scatter_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
+        canvas.print_figure(path)
+    except:
+        print (sys.exc_info())
+    return path
