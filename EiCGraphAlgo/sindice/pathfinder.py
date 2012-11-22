@@ -32,6 +32,7 @@ class PathFinder:
         self.storedResources = dict()  
         self.initMatrix(s1, s2)
         self.threshold = threshold
+        self.checked_resources = 0
         
         
     def initMatrix(self, source1, source2):
@@ -81,6 +82,8 @@ class PathFinder:
             n = n + 1
             
         logger.info ('Total resources: %s' % str(n))
+        
+        self.checked_resources += len(additionalResources)
             
         halt1 = time.clock()
         logger.info ('resource gathering: %s' % str(halt1 - start))

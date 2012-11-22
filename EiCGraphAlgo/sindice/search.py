@@ -93,6 +93,7 @@ def search(s1,s2):
     r['paths'] = resolvedPaths
     r['source'] = s1
     r['destination'] = s2
+    r['checked_resources'] = p.checked_resources
     r['hash'] = 'h%s' % hash('{0}{1}{2}'.format(s1,s2,time.time()))
     r['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
     

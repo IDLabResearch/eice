@@ -16,5 +16,6 @@ def generateCachedPaths():
                 pickle.dump(r,open( "cached_paths/%s.dump" % hash('{0}_{1}'.format(s,d)), "wb" ))
             except:
                 print("Could not find path between {0} and {1}".format(s,d))
+
 #generateCachedPaths()
             

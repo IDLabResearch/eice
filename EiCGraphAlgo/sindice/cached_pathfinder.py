@@ -24,6 +24,8 @@ class CachedPathFinder:
         self.loaded = False
         self.path_lengths = dict()
         self.path_execution_times = dict()
+        self.path_cached_resources = dict()
+        self.path_execution_time_by_checked_resources = dict()
         self.path = os.path.dirname(os.path.abspath(sys.modules[CachedPathFinder.__module__].__file__))
         
     def loadCachedPaths(self):
@@ -68,6 +70,7 @@ class CachedPathFinder:
         files_to_load = files[0:max]    
         for f in files_to_load:
             dump = pickle.load(open(f,'rb'))
+            
             if 'paths' in dump:
                 for path in dump['paths']:
                     length = len(path['edges'])
@@ -82,6 +85,19 @@ class CachedPathFinder:
                         self.path_execution_times[length] = list()
                         self.path_execution_times[length].append(dump['execution_time'])
                         
+                    if 'checked_resources' in dump:
+                        if dump['checked_resources'] in self.path_execution_time_by_checked_resources:
+                            self.path_execution_time_by_checked_resources[dump['checked_resources']].append(dump['execution_time'])
+                        else:
+                            self.path_execution_time_by_checked_resources[dump['checked_resources']] = list()
+                            self.path_execution_time_by_checked_resources[dump['checked_resources']].append(dump['execution_time'])
+                        
+                        if length in self.path_cached_resources:
+                            self.path_cached_resources[length].append(dump['checked_resources'])
+                        else:
+                            self.path_cached_resources[length] = list()
+                            self.path_cached_resources[length].append(dump['checked_resources'])
+                    
                     for edge in path['edges']:
                         if edge in self.properties_counts:
                             self.properties_counts[edge] += 1
@@ -120,6 +136,7 @@ class CachedPathFinder:
         try:    
             dump = pickle.load(open(f,'rb'))
             dump.pop('paths')
+            #print (dump.pop('checked_resources'))
             return dump
         except:
             return False      
@@ -241,10 +258,10 @@ class CachedPathFinder:
             
         return path
                             
-cpf = CachedPathFinder()
+#cpf = CachedPathFinder()
 #r = randompathgenerator.randomSourceAndDestination()
 #cpf.getPaths(r['destination'], r['source'])
 #cpf.buildMatrix()
 #cpf.visualize()
-#print (cpf.getStoredPath(1876686441233945763))
+#print (cpf.getStoredPath('h-4358414122171955722'))
 #print (cpf.getPaths('http://dbpedia.org/resource/France'))

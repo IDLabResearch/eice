@@ -30,7 +30,7 @@ def plot():
                     # everything is rotated counter-clockwise by 90 degrees,
                     # so the plotting starts on the positive y-axis.
     
-    plt.title('Pathfinding Hitrate', bbox={'facecolor':'0.8', 'pad':5})
+    plt.title('Pathfinding Hitrate (n = %s)' % hitrate['total'], bbox={'facecolor':'0.8', 'pad':5})
     
     try:
         path = "/tmp/hitrate_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
