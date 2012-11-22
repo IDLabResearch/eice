@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 import time
 import os, os.path, sys, logging
-from sindice import graph, resourceretriever, randompathgenerator
+from sindice import graph, resourceretriever
 import matplotlib.pyplot as plt
 import glob
 
@@ -66,8 +66,13 @@ class CachedPathFinder:
         for root, dirs, files in os.walk(root):
             files = [os.path.join(root, f) for f in files] # add path to each file
             files.sort(key=lambda x: os.path.getmtime(x),reverse=True)
-        
-        files_to_load = files[0:max]    
+            
+        if not self.loaded:
+            files_to_load = files[0:max]
+            self.files_loaded = len(files_to_load)
+        else:
+            files_to_load = []
+                
         for f in files_to_load:
             dump = pickle.load(open(f,'rb'))
             
@@ -128,7 +133,8 @@ class CachedPathFinder:
                             resourceretriever.addDirectedLink(steps[1], steps[0], path['edges'][i], False, self.resources_by_parent)
                             i += 1
         self.loaded = True
-        return len(files_to_load)
+        
+        return self.files_loaded
     
     def getStoredPath(self, hash):
         root = '{0}/stored_paths'.format(self.path)

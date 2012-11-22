@@ -35,12 +35,19 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     
     x = list()
     y = list()
+    topop = set()
     
     for length in cpf.path_execution_times:
-        for execution_time in cpf.path_execution_times[length]:
-            x.append(length)
-            y.append(execution_time)
-            
+        if len(cpf.path_execution_times[length]) > 1:
+            for execution_time in cpf.path_execution_times[length]:
+                x.append(length)
+                y.append(execution_time)
+        else:
+            topop.add(length)
+    
+    for pop in topop:
+        cpf.path_execution_times.pop(pop)
+        
     #print (x)
     #print (y)
     

@@ -2,7 +2,7 @@ import tornado
 import ujson
 import signal
 import time, sys
-from sindice import typeahead, search,resourceretriever,graph,randompath,randompathgenerator
+from sindice import typeahead, search,resourceretriever,graph,randompath
 import sys, traceback,logging
 from sindice import cached_pathfinder
 import handlers.time_out

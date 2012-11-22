@@ -35,11 +35,18 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     
     x = list()
     y = list()
+    topop = set()
     
     for length in cpf.path_cached_resources:
-        for checked_resources in cpf.path_cached_resources[length]:
-            x.append(length)
-            y.append(checked_resources)
+        if len(cpf.path_cached_resources[length]) > 1:
+            for checked_resources in cpf.path_cached_resources[length]:
+                x.append(length)
+                y.append(checked_resources)
+        else:
+            topop.add(length)
+    
+    for pop in topop:
+        cpf.path_cached_resources.pop(pop)   
             
     #print (x)
     #print (y)

@@ -27,7 +27,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     plt.ylabel('(#)',fontsize=9)
     #plt.yscale('log')
     
-    plt.hist(flattened_checked_resources,bins=10, range=None, normed=False,alpha=0.5)
+    plt.hist(flattened_checked_resources,bins=15, range=None, normed=False,alpha=0.5)
     
     try:
         path = "/tmp/checked_resources_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))

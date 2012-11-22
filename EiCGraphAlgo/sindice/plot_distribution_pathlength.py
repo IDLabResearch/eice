@@ -1,5 +1,7 @@
 from sindice import cached_pathfinder
 import scipy.stats as spst
+import scipy.stats as ss
+import scipy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
@@ -27,8 +29,8 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     for x_el in x:
         x_n.append(x_el - 0.4)
         
-    variation = spst.tstd(flattened_lengths)
-    median = spst.tmean(flattened_lengths)
+    #variation = spst.tstd(flattened_lengths)
+    #median = spst.tmean(flattened_lengths)
     #print (x_n)
     #print (y_n)
     #print (median)
@@ -42,8 +44,14 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     
     # Set the Y Axis label.
     plt.ylabel('(fraction)',fontsize=9)
+    fit_alpha,fit_loc,fit_beta=ss.gamma.fit(flattened_lengths)
+    print(fit_alpha,fit_loc,fit_beta)
+    print(fit_alpha * fit_beta)
+    
     plt.bar(x_n,y_n,alpha=0.5)
-    plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='tomato')
+    #plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='tomato')
+    dist = ss.gamma(fit_alpha,loc=fit_loc,scale=fit_beta)
+    plt.plot(x, dist.pdf(x), ls='-', c='tomato')
     
     try:
         path = "/tmp/analysis_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))

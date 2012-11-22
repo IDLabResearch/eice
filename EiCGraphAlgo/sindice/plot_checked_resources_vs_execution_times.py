@@ -35,12 +35,18 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     
     x = list()
     y = list()
-    
+    topop = set()
     for checked_resources in cpf.path_execution_time_by_checked_resources:
-        for execution_time in cpf.path_execution_time_by_checked_resources[checked_resources]:
-            x.append(checked_resources)
-            y.append(execution_time)
-            
+        if len(cpf.path_execution_time_by_checked_resources[checked_resources]) > 1:
+            for execution_time in cpf.path_execution_time_by_checked_resources[checked_resources]:
+                x.append(checked_resources)
+                y.append(execution_time)
+        else:
+            topop.add(checked_resources)
+    
+    for pop in topop:
+        cpf.path_execution_time_by_checked_resources.pop(pop)    
+             
     #print (x)
     #print (y)
     
@@ -73,10 +79,11 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     x_n = np.array(x)
     y_n = np.array(y)
     
-    m,b = np.polyfit(x_n, y_n, 1) 
+    m,b = np.polyfit(x_n, y_n, 1)
+    print (m,b) 
 
     # Generate the Scatter Plot.
-    ax.scatter(x,y,s=4,color='tomato')
+    ax.scatter(x,y,s=3,color='tomato')
     ax.plot(x_n, m*x_n+b, '-', alpha=0.7) 
     
 #    datas = list()
