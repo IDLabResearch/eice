@@ -33,10 +33,13 @@ class VisualizationHandler(MainHandler):
     def get(self):
         self.render("index.html")
         
-class MetricHandler(MainHandler):
-        
+class MetricHandler(MainHandler):       
     def get(self):
-        generateplots.generatePlots()
+        update = self.get_argument("update", False)
+        if not update:
+            pass
+        else:
+            generateplots.generatePlots()
         self.render("metric.html")
 
 class AnalysisHandler(MainHandler):
