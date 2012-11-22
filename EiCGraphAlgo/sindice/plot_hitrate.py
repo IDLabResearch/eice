@@ -6,13 +6,9 @@ import matplotlib.mlab as mlab
 import sys, time
 from pylab import *
 
-def plot():
+def plot(cpf = cached_pathfinder.CachedPathFinder()):
     plt.clf()
-    
-    cpf = cached_pathfinder.CachedPathFinder()
     hitrate = cpf.hitrate()
-
-    
     # make a square figure and axes
     plt.figure(1, figsize=(6,6))
     plt.axes([0.1, 0.1, 0.8, 0.8])

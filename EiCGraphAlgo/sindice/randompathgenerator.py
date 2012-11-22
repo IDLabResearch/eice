@@ -17,5 +17,5 @@ def generateCachedPaths():
             except:
                 print("Could not find path between {0} and {1}".format(s,d))
 
-generateCachedPaths()
+#generateCachedPaths()
             

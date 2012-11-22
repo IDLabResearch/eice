@@ -5,10 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import sys, time
 
-def plot():
+def plot(cpf = cached_pathfinder.CachedPathFinder()):
     plt.clf()
-    
-    cpf = cached_pathfinder.CachedPathFinder()
     total_paths = cpf.loadStoredPaths(max=None)
     #print (total_paths)
     #print (cpf.path_lengths)

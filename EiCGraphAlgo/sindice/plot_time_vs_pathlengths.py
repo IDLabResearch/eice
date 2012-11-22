@@ -28,8 +28,7 @@ def violin_plot(ax,data,pos, bp=False):
     if bp:
         ax.boxplot(data,notch=0,positions=pos,vert=1, whis=1)
 
-def plot():
-    cpf = cached_pathfinder.CachedPathFinder()
+def plot(cpf = cached_pathfinder.CachedPathFinder()):
     total_paths = cpf.loadStoredPaths(max=None)
     #print(total_paths)
     #print(cpf.path_execution_times)
