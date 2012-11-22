@@ -7,7 +7,7 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 
-  <title>Interactive Visualization of Paths</title>
+  <title>Pathfinding Metrics</title>
   <meta name="description" content="Demo for How to Build an Interactive Network Visualization.">
   <meta name="author" content="Jim Vallandingham">
 
@@ -18,19 +18,44 @@
   <link rel="stylesheet" href="{{ static_url("css/bootstrap.min.css") }}">
   <link rel="stylesheet" href="{{ static_url("css/style.css") }}">
   <!-- end CSS-->
-
+  <style>
+  	img.plot {
+    	height: 100%;
+    	width: 400px;
+	}
+  </style>
   <script src="{{ static_url('js/libs/modernizr-2.0.6.min.js') }}"></script>
 </head>
 
 <body>
 
-  <div id="container" class="container">
+  <div id="container" class="container-fluid">
     <header>
-    <h1>Pathfinding Analytics</h1>
-    <p>Pathfinding Analytics Dashboard</p>
+    <h1>Pathfinding Metrics</h1>
+    <p>Overview of the pathfinding activities.</p>
     </header>
+    <div class="row">
+    	<div class="span6">
+    		<h2>Graph 1</h2>
+    		<img src="{{ static_url('imgs/plots1.png') }}"  class="plot">
+    	</div>
+    	<div class="span6">
+    		<h2>Graph 2</h2>
+    		<img src="{{ static_url('imgs/plots2.png') }}"  class="plot">
+    	</div>
+    </div>
+    <div class="row">
+    	<div class="span6">
+    		<h2>Graph 3</h2>
+    		<img src="{{ static_url('imgs/plots3.png') }}"  class="plot">
+    	</div>
+    	<div class="span6">
+    		<h2>Graph 4</h2>
+    		<img src="{{ static_url('imgs/plots4.png') }}"  class="plot">
+    	</div>
+    </div>
   </div> <!--! end of #container -->
-
+	
 
   <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script> -->
   <script>window.jQuery || document.write('<script src="{{ static_url("js/libs/jquery-1.7.2.min.js") }}"><\/script>')</script>

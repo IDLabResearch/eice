@@ -18,8 +18,9 @@ def plot():
     plt.axes([0.1, 0.1, 0.8, 0.8])
     
     # The slices will be ordered and plotted counter-clockwise.
-    labels = 'Hits', 'Misses'
-    fracs = [hitrate['found'], hitrate['total'] - hitrate['found']]
+    misses = hitrate['total'] - hitrate['found']
+    labels = 'Hits (%s)' % hitrate['found'], 'Misses (%s)' %misses 
+    fracs = [hitrate['found'], misses]
     explode=( 0, 0.05 )
     
     plt.pie(fracs, explode=explode, labels=labels,  colors=('lawngreen', 'tomato'),

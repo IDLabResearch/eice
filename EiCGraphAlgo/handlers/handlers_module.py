@@ -7,6 +7,7 @@ import sys, traceback,logging
 from sindice import cached_pathfinder
 import handlers.time_out
 from handlers.time_out import TimeoutError
+import generateplots
 
 logger = logging.getLogger('handler')
 
@@ -31,6 +32,12 @@ class NodeDataHandler(MainHandler):
 class VisualizationHandler(MainHandler):
     def get(self):
         self.render("index.html")
+        
+class MetricHandler(MainHandler):
+        
+    def get(self):
+        generateplots.generatePlots()
+        self.render("metric.html")
 
 class AnalysisHandler(MainHandler):
     

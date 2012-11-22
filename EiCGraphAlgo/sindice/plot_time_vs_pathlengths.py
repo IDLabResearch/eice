@@ -54,7 +54,7 @@ def plot():
     ax = fig.add_subplot(111)
     
     # Set the title.
-    ax.set_title('Execution time in function of path length',fontsize=12)
+    ax.set_title('Execution time in function of path length (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
     ax.set_xlabel('(steps)',fontsize=9)

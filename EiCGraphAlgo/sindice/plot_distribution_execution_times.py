@@ -20,7 +20,7 @@ def plot():
     #print (flattened_execution_times)
     
     # Set the title.
-    plt.title('Distribution of execution times',fontsize=12)
+    plt.title('Distribution of execution times (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
     plt.xlabel('(ms)',fontsize=9)

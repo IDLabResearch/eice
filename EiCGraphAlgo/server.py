@@ -29,6 +29,7 @@ class Application(tornado.web.Application):
                 url(r'/cached_paths', handlers_module.CachedPathHandler, name = 'cached_paths'),
                 url(r'/descriptions', handlers_module.CacheLookupHandler, name = 'descriptions'),
                 url(r'/analysis', handlers_module.AnalysisHandler, name = 'analysis'),
+                url(r'/metrics', handlers_module.MetricHandler, name = 'metrics'),
                 url(r'/stored_path', handlers_module.StoredPathHandler, name = 'stored_path'),
                 url(r'/visualization', handlers_module.VisualizationHandler, name='visualization'),
                 url(r'/nodedata.json', handlers_module.NodeDataHandler, name='nodedata'),

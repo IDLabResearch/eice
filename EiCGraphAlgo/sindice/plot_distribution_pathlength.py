@@ -37,7 +37,7 @@ def plot():
     #print (variation)
     l = np.linspace(0,np.max(np.array(x)),np.max(np.array(y)))
     # Set the title.
-    plt.title('Distribution of path length',fontsize=12)
+    plt.title('Distribution of path length (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
     plt.xlabel('(steps)',fontsize=9)
