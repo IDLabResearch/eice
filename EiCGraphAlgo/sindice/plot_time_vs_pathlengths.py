@@ -36,10 +36,11 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     x = list()
     y = list()
     topop = set()
-    
-    for length in cpf.path_execution_times:
-        if len(cpf.path_execution_times[length]) > 1:
-            for execution_time in cpf.path_execution_times[length]:
+    et = cpf.path_execution_times
+    et.pop(len(cpf.path_execution_times))
+    for length in et:
+        if len(et[length]) > 1:
+            for execution_time in et[length]:
                 x.append(length)
                 y.append(execution_time)
         else:
@@ -50,7 +51,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         
     #print (x)
     #print (y)
-    
+
     fig = Figure(figsize=(7,6))
     
     # Create a canvas and add the figure to it.
@@ -83,15 +84,15 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     datas = list()
     w = 0.5
     
-    for length in cpf.path_execution_times:
-        sorted = np.sort(cpf.path_execution_times[length])
+    for length in et:
+        sorted = np.sort(et[length])
         spread = sorted
         center = ones(len(sorted)) * np.median(sorted)
         data = concatenate((spread, center), 0)
         data.shape = (-1, 1)
         datas.append(data)
     
-    violin_plot(ax,list(cpf.path_execution_times.values()),range(1,len(cpf.path_execution_times)+1),bp=True)
+    violin_plot(ax,list(et.values()),range(1,len(et)+1),bp=True)
         
     # Making a 2-D array only works if all the columns are the
     # same length.  If they are not, then use a list instead.

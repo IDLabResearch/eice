@@ -82,16 +82,17 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     # fake up some more data
     datas = list()
     w = 0.5
-    
-    for length in cpf.path_cached_resources:
-        sorted = np.sort(cpf.path_cached_resources[length])
+    cr = cpf.path_cached_resources
+    cr.pop(len(cpf.path_cached_resources))
+    for length in cr:
+        sorted = np.sort(cr[length])
         spread = sorted
         center = ones(len(sorted)) * np.median(sorted)
         data = concatenate((spread, center), 0)
         data.shape = (-1, 1)
         datas.append(data)
     
-    violin_plot(ax,list(cpf.path_cached_resources.values()),range(1,len(cpf.path_cached_resources)+1),bp=True)
+    violin_plot(ax,list(cr.values()),range(1,len(cr)+1),bp=True)
         
     # Making a 2-D array only works if all the columns are the
     # same length.  If they are not, then use a list instead.

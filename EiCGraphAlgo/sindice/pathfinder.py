@@ -6,7 +6,7 @@ Created on 10-aug.-2012
 import numpy as np
 import scipy
 import networkx as nx
-from scipy import linalg
+from scipy import linalg, spatial
 from sindice import worker, resourceretriever, graph
 import time, gc, sys, logging
 
@@ -103,6 +103,7 @@ class PathFinder:
                 logger.debug (len(self.stateGraph))
                 k = np.int((1-np.divide(1,self.iteration))*250)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
+                #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
                 logger.debug(k)
                 
@@ -145,7 +146,7 @@ class PathFinder:
             
         for link in respbB:
             predB.add(link['uri'])
-            
+        #scipy.spatial.distance.jaccard(np.array(predA), np.array(predB))    
         return 1-np.divide(len(predA & predB),len(predA | predB))       
     
     def buildGraph(self, i, n):

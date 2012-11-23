@@ -13,6 +13,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     #print (total_paths)
     #print (cpf.path_lengths)
     flattened_lengths = list()
+    cpf.path_lengths.pop(len(cpf.path_lengths))
     for x in cpf.path_lengths:
         i = 0
         for i in range(cpf.path_lengths[x]):
@@ -31,17 +32,20 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         
     #variation = spst.tstd(flattened_lengths)
     #median = spst.tmean(flattened_lengths)
+    mean = np.average(np.array(flattened_lengths))
     #print (x_n)
     #print (y_n)
     #print (median)
     #print (variation)
+    print ("mean = %s " % mean )
     l = np.linspace(0,np.max(np.array(x)),np.max(np.array(y)))
     # Set the title.
     plt.title('Distribution of path length (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
     plt.xlabel('(steps)',fontsize=9)
-    
+    plt.xlim(0,np.max(x)+1)
+    x_r = np.arange(np.max(x)+1,step = 0.1)
     # Set the Y Axis label.
     plt.ylabel('(fraction)',fontsize=9)
     fit_alpha,fit_loc,fit_beta=ss.gamma.fit(flattened_lengths)
@@ -51,7 +55,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     plt.bar(x_n,y_n,alpha=0.5)
     #plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='tomato')
     dist = ss.gamma(fit_alpha,loc=fit_loc,scale=fit_beta)
-    plt.plot(x, dist.pdf(x), ls='-', c='tomato')
+    plt.plot(x_r, dist.pdf(x_r), ls='-', c='tomato')
     
     try:
         path = "/tmp/analysis_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))

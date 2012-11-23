@@ -22,12 +22,13 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     
     # Set the X Axis label.
     plt.xlabel('(ms)',fontsize=9)
+    plt.xticks(np.arange(0,np.max(flattened_execution_times),4000))
     
     # Set the Y Axis label.
-    plt.ylabel('(#)',fontsize=9)
+    plt.ylabel('(fraction)',fontsize=9)
     #plt.yscale('log')
-    
-    plt.hist(flattened_execution_times,bins=15, range=None, normed=True,alpha=0.5, cumulative=True)
+    bins = np.int(np.max(flattened_execution_times) / 2000) + 1
+    plt.hist(flattened_execution_times, bins = bins, range=[0,np.max(flattened_execution_times)], normed=True,alpha=0.5, cumulative=True)
     
     try:
         path = "/tmp/analysis_et_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
