@@ -42,6 +42,8 @@ blacklist = resourceretriever.blacklist
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
 def search(s1,s2):
+    """Searches a path between two resources s1 and s2
+    """
     #START
     start = time.clock()
     

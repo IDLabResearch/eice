@@ -100,14 +100,14 @@ sources = [
             #'http://dbpedia.org/resource/Diana_Ross',
             #'http://dbpedia.org/resource/Volvo',
             #'http://dbpedia.org/resource/BMW',
-            'http://dbpedia.org/resource/Aston_Martin',
-            'http://dbpedia.org/resource/Mickey_Mouse',
-            'http://dbpedia.org/resource/Mercedes-Benz',
-            'http://dbpedia.org/resource/Euro',
-            'http://dbpedia.org/resource/The_Times',
-            'http://dbpedia.org/resource/Digital_Enterprise_Research_Institute',
-            'http://dbpedia.org/resource/Ferrari',
-            'http://dbpedia.org/resource/Valve',
+            #'http://dbpedia.org/resource/Aston_Martin',
+            #'http://dbpedia.org/resource/Mickey_Mouse',
+            #'http://dbpedia.org/resource/Mercedes-Benz',
+            #'http://dbpedia.org/resource/Euro',
+            #'http://dbpedia.org/resource/The_Times',
+            #'http://dbpedia.org/resource/Digital_Enterprise_Research_Institute',
+            #'http://dbpedia.org/resource/Ferrari',
+            #'http://dbpedia.org/resource/Valve',
         ]
 
 destinations = [

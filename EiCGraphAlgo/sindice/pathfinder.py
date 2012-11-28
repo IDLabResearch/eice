@@ -13,14 +13,10 @@ import time, gc, sys, logging
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
 
-''' @params
-        source: *
-        property: <name>
-        value: "Guetta"
-        type: foaf:person
-    Query: http://api.sindice.com/v3/search?nq=* <name> "Guetta"fq=class:foaf:person&format=json
-'''
+
 class PathFinder:
+    ''' The pathfinder class description
+    '''
     resources = dict()
     resources_by_parent = dict()
     iteration = 0

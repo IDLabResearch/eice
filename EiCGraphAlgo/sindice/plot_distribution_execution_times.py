@@ -27,6 +27,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     # Set the Y Axis label.
     plt.ylabel('(fraction)',fontsize=9)
     #plt.yscale('log')
+    plt.ylim(0.5,1)
     bins = np.int(np.max(flattened_execution_times) / 2000) + 1
     plt.hist(flattened_execution_times, bins = bins, range=[0,np.max(flattened_execution_times)], normed=True,alpha=0.5, cumulative=True)
     

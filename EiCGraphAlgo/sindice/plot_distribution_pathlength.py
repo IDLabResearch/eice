@@ -56,6 +56,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     #plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='tomato')
     dist = ss.gamma(fit_alpha,loc=fit_loc,scale=fit_beta)
     plt.plot(x_r, dist.pdf(x_r), ls='-', c='tomato')
+    #test http://docs.scipy.org/doc/scipy/reference/tutorial/stats.html look for test
     
     try:
         path = "/tmp/analysis_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
