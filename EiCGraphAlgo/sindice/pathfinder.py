@@ -1,8 +1,3 @@
-'''
-Created on 10-aug.-2012
-
-@author: ldevocht
-'''
 import numpy as np
 import scipy
 import networkx as nx
@@ -15,13 +10,15 @@ query_log = logging.getLogger('query')
 
 
 class PathFinder:
-    ''' The pathfinder class description
-    '''
+    """This class contains the adjecency matrix and provides interfaces to interact with it.
+    Besides the adjacency matrix it also holds the fetched resources in a hash set.
+    """
     resources = dict()
     resources_by_parent = dict()
     iteration = 0
     
     def __init__(self,s1,s2,threshold=1.1):
+        """Initialization of all required containers"""
         worker.startQueue(resourceretriever.resourceFetcher, num_of_threads=32)
         self.resources = dict()
         self.resources_by_parent = dict()   
@@ -32,6 +29,7 @@ class PathFinder:
         
         
     def initMatrix(self, source1, source2):
+        """Initialization of the adjacency matrix based on input source and destination."""
         query_log.info('Path between {0} and {1}'.format(source1,source2))
         s1 = '<%s>' % source1
         s2 = '<%s>' % source2
@@ -44,6 +42,19 @@ class PathFinder:
         return self.stateGraph
 
     def iterateMatrix(self, blacklist=set()):
+        """Iteration phase,
+        During this phase the children of the current bottom level nodes are fetched and added to the hashed set.
+        
+        **Parameters**
+    
+        blacklist : set, optional (default = empty)
+            list of resources to exclude from the pathfinding algorithm
+    
+        **Returns**
+        
+        response : stateGraph
+            contains the final adjacency matrix
+        """
         logger.info ('--- NEW ITERATION ---')
         logger.info ('Existing resources {0}'.format(str(len(self.resources))))
         logger.info ('Indexed resources by parents {0}'.format(str(len(self.resources_by_parent))))
@@ -133,6 +144,7 @@ class PathFinder:
         return 1-np.divide(len(resA & resB),len(resA | resB))  
     
     def jaccard(self,nodeA,nodeB):
+        """Computes the jaccard between two nodes."""
         respbA = self.resources_by_parent[self.resources[nodeA]].values()
         respbB = self.resources_by_parent[self.resources[nodeB]].values()
         predA = set()
@@ -146,11 +158,13 @@ class PathFinder:
         return 1-np.divide(len(predA & predB),len(predA | predB))       
     
     def buildGraph(self, i, n):
+        """Builds a graph based on row number i and size n"""
         row = np.zeros(n, np.byte)
         [self.matchResource(i, j, row) for j in range(n)]
         self.stateGraph[i] = row
         
     def matchResource(self, i, j, row):
+        """Matches each resource with row and column number i and j in a row from the adjacency matrix"""
         try:
             if i == j:
                 row[j] = 1

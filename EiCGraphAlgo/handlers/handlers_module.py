@@ -1,6 +1,7 @@
 import tornado
+from mako.lookup import TemplateLookup
 import ujson
-import signal
+import signal, os
 import time, sys
 from sindice import typeahead, search,resourceretriever,graph,randompath
 import sys, traceback,logging
@@ -14,9 +15,9 @@ logger = logging.getLogger('handler')
 class MainHandler(tornado.web.RequestHandler):
     
     def get(self):
-        self.write("Pathfinding Service Version 22-11-2012 running on %s" % sys.platform)
-        self.finish()
-        
+        logger.info("Pathfinding Service Version 20121129.1 running on %s" % sys.platform)
+        self.render('landing.html')
+
 class NodeDataHandler(MainHandler):
     
     def initialize(self):
@@ -32,7 +33,7 @@ class NodeDataHandler(MainHandler):
 class VisualizationHandler(MainHandler):
     def get(self):
         self.render("index.html")
-        
+            
 class MetricHandler(MainHandler):       
     def get(self):
         update = self.get_argument("update", False)

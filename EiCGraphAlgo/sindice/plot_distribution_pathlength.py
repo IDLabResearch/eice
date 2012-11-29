@@ -2,6 +2,7 @@ from sindice import cached_pathfinder
 import scipy.stats as spst
 import scipy.stats as ss
 import scipy as sp
+from scipy.stats import ks_2samp
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
@@ -51,6 +52,9 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     fit_alpha,fit_loc,fit_beta=ss.gamma.fit(flattened_lengths)
     print(fit_alpha,fit_loc,fit_beta)
     print(fit_alpha * fit_beta)
+    fit_gamma = ss.gamma.rvs(fit_alpha,loc=fit_loc,scale=fit_beta, size=len(flattened_lengths))
+    print (fit_gamma)
+    print (ks_2samp(flattened_lengths, fit_gamma))
     
     plt.bar(x_n,y_n,alpha=0.5)
     #plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='tomato')

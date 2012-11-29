@@ -1,8 +1,3 @@
-'''
-Created on 11-sep.-2012
-
-@author: ldevocht
-'''
 from sindice import pathfinder,resourceretriever,randompath,graph,worker
 import time
 import gc
@@ -41,14 +36,27 @@ blacklist = resourceretriever.blacklist
 #s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
-def search(s1,s2):
-    """Searches a path between two resources s1 and s2
+def search(start,dest):
+    """Searches a path between two resources start and dest
+
+    **Parameters**
+    
+    start : uri
+        resource to start pathfinding
+    destination : uri
+        destination resource for pathfinding
+
+    **Returns**
+    
+    response : dictionary
+        contains execution time, path if found, hash
+
     """
     #START
-    start = time.clock()
+    start_time = time.clock()
     
     #Initialization
-    p = pathfinder.PathFinder(s1,s2)
+    p = pathfinder.PathFinder(start,dest)
     paths = None #Initially no paths exist
     
     #Iteration 1
@@ -86,17 +94,17 @@ def search(s1,s2):
             fullPath['edges'] = resolvedLinks
             resolvedPaths.append(fullPath)
     else:
-        return {'path':False,'execution_time':int(round((time.clock()-start) * 1000))}
+        return {'path':False,'execution_time':int(round((time.clock()-start_time) * 1000))}
             
     #    graph.visualize(p, path=path)
-    finish = int(round((time.clock()-start) * 1000))
+    finish = int(round((time.clock()-start_time) * 1000))
     r = dict()
     r['execution_time'] = finish
     r['paths'] = resolvedPaths
-    r['source'] = s1
-    r['destination'] = s2
+    r['source'] = start
+    r['destination'] = dest
     r['checked_resources'] = p.checked_resources
-    r['hash'] = 'h%s' % hash('{0}{1}{2}'.format(s1,s2,time.time()))
+    r['hash'] = 'h%s' % hash('{0}{1}{2}'.format(start_time,dest,time.time()))
     r['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
     
     try:
@@ -104,7 +112,7 @@ def search(s1,s2):
         file = r['hash']
         pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
     except:
-        logger.warning('could not log and store path between {0} and {1}'.format(s1,s2))
+        logger.warning('could not log and store path between {0} and {1}'.format(start_time,dest))
         logger.error(sys.exc_info())
     query_log.info(r)
     logger.debug(r)
@@ -114,7 +122,7 @@ def search(s1,s2):
     result['execution_time'] = r['execution_time']
     return result
 
-#r = search(s1,s2)
+#r = search(start,dest)
 #
 #p = r['path']
 #time = r['execution_time']

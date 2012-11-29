@@ -44,6 +44,8 @@ class Application(tornado.web.Application):
             'debug':True,
             'log_file_prefix':"tornado.log",
         }
+        
+
 
         tornado.web.Application.__init__(self, handlers, **settings) # debug=True ,
 

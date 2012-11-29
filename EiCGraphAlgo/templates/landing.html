@@ -1,0 +1,150 @@
+<!--
+Uses Bootstrap v2.0.4
+
+Big-Header is a minimal landing page template. It provides you with the basic structure and look
+without pushing anything into your design. The HTML does not validate, and
+is used as a guide for your own designs.
+
+Licensed under the same license as twitter bootstrap.
+
+-->
+<!doctype html>
+<!--[if lt IE 7]> <html class="no-js ie6 oldie" lang="en"> <![endif]-->
+<!--[if IE 7]>    <html class="no-js ie7 oldie" lang="en"> <![endif]-->
+<!--[if IE 8]>    <html class="no-js ie8 oldie" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html class="no-js" lang="en">
+	<!--<![endif]-->
+<html>
+	<head>
+		<title>Pathfinding Service</title>
+		<!-- CSS concatenated and minified via ant build script-->
+		<link rel="stylesheet" href="{{ static_url("css/reset.css") }}">
+		<link rel="stylesheet" href="{{ static_url("css/bootstrap.min.css") }}">
+		<link rel="stylesheet" href="{{ static_url("css/style.css") }}">
+		<!-- end CSS-->
+
+		<script src="{{ static_url('js/libs/modernizr-2.0.6.min.js') }}"></script>
+		<meta name="thefeedbackbutton" content="pathfinding-feedback:41e35b9d901487a8c3de06493ff513">
+		<script type="text/javascript" src="http://www.thefeedbackbutton.com/button.js"></script>
+
+		<style>
+			body {
+				background-image: url("{{ static_url('imgs/clean_textile.png')
+			}}");
+			}
+
+			img.logoos {
+				height: 40px;
+			}
+
+			#branding {
+				margin-top: 10px;
+			}
+			#landing {
+				margin-top: 20px;
+			}
+			#form {
+				margin-top: -15px;
+			}
+
+			.tagline {
+				color: #777;
+			}
+			/*.copy {background-color: #fff;} */
+			.form {
+				background-color: #46a0c3;
+				color: #fff;
+			} /* A/B test the bg color. */
+
+		</style>
+
+	</head>
+	<body>
+
+		<div class="container">
+			<header>
+				<h1>Pathfinding Service</h1>
+				<p>
+					Discover paths between any two DBPedia resources
+				</p>
+			</header>
+
+			<div id="landing">
+				<div class="hero-unit">
+					<h2>About the Pathfinding Service</h2>
+					<p>
+						Graph algorithms make optimal use of available computation resources to and paths in structured data. Linked Data
+						allows us to make these approaches generic. However, scalability has always been a major issue in this context. To overcome this issue we propose an approach by pre-processing
+						datasets and indexing them. We can then find paths between Linked Data resources in large datasets in most cases
+						within a couple of seconds. We have implemented with this service a testcase
+						for our approach with the DBPedia dataset.
+					</p>
+					<h2>Use cases</h2>
+					<h3>Everything isConnected</h3>
+					<p>
+						<a href="http://everythingisconnected.be">Everything is Connected</a> is able to and a path between a Facebook user and any concept known on DBpedia,
+						such as, persons, locations, things, etc. The found path is presented to the end-user as a short story, which explains the relation between the searched concept and the end-user.
+					</p>
+					<p>
+						This service was designed and implemented by <a href="http://multimedialab.elis.ugent.be/about">MultiMediab</a> | Ghent University | iMinds
+					</p>
+
+				</div>
+				<!--/hero-unit-->
+
+			</div><!--/landing-->
+
+			<div id="form">
+
+				<div class="hero-unit form">
+					<h2 class="offset1">Service API</h2>
+					<p class="offset1">
+						build v20121129.1
+					</p>
+					<h3 class="offset1">/paths?from=[source_URI]&amp;to=[destination_URI]</h3>
+					<p class="offset1">
+						Returns path in JSON between [source_URI] and [destination_URI]
+					</p><h3 class="offset1">/subjects?label=[comma seperated list of keywords](&amp;type=[type of keywords])</h3>
+					<p class="offset1">
+						Returns list of URI's with their connectivity to other resources based on inputted list of keywords and optional type.
+						Including the type improves the accuracy of the returned URIs.
+					</p><h3 class="offset1">/description?uri=[comma separated list of URIs]</h3>
+					<p class="offset1">
+						Returns list in JSON with description of the URIs (labels and abstracts).
+					</p><h3 class="offset1">/visualization</h3>
+					<p class="offset1">
+						Returns a HTML page with an interactive visualization of recent found paths.
+					</p><h3 class="offset1">/metrics</h3>
+					<p class="offset1">
+						Returns a HTML page with the latest statistcs on recent pathfinding queries such as hitrate and execution times.
+					</p>
+				</div>
+
+			</div><!--/form div-->
+
+			<div id="footer">
+				<div class="row">
+					<img src="{{static_url('imgs/iMinds.jpg')}}" class="logoos">
+					<img src="{{static_url('imgs/UGent.jpg')}}" class="logoos">
+					<img src="{{static_url('imgs/mml.jpg')}}" class="logoos">
+				</div>
+			</div>
+		</div>
+		<!--/container -->
+
+		<script>
+			// Change UA-XXXXX-X to be your site's ID
+			window._gaq = [['_setAccount', 'UA-36136301-2'], ['_trackPageview'], ['_trackPageLoadTime']];
+			Modernizr.load({
+				load : ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js'
+			});
+		</script>
+
+		<!--[if lt IE 7 ]>
+		<script src="//ajax.googleapis.com/ajax/libs/chrome-frame/1.0.3/CFInstall.min.js"></script>
+		<script>window.attachEvent('onload',function(){CFInstall.check({mode:'overlay'})})</script>
+		<![endif]-->
+
+	</body>
+</html>
