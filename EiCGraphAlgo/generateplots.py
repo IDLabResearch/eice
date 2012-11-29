@@ -32,4 +32,4 @@ def generatePlots():
         
     logging.info('Done generating plots. They are located in /tmp and %s/static/imgs' %root)
 
-generatePlots()
+#generatePlots()
