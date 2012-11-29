@@ -53,7 +53,7 @@ class PathFinder:
         **Returns**
         
         response : stateGraph
-            contains the final adjacency matrix
+            contains the updated adjacency matrix after fetching new resources
         """
         logger.info ('--- NEW ITERATION ---')
         logger.info ('Existing resources {0}'.format(str(len(self.resources))))

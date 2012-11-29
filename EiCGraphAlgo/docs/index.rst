@@ -10,15 +10,21 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
+ 
+.. automodule:: search
+    :members:
 
 .. automodule:: pathfinder
  
 .. autoclass:: PathFinder
     :members: 
- 
-.. automodule:: search
+
+.. automodule:: graph
     :members:
 
+.. automodule:: resourceretriever
+    :members:
+        
 Indices and tables
 ==================
 

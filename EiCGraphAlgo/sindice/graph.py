@@ -1,8 +1,3 @@
-'''
-Created on 13-sep.-2012
-
-@author: ldevocht
-'''
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -13,6 +8,18 @@ import logging
 logger = logging.getLogger('pathFinder')
 
 def resolvePath(path,resources):
+    """Resolves a path between two resources.
+    
+    **Parameters**
+    
+    path : list of numbers corresponding with resources list indices
+    resources : list of resources containing hashes to the resources
+    
+    **Returns**
+    
+    resolvedPath : sequential list of hashes of the nodes in the path
+    
+    """
     resolvedPath = list()
     for step in path:
         resolvedPath.append(resources[step])
@@ -34,6 +41,18 @@ def rolling_window(seq, window_size):
         yield win
         
 def resolveLinks(resolvedPath,resourcesByParent):
+    """Resolves the links in a path between two resources.
+    
+    **Parameters**
+    
+    resolvedPath : list of hash corresponding with resources in the path
+    resourcesByParent : map that contains a list of hashes with the corresponding sets of children for each parent
+    
+    **Returns**
+    
+    resolvedLinks : sequential list of predicates (URIs) connecting the resources in the path
+    
+    """
     resolvedLinks = list()
     for iterator in rolling_window(resolvedPath, 2):
         steps = list(iterator)
@@ -43,6 +62,7 @@ def resolveLinks(resolvedPath,resourcesByParent):
     return resolvedLinks
                                                    
 def listPath(resolvedPath,resourcesByParent):
+    """Converts a resolved path containing hashes of the resources to the actual URIs of each resource"""
     resolvedEdges = list()
     listedPath = list()
     for iterator in rolling_window(resolvedPath, 2):
@@ -66,10 +86,12 @@ def listPath(resolvedPath,resourcesByParent):
     return listedPath
 
 def pathExists(M):
+    """Checks whether an adjacency matrix M contains a path or not"""
     G = nx.Graph(M)
     return nx.has_path(G, 0, 1)
 
 def pathLength(pathFinder):
+    """Checks the length of a path if it exists in the given PathFinder class"""
     G = buildWeightedGraph(pathFinder)
     try:
         if nx.has_path(G, 0, 1):
@@ -81,6 +103,7 @@ def pathLength(pathFinder):
         return None
 
 def path(pathFinder):
+    """Computes the astar path if it exists in the given PathFinder class"""
     G = buildWeightedGraph(pathFinder)
     try:
         if nx.has_path(G, 0, 1):
@@ -94,6 +117,7 @@ def path(pathFinder):
         return None
     
 def buildWeightedGraph(pathFinder):
+    """Computes the weights for the links in the given PathFinder class"""
     M=pathFinder.getGraph()
     G = nx.Graph(M)
     for i in range(len(M)-1):
@@ -103,6 +127,7 @@ def buildWeightedGraph(pathFinder):
     return G
 
 def deg(node,pathFinder):
+    """Computes the degree for a node in the given PathFinder class"""
     resources = pathFinder.getResources()
     resourcesByParent = pathFinder.getResourcesByParent()
     return len(resourcesByParent[resources[node]])

@@ -106,6 +106,7 @@ def sindiceFind2(prop, value, kind):
     return sindiceFind('*', prop, value, kind)
 
 def sparqlQueryByUri(uri):
+    """Find properties of a URI in the configured SPARQL endpoint and return label, abstract and type."""
     if sparql:
         query = " \
                 PREFIX p: <http://dbpedia.org/property/> \
@@ -135,6 +136,7 @@ def sparqlQueryByUri(uri):
         return False
     
 def sparqlQueryByLabel(value, type=""):
+    """Find a URI by label in the configured SPARQL endpoint and return it"""
     type_entry = ""
     if not type == "":
         types = mappings.get('enabled','types').strip(' ').split(',')
@@ -167,6 +169,7 @@ def sparqlQueryByLabel(value, type=""):
         return False
 
 def dbPediaLookup(value, kind=""):
+    """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured SPARQL endpoint"""
     s = sparqlQueryByLabel(value, kind)
     if s:
         l = getResourceLocal(s['uri'].strip("<>"))
@@ -182,6 +185,7 @@ def dbPediaLookup(value, kind=""):
 
 
 def dbPediaIndexLookup(value, kind=""):
+    """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured INDEX"""
     server = config.get('services', 'lookup')
     gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(server,kind,value)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
@@ -221,6 +225,7 @@ def dbPediaIndexLookup(value, kind=""):
     return r
 
 def getResource(resource):
+    """Wrapper function to find properties of a resource given the URI in the configured INDEX(es)"""
     try:
         local = getResourceLocal(resource)
     except:
@@ -236,6 +241,7 @@ def getResource(resource):
             return False
 
 def describeResource(resource):
+    """Wrapper function to describe a resource given a URI either using INDEX lookup or via a SPARQL query"""
     label='<http://www.w3.org/2000/01/rdf-schema#label>'
     abstract='<http://dbpedia.org/ontology/abstract>'
     r = getResource(resource)
@@ -255,6 +261,7 @@ def describeResource(resource):
     return response      
 
 def getResourceLocal(resource):
+    """Fetch properties and children from a resource given a URI in the configured local INDEX"""
     source = resource.strip('<>')
 
     query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'50'}
@@ -270,6 +277,7 @@ def getResourceLocal(resource):
         
 
 def getResourceRemote(resource):
+    """Fetch properties and children from a resource given a URI in the configured remote INDEX"""
     source = resource.strip('<>')
     request = 'http://api.sindice.com/v3/cache?pretty=true&url={0}'.format(source)
     try:
