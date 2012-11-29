@@ -1,8 +1,3 @@
-'''
-Created on 13-sep.-2012
-
-@author: ldevocht
-'''
 import numpy as np
 import ujson
 from sindice import worker
