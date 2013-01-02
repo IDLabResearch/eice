@@ -1,10 +1,10 @@
-from core import plot_distribution_execution_times
-from core import plot_distribution_checked_resources
-from core import plot_checked_resources_vs_execution_times
-from core import plot_checked_resources_vs_pathlengths
-from core import plot_distribution_pathlength
-from core import plot_hitrate
-from core import plot_time_vs_pathlengths
+from plots import plot_distribution_execution_times
+from plots import plot_distribution_checked_resources
+from plots import plot_checked_resources_vs_execution_times
+from plots import plot_checked_resources_vs_pathlengths
+from plots import plot_distribution_pathlength
+from plots import plot_hitrate
+from plots import plot_time_vs_pathlengths
 from core import cached_pathfinder
 
 import inspect, os
@@ -31,5 +31,3 @@ def generatePlots():
         shutil.copyfile(plot, "{0}/static/imgs/plots{1}.png".format(root,i))
         
     logging.info('Done generating plots. They are located in /tmp and %s/static/imgs' %root)
-
-#generatePlots()
