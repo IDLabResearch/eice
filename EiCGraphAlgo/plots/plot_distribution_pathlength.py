@@ -38,7 +38,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     #print (y_n)
     #print (median)
     #print (variation)
-    print ("mean = %s " % mean )
+    #print ("mean = %s " % mean )
     l = np.linspace(0,np.max(np.array(x)),np.max(np.array(y)))
     # Set the title.
     plt.title('Distribution of path length (n = %s)' % total_paths,fontsize=12)
@@ -50,11 +50,11 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     # Set the Y Axis label.
     plt.ylabel('(fraction)',fontsize=9)
     fit_alpha,fit_loc,fit_beta=ss.gamma.fit(flattened_lengths)
-    print(fit_alpha,fit_loc,fit_beta)
-    print(fit_alpha * fit_beta)
+    #print(fit_alpha,fit_loc,fit_beta)
+    #print(fit_alpha * fit_beta)
     fit_gamma = ss.gamma.rvs(fit_alpha,loc=fit_loc,scale=fit_beta, size=len(flattened_lengths))
-    print (fit_gamma)
-    print (ks_2samp(flattened_lengths, fit_gamma))
+    #print (fit_gamma)
+    #print (ks_2samp(flattened_lengths, fit_gamma))
     
     plt.bar(x_n,y_n,alpha=0.5)
     #plt.plot(l,mlab.normpdf(l,median,np.sqrt(variation)),color='tomato')
@@ -66,5 +66,6 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         path = "/tmp/analysis_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
         plt.savefig(path)
     except:
-        print (sys.exc_info())
+        #print (sys.exc_info())
+        pass
     return path

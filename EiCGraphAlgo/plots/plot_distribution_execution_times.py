@@ -35,5 +35,6 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         path = "/tmp/analysis_et_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
         plt.savefig(path)
     except:
-        print (sys.exc_info())
+        #print (sys.exc_info())
+        pass
     return path

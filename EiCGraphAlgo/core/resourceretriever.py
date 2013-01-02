@@ -221,17 +221,19 @@ def getResource(resource):
     """Wrapper function to find properties of a resource given the URI in the configured INDEX(es)"""
     try:
         local = getResourceLocal(resource)
+        if local:
+            return local
+        else:
+            logger.warning("resource %s not in local index" % resource)        
+            if use_remote == 'True':
+                logger.warning("Fetching %s remotely instead" % resource)
+                return getResourceRemote(resource)
+            else:
+                return False
     except:
         logger.error ('connection error: could not connect to index. Check the index log files for more info.')
-    if local:
-        return local
-    else:
-        logger.warning("resource %s not in local index" % resource)        
-        if use_remote == 'True':
-            logger.warning("Fetching %s remotely instead" % resource)
-            return getResourceRemote(resource)
-        else:
-            return False
+        return False
+    
 
 def describeResource(resource):
     """Wrapper function to describe a resource given a URI either using INDEX lookup or via a SPARQL query"""

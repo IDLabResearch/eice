@@ -80,7 +80,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     y_n = np.array(y)
     
     m,b = np.polyfit(x_n, y_n, 1)
-    print (m,b) 
+    #print (m,b) 
 
     # Generate the Scatter Plot.
     ax.scatter(x,y,s=3,color='tomato')
@@ -111,5 +111,6 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         path = "/tmp/scatter_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
         canvas.print_figure(path)
     except:
-        print (sys.exc_info())
+        #print (sys.exc_info())
+        pass
     return path
