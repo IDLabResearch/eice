@@ -192,7 +192,8 @@ class SearchHandler(MainHandler):
             if failed:
                 try:
                     with handlers.time_out.time_limit(23):
-                        r = search.searchFallback(source, destination)
+                        f = search.FallbackSearcher()
+                        r = f.searchFallback(source, destination)
                         r['execution_time'] = str(int(r['execution_time']) + 7000)
                 except TimeoutError:
                     self.set_status(503)
@@ -206,9 +207,7 @@ class SearchHandler(MainHandler):
             self.set_status(404)
             logger.error (sys.exc_info())
             r = 'Something went wrong x( Probably either the start or destination URI is a dead end. Check the server log files for more information.'
-            
-        #self.render("login.html", notification=self.get_argument("notification","") )
-        
+
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")

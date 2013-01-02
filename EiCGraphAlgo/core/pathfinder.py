@@ -180,10 +180,11 @@ class PathFinder:
                 row[j] = 0
         
         except:
-            logger.error ('error %s' % str(j))
+            row[j] = 0
+            logger.error ('error %s not found in list of resources' % str(j))
             logger.error (self.resources)
             logger.error (sys.exc_info())
-            quit()
+            
     
     def resourceFetcher(self):
         q = self.worker.getQueue(self.resourceFetcher)
