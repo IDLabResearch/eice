@@ -1,4 +1,4 @@
-from sindice import search,randompath
+from core import search,randompath
 import pickle
 import ujson, os, inspect, time, gc, sys
 import logging.config

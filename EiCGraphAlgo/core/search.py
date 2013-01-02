@@ -1,4 +1,4 @@
-from sindice import pathfinder,resourceretriever,randompath,graph,worker
+from core import pathfinder,resourceretriever,randompath,graph,worker
 import time
 import gc
 import logging

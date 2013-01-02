@@ -3,7 +3,7 @@ import numpy as np
 import networkx as nx
 import time
 import os, os.path, sys, logging
-from sindice import graph, resourceretriever
+from core import graph, resourceretriever
 import matplotlib.pyplot as plt
 import glob
 

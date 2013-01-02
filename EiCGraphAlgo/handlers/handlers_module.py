@@ -3,9 +3,9 @@ from mako.lookup import TemplateLookup
 import ujson
 import signal, os
 import time, sys
-from sindice import typeahead, search,resourceretriever,graph,randompath
+from core import typeahead, search,resourceretriever,graph,randompath
 import sys, traceback,logging
-from sindice import cached_pathfinder
+from core import cached_pathfinder
 import handlers.time_out
 from handlers.time_out import TimeoutError
 import generateplots

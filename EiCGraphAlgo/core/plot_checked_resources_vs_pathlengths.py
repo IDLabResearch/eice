@@ -1,4 +1,4 @@
-from sindice import cached_pathfinder
+from core import cached_pathfinder
 import sys, time
 import scipy.stats as spst
 import numpy as np

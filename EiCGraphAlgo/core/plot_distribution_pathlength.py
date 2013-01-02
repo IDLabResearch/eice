@@ -1,4 +1,4 @@
-from sindice import cached_pathfinder
+from core import cached_pathfinder
 import scipy.stats as spst
 import scipy.stats as ss
 import scipy as sp

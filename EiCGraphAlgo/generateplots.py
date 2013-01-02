@@ -1,11 +1,11 @@
-from sindice import plot_distribution_execution_times
-from sindice import plot_distribution_checked_resources
-from sindice import plot_checked_resources_vs_execution_times
-from sindice import plot_checked_resources_vs_pathlengths
-from sindice import plot_distribution_pathlength
-from sindice import plot_hitrate
-from sindice import plot_time_vs_pathlengths
-from sindice import cached_pathfinder
+from core import plot_distribution_execution_times
+from core import plot_distribution_checked_resources
+from core import plot_checked_resources_vs_execution_times
+from core import plot_checked_resources_vs_pathlengths
+from core import plot_distribution_pathlength
+from core import plot_hitrate
+from core import plot_time_vs_pathlengths
+from core import cached_pathfinder
 
 import inspect, os
 import shutil, logging
