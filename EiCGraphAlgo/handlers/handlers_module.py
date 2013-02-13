@@ -80,6 +80,30 @@ class CacheLookupHandler(MainHandler):
         #responses = sorted(responses, key=responses.__getitem__, reverse=True)
         self.write('{0}'.format(ujson.dumps(responses)))
         self.finish()
+
+class NeighbourLookupHandler(MainHandler):
+    
+    def get(self):
+        uris = self.get_argument("uri", "")
+        items = uris.split(",http://")
+        responses = dict()
+        for item in items: 
+            try:
+                if not 'http://' in item:
+                    uri = 'http://%s' % item.strip('<>')
+                else:
+                    uri = item.strip('<>')
+                r =  resourceretriever.getResourceLocal(uri)
+                responses[uri] = r
+            except:
+                responses[uri] = {}
+                logger.error(sys.exc_info())
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
+        self.set_header("charset", "utf8")
+        #responses = sorted(responses, key=responses.__getitem__, reverse=True)
+        self.write('{0}'.format(ujson.dumps(responses)))
+        self.finish()
         
 class PrefixHandler(MainHandler):
 

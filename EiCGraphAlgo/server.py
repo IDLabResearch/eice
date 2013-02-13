@@ -32,6 +32,7 @@ class Application(tornado.web.Application):
                 url(r'/metrics', handlers_module.MetricHandler, name = 'metrics'),
                 url(r'/stored_path', handlers_module.StoredPathHandler, name = 'stored_path'),
                 url(r'/visualization', handlers_module.VisualizationHandler, name='visualization'),
+                url(r'/neighbours', handlers_module.NeighbourLookupHandler, name='neighbours'),
                 url(r'/nodedata.json', handlers_module.NodeDataHandler, name='nodedata'),
         ]
 

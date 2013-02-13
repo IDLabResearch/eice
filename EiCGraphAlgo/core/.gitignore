@@ -3,3 +3,4 @@
 /__pycache__
 /cached_paths
 /stored_paths
+/config_local.ini
