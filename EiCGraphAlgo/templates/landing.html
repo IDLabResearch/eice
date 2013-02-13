@@ -99,7 +99,7 @@ Licensed under the same license as twitter bootstrap.
 				<div class="hero-unit form">
 					<h2 class="offset1">Service API</h2>
 					<p class="offset1">
-						build v20130102.1
+						build v20130213.1
 					</p>
 					<h3 class="offset1">/paths?from=[source_URI]&amp;to=[destination_URI]</h3>
 					<p class="offset1">
@@ -108,10 +108,14 @@ Licensed under the same license as twitter bootstrap.
 					<p class="offset1">
 						Returns list of URI's with their connectivity to other resources based on inputted list of keywords and optional type.
 						Including the type improves the accuracy of the returned URIs.
-					</p><h3 class="offset1">/description?uri=[comma separated list of URIs]</h3>
+					</p><h3 class="offset1">/descriptions?uri=[comma separated list of URIs]</h3>
 					<p class="offset1">
 						Returns list in JSON with description of the URIs (labels and abstracts).
-					</p><h3 class="offset1">/visualization</h3>
+					</p><h3 class="offset1">/neighbours?uri=[comma separated list of URIs]</h3>
+					<p class="offset1">
+						Returns list in JSON neighbouring nodes and the links (subject, predicate and object).
+					</p>
+					<h3 class="offset1">/visualization</h3>
 					<p class="offset1">
 						Returns a HTML page with an interactive visualization of recent found paths.
 					</p><h3 class="offset1">/metrics</h3>
