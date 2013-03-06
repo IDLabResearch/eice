@@ -3,7 +3,6 @@ import pickle
 import ujson, os, inspect, time, gc, sys
 import logging.config
 import numpy as np
-from memory_profiler import memory_usage
                
 logging.config.fileConfig('logging.conf')
  

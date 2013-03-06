@@ -20,7 +20,7 @@ class PathFinder:
     def __init__(self,s1,s2,threshold=1.1):
         """Initialization of all required containers"""
         self.worker = Worker()
-        self.worker.startQueue(self.resourceFetcher, num_of_threads=32)
+        self.worker.startQueue(resourceretriever.fetchResource, num_of_threads=32)
         self.resources = dict()
         self.resources_by_parent = dict()   
         self.storedResources = dict()  
@@ -72,9 +72,9 @@ class PathFinder:
             
         for resource in prevResources:
             item = [resource, self.resources_by_parent, additionalResources, blacklist]
-            self.worker.getQueue(self.resourceFetcher).put(item)
+            self.worker.getQueue(resourceretriever.fetchResource).put([resourceretriever.fetchResource, item])
         
-        self.worker.getQueue(self.resourceFetcher).join()
+        self.worker.getQueue(resourceretriever.fetchResource).join()
         
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)

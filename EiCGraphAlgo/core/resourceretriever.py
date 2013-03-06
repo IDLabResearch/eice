@@ -1,6 +1,5 @@
 import numpy as np
 import ujson
-from core import worker
 from mysolr import Solr
 from SPARQLWrapper import SPARQLWrapper, JSON
 import urllib.request
