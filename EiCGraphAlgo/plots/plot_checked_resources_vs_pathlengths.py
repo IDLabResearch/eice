@@ -110,4 +110,4 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         pass
     return path
 
-plot()
+#plot()

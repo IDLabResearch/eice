@@ -4,7 +4,7 @@ import networkx as nx
 from scipy import linalg, spatial
 from core import resourceretriever, graph
 import time, gc, sys, logging
-from core.worker import Worker
+from core.worker_async import Worker
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')

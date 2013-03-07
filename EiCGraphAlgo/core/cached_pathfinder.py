@@ -63,10 +63,11 @@ class CachedPathFinder:
             
     def loadStoredPaths(self, blacklist=set(), max=150):
         root = '{0}/stored_paths'.format(self.path)
+        files = []
         for root, dirs, files in os.walk(root):
             files = [os.path.join(root, f) for f in files] # add path to each file
             files.sort(key=lambda x: os.path.getmtime(x),reverse=True)
-            
+        
         if not self.loaded:
             files_to_load = files[0:max]
             self.files_loaded = len(files_to_load)

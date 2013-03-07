@@ -6,7 +6,7 @@ import pickle
 import os, sys
 import handlers.time_out
 from handlers.time_out import TimeoutError
-from core.worker import Worker
+from core.worker_async import Worker
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -113,7 +113,7 @@ def search(start,dest):
         file = r['hash']
         pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
     except:
-        logger.warning('could not log and store path between {0} and {1}'.format(start_time,dest))
+        logger.warning('could not log and store path between {0} and {1}'.format(start,dest))
         logger.error(sys.exc_info())
     query_log.info(r)
     logger.debug(r)

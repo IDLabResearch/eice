@@ -141,3 +141,5 @@ EiCGraphAlgo/debug.log
 EiCGraphAlgo/error.log
 EiCGraphAlgo/query.log
 EiCGraphAlgo/sindice/plot_distribution_pathlength.py
+EiCGraphAlgo/core/cached_paths
+EiCGraphAlgo/core/stored_paths

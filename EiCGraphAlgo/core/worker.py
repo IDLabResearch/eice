@@ -3,8 +3,10 @@ Created on 25-mei-2012
 
 @author: ldevocht
 '''
-import queue
-from threading import Thread
+#import queue
+#from threading import Thread
+import multiprocessing
+from multiprocessing import JoinableQueue
 
 NUM_OF_THREADS = 24
 
@@ -43,11 +45,11 @@ class Worker:
     
     def createQueue(self, function):
         if not function in self.q:
-            self.q[function] = queue.Queue()
+            self.q[function] = JoinableQueue()
     
     def startQueue(self, function, num_of_threads=NUM_OF_THREADS):
         self.createQueue(function)
         for i in range(num_of_threads):
-            t = Thread(target=self.functionWorker, args=([function]))
+            t = multiprocessing.Process(target=self.functionWorker, args=([function]))
             t.daemon = True
             t.start()
