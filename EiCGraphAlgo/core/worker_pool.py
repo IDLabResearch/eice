@@ -17,31 +17,20 @@ NUM_OF_THREADS = 24
 class Worker:
     def __init__(self):
         self.q = dict()
-        
-    def functionWorker(self, function):
-        while True:
-            items = self.q[function].get()
-            f = items[0]
-            argument = items[1]
-            #if 'resourceFetcher' in str(function):
-            #    print ('RF')
-            if not argument == None:
-                #argument[-1] = f(*argument[:-1])
-                f(*argument)
-            else:
-                f()
-            self.q[function].task_done()
     
     def startFunctionWorker(self):
         self.startQueue(num_of_threads=NUM_OF_THREADS)
         
     def queueFunction(self, function, argument=None):
-        items = [function, argument]
-        self.getQueue(function).put(items)
+        if not argument == None:
+            thread = gevent.spawn(function, *argument)
+        else:
+            thread = gevent.spawn(function)
+        self.getQueue(function).add(thread)
     
     def waitforFunctionsFinish(self, function):
         try:
-            self.getQueue(function).join()
+            gevent.joinall(self.getQueue(function))
             del self.q[function]
         except:
             pass
@@ -51,9 +40,7 @@ class Worker:
     
     def createQueue(self, function):
         if not function in self.q:
-            self.q[function] = gevent.queue.JoinableQueue()
+            self.q[function] = set()
     
     def startQueue(self, function, num_of_threads=NUM_OF_THREADS):
         self.createQueue(function)
-        for i in range(num_of_threads):
-            gevent.spawn(self.functionWorker, function)

@@ -4,7 +4,7 @@ import networkx as nx
 from scipy import linalg, spatial
 from core import resourceretriever, graph
 import time, gc, sys, logging
-from core.worker_async import Worker
+from core.worker_pool import Worker
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -20,7 +20,6 @@ class PathFinder:
     def __init__(self,s1,s2,threshold=1.1):
         """Initialization of all required containers"""
         self.worker = Worker()
-        self.worker.startQueue(resourceretriever.fetchResource, num_of_threads=32)
         self.resources = dict()
         self.resources_by_parent = dict()   
         self.storedResources = dict()  
@@ -70,11 +69,13 @@ class PathFinder:
         for key in self.resources:
             prevResources.add(self.resources[key])
             
+        self.worker.startQueue(resourceretriever.fetchResource, num_of_threads=32)
+            
         for resource in prevResources:
             item = [resource, self.resources_by_parent, additionalResources, blacklist]
-            self.worker.getQueue(resourceretriever.fetchResource).put([resourceretriever.fetchResource, item])
+            self.worker.queueFunction(resourceretriever.fetchResource, item)
         
-        self.worker.getQueue(resourceretriever.fetchResource).join()
+        self.worker.waitforFunctionsFinish(resourceretriever.fetchResource)
         
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)

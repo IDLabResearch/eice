@@ -6,7 +6,7 @@ import pickle
 import os, sys
 import handlers.time_out
 from handlers.time_out import TimeoutError
-from core.worker_async import Worker
+from core.worker_pool import Worker
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -128,7 +128,6 @@ class FallbackSearcher:
         self.worker =worker
         
     def searchFallback(self,source,destination):
-        self.worker.startQueue(self.searcher, 3)
         resp = dict()
         logger.info('Using fallback using random hubs, because no path directly found')
         path_between_hubs = False
@@ -136,10 +135,11 @@ class FallbackSearcher:
             start = time.clock()
             worker_output = dict()
             hubs = randompath.randomSourceAndDestination()
-            self.worker.getQueue(self.searcher).put([hubs['source'],hubs['destination'],worker_output,'path_between_hubs'])
-            self.worker.getQueue(self.searcher).put([source,hubs['source'],worker_output,'path_to_hub_source'])
-            self.worker.getQueue(self.searcher).put([hubs['destination'],destination,worker_output,'path_to_hub_destination'])
-            self.worker.getQueue(self.searcher).join()
+            self.worker.startQueue(self.searchF, 3)
+            self.worker.queueFunction(self.searchF,[hubs['source'],hubs['destination'],worker_output,'path_between_hubs'])
+            self.worker.queueFunction(self.searchF,[source,hubs['source'],worker_output,'path_to_hub_source'])
+            self.worker.queueFunction(self.searchF,[hubs['destination'],destination,worker_output,'path_to_hub_destination'])
+            self.worker.waitforFunctionsFinish(self.searchF)
             path_between_hubs = worker_output['path_between_hubs']
             path_to_hub_source = worker_output['path_to_hub_source']
             path_to_hub_destination = worker_output['path_to_hub_destination']
@@ -156,38 +156,21 @@ class FallbackSearcher:
         resp['path'].extend(path_between_hubs['path'])
         resp['path'].extend(path_to_hub_destination['path'][1:])
         resp['hash'] = False
-        del self.worker.q[self.searcher]
         return resp
     
-    def searcher(self):
-        q = self.worker.getQueue(self.searcher)
-        while True:
-            items = q.get()
-            if len(items) == 4:
-                source = items[0]
-                destination = items[1]
-                try:
-                    items[2][items[3]] = search(source,destination)
-                except:
-                    items[2][items[3]] = dict()
-                    items[2][items[3]]['path'] = False
-                    logger.error(sys.exc_info())
-                    logger.error('path between {0} and {1} not found.'.format(source, destination))
-            else:
-                pass
-            q.task_done()
-            
-    def fallback_searcher(self):
-        q = self.worker.getQueue(self.fallback_searcher)
-        while True:
-            items = q.get()
-            if len(items) == 4:
-                source = items[0]
-                destination = items[1]
-                items[2][items[3]] = self.searchFallback(source,destination)
-            else:
-                pass
-            q.task_done()
+    def searchF(self, items):
+        if len(items) == 4:
+            source = items[0]
+            destination = items[1]
+            try:
+                items[2][items[3]] = search(source,destination)
+            except:
+                items[2][items[3]] = dict()
+                items[2][items[3]]['path'] = False
+                logger.error(sys.exc_info())
+                logger.error('path between {0} and {1} not found.'.format(source, destination))
+        else:
+            pass
              
 
 #r = search(start,dest)
