@@ -3,7 +3,9 @@ import pickle
 import ujson, os, inspect, time, gc, sys
 import logging.config
 import numpy as np
-               
+import timeit
+import math
+
 logging.config.fileConfig('logging.conf')
  
 def generateCachedPaths():
@@ -31,4 +33,4 @@ def generateCachedPaths():
             print("{0} of {3} Elapsed: {1} ETR: {2}".format(n,elapsed_time,remaining_time,total))
 
 generateCachedPaths()
-            
+

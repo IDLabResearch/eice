@@ -158,19 +158,14 @@ class FallbackSearcher:
         resp['hash'] = False
         return resp
     
-    def searchF(self, items):
-        if len(items) == 4:
-            source = items[0]
-            destination = items[1]
-            try:
-                items[2][items[3]] = search(source,destination)
-            except:
-                items[2][items[3]] = dict()
-                items[2][items[3]]['path'] = False
-                logger.error(sys.exc_info())
-                logger.error('path between {0} and {1} not found.'.format(source, destination))
-        else:
-            pass
+    def searchF(self, source, destination, target, index):
+        try:
+            target[index] = search(source,destination)
+        except:
+            target[index] = dict()
+            target[index]['path'] = False
+            logger.error(sys.exc_info())
+            logger.error('path between {0} and {1} not found.'.format(source, destination))
              
 
 #r = search(start,dest)

@@ -2,6 +2,8 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 import sys
+import math
+import random
 from itertools import islice, chain
 import logging
 
@@ -123,7 +125,7 @@ def buildWeightedGraph(pathFinder):
     for i in range(len(M)-1):
         for j in range(len(M[i])-1):
             if M[i][j] == 1:
-                G[i][j]['weight'] = np.log(deg(i,pathFinder)+deg(j,pathFinder))
+                G[i][j]['weight'] = math.log(deg(i,pathFinder)+deg(j,pathFinder))
     return G
 
 def deg(node,pathFinder):

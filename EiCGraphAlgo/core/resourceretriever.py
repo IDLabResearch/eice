@@ -268,8 +268,6 @@ def getResourceLocal(resource):
     else:
         return False
     
-        
-
 def getResourceRemote(resource):
     """Fetch properties and children from a resource given a URI in the configured remote INDEX"""
     source = resource.strip('<>')
