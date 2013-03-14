@@ -156,8 +156,8 @@ class PathFinder:
             
         for link in respbB:
             predB.add(link['uri'])
-        #scipy.spatial.distance.jaccard(np.array(predA), np.array(predB))    
-        return 1-np.divide(len(predA & predB),len(predA | predB))       
+        return scipy.spatial.distance.jaccard(np.array(predA), np.array(predB))    
+        #return 1-np.divide(len(predA & predB),len(predA | predB))       
     
     def buildGraph(self, i, n):
         """Builds a graph based on row number i and size n"""

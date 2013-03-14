@@ -125,7 +125,8 @@ def buildWeightedGraph(pathFinder):
     for i in range(len(M)-1):
         for j in range(len(M[i])-1):
             if M[i][j] == 1:
-                G[i][j]['weight'] = math.log(deg(i,pathFinder)+deg(j,pathFinder))
+                #G[i][j]['weight'] = math.log(deg(i,pathFinder)+deg(j,pathFinder))
+                G[i][j]['weight'] = math.log(G.degree(i)+G.degree(j))
     return G
 
 def deg(node,pathFinder):

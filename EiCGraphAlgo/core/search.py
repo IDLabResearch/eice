@@ -61,9 +61,8 @@ def search(start,dest):
     paths = None #Initially no paths exist
     
     #Iteration 1
-    m = p.iterateMatrix(blacklist)
-    if graph.pathExists(m):
-        paths = graph.path(p)
+    p.iterateMatrix(blacklist)
+    paths = graph.path(p)
     
     #Following iterations
     while True:
