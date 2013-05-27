@@ -1,4 +1,4 @@
-from core import pathfinder,resourceretriever,randompath,graph,worker
+from core import pathfinder,resourceretriever,randompath,graph
 import time
 import gc
 import logging
@@ -37,7 +37,18 @@ blacklist = resourceretriever.blacklist
 #s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
-def search(start,dest):
+def generateBlackList(blacklist,response):
+    """Expands a given blacklist with a found response"""
+    new_blacklist = set(blacklist)
+    if not response['path'] == False:
+        for step in response['path'][1:-1]:
+            if step['type'] == 'link':
+                print (step['uri'])
+                new_blacklist.add('<%s>' % step['uri'])
+            
+    return new_blacklist
+    
+def search(start,dest,search_blacklist=blacklist):
     """Searches a path between two resources start and dest
 
     **Parameters**
@@ -61,7 +72,7 @@ def search(start,dest):
     paths = None #Initially no paths exist
     
     #Iteration 1
-    p.iterateMatrix(blacklist)
+    p.iterateMatrix(search_blacklist)
     paths = graph.path(p)
     
     #Following iterations
@@ -72,7 +83,7 @@ def search(start,dest):
         
         logger.info ('=== %s-- ===' % str(p.iteration))
         gc.collect()
-        m = p.iterateMatrix(blacklist)
+        m = p.iterateMatrix(search_blacklist)
         halt_path = time.clock()
         paths = graph.path(p)
         logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
@@ -166,7 +177,18 @@ class FallbackSearcher:
             logger.error(sys.exc_info())
             logger.error('path between {0} and {1} not found.'.format(source, destination))
              
-
+def searchAllPaths(start,dest,search_blacklist=blacklist):
+    paths = list()
+    prevLenBlacklist = set(search_blacklist)
+    path = search(start,dest,prevLenBlacklist)
+    new_blacklist = generateBlackList(prevLenBlacklist,path)
+    paths.append(path)
+    while len(new_blacklist) > len (prevLenBlacklist):
+        path = search(start,dest,new_blacklist)
+        prevLenBlacklist = set(new_blacklist)
+        new_blacklist = generateBlackList(new_blacklist,path)
+        paths.append(path)
+    return paths
 #r = search(start,dest)
 #
 #p = r['path']
@@ -181,4 +203,13 @@ class FallbackSearcher:
 #    graph.visualize(p)
 
 #print (searchFallback('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
-#print (search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium'))
+#path = search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium',blacklist)
+#print (len(blacklist))
+#print (len(new_blacklist))
+#print (new_blacklist)
+#path = search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium',new_blacklist)
+##print (len(new_blacklist))
+
+print (len(searchAllPaths('http://dbpedia.org/resource/China','http://dbpedia.org/resource/Japan',blacklist)))
+        
+    

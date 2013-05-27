@@ -39,7 +39,10 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://dbpedia.org/ontology/timeZone>',
              ])
 
-
+valid_domains = frozenset([
+                        'dbpedia',
+                        'freebase'
+                           ])
 logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
 mappings = configparser.ConfigParser()
@@ -174,7 +177,17 @@ def dbPediaLookup(value, kind=""):
         s = dbPediaIndexLookup(value, kind)
     return s
 
-
+def cleanResultSet(resultSet):
+    nt_cleaned = dict()
+    resultSet = set(resultSet)
+    i = 0
+    for triple in resultSet:
+        triple = triple.strip(' .\n')
+        triple = triple.split(' ', 2)
+        triple[2] = triple[2].replace('"', '')
+        nt_cleaned[i] = triple
+        i += 1
+    return nt_cleaned
 
 def dbPediaIndexLookup(value, kind=""):
     """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured INDEX"""
@@ -258,7 +271,21 @@ def getResourceLocal(resource):
     """Fetch properties and children from a resource given a URI in the configured local INDEX"""
     source = resource.strip('<>')
 
-    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'50'}
+    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
+    response = solr.search(**query)
+    if response.status==200 and len(response.documents) > 0:
+        nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+        nt_cleaned = cleanResultSet(nt)
+        return nt_cleaned
+    
+    else:
+        return False
+    
+def getResourceLocalWithType(resource):
+    """Fetch properties and children from a resource given a URI in the configured local INDEX"""
+    source = resource.strip('<>')
+
+    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type label','timeAllowed':'5000'}
     response = solr.search(**query)
     if response.status==200 and len(response.documents) > 0:
         nt = response.documents[0]['ntriple'].split('.\n')[:-1]
@@ -301,18 +328,6 @@ def getResourceLive(resource):
     except:
         #logger.warning (sys.exc_info())
         return False
-    
-def cleanResultSet(resultSet):
-    nt_cleaned = dict()
-    resultSet = set(resultSet)
-    i = 0
-    for triple in resultSet:
-        triple = triple.strip(' .\n')
-        triple = triple.split(' ', 2)
-        triple[2] = triple[2].replace('"', '')
-        nt_cleaned[i] = triple
-        i += 1
-    return nt_cleaned
 
 def formatResultSet(resultSet):
     nt_cleaned = dict()
@@ -349,7 +364,7 @@ def fetchResource(resource, resourcesByParent, additionalResources, blacklist):
         for tripleKey, triple in newResources.items():
             targetRes = triple[2]
             predicate = triple[1]
-            if isResource(targetRes) and (predicate not in blacklist) and 'dbpedia' in targetRes:
+            if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
                 #Add forward link  
                 addDirectedLink(resource, targetRes, predicate, True, resourcesByParent)
                 #Add backward link

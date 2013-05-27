@@ -9,8 +9,8 @@ from gevent import Greenlet
 from gevent.pool import Pool
 from gevent import queue
 
-monkey.patch_thread()
 monkey.patch_socket()
+#monkey.patch_thread()
 
 NUM_OF_THREADS = 24
 
