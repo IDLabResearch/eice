@@ -48,7 +48,7 @@ def generateBlackList(blacklist,response):
             
     return new_blacklist
     
-def search(start,dest,search_blacklist=blacklist):
+def search(start,dest,search_blacklist=blacklist,givenP=None):
     """Searches a path between two resources start and dest
 
     **Parameters**
@@ -57,6 +57,10 @@ def search(start,dest,search_blacklist=blacklist):
         resource to start pathfinding
     destination : uri
         destination resource for pathfinding
+    blacklislt : list
+        list of resources to exclude in search
+    pathfinder : Pathfinder
+        a given pathfinder state for complex search queries
 
     **Returns**
     
@@ -68,7 +72,11 @@ def search(start,dest,search_blacklist=blacklist):
     start_time = time.clock()
     
     #Initialization
-    p = pathfinder.PathFinder(start,dest)
+    if givenP == None:
+        p = pathfinder.PathFinder(start,dest)
+    else:
+        p = givenP
+    
     paths = None #Initially no paths exist
     
     #Iteration 1
@@ -83,7 +91,7 @@ def search(start,dest,search_blacklist=blacklist):
         
         logger.info ('=== %s-- ===' % str(p.iteration))
         gc.collect()
-        m = p.iterateMatrix(search_blacklist)
+        m = p.iterateMatrix(blacklist=search_blacklist)
         halt_path = time.clock()
         paths = graph.path(p)
         logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
@@ -181,6 +189,7 @@ def searchAllPaths(start,dest,search_blacklist=blacklist):
     paths = list()
     prevLenBlacklist = set(search_blacklist)
     path = search(start,dest,prevLenBlacklist)
+    print (path)
     new_blacklist = generateBlackList(prevLenBlacklist,path)
     paths.append(path)
     while len(new_blacklist) > len (prevLenBlacklist):

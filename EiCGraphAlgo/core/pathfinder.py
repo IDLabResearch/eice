@@ -46,14 +46,17 @@ class PathFinder:
         self.iteration += 1
         return self.stateGraph
 
-    def iterateMatrix(self, blacklist=set(), additionalResources = set()):
+    def iterateMatrix(self, blacklist=set(), additionalRes = set()):
         """Iteration phase,
         During this phase the children of the current bottom level nodes are fetched and added to the hashed set.
         
         **Parameters**
     
         blacklist : set, optional (default = empty)
-            list of resources to exclude from the pathfinding algorithm
+            set of resources predicates to exclude from the pathfinding algorithm
+        
+        additionalResources : set, optional (default = empty)
+            set of resources to include anyway in the next iteration
     
         **Returns**
         
@@ -69,17 +72,26 @@ class PathFinder:
         
         start = time.clock()
         prevResources = set()
+        additionalResources = set()
         
         for key in self.resources:
             prevResources.add(self.resources[key])
             
-        self.worker.startQueue(resourceretriever.fetchResource, num_of_threads=32)
-            
-        for resource in prevResources:
-            item = [resource, self.resources_by_parent, additionalResources, blacklist]
-            self.worker.queueFunction(resourceretriever.fetchResource, item)
+        print (len(additionalRes))
         
-        self.worker.waitforFunctionsFinish(resourceretriever.fetchResource)
+        if len(additionalRes) == 0: 
+            
+            self.worker.startQueue(resourceretriever.fetchResource, num_of_threads=32)
+                
+            for resource in prevResources:
+                item = [resource, self.resources_by_parent, additionalResources, blacklist]
+                self.worker.queueFunction(resourceretriever.fetchResource, item)
+            
+            self.worker.waitforFunctionsFinish(resourceretriever.fetchResource)
+        
+        else:
+            additionalResources = additionalRes
+            logger.info('Special search iteration: Deep search')
         
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
@@ -153,9 +165,11 @@ class PathFinder:
                 self.resources_s2.add(resource)
             else:
                 logger.warning ('resource %s does not belong to any parent' % resource)
-                
-        self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s1], k)
-        self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s2], k)
+              
+        childs = dict()  
+        childs['start'] = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s1], k)
+        childs['dest'] = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s2], k)
+        return childs
     
     def findBestChilds(self,nodes,k = 4):
         n = len(nodes)
