@@ -236,7 +236,7 @@ def getResource(resource):
         if local:
             return local
         else:
-            logger.warning("resource %s not in local index" % resource)        
+            #logger.warning("resource %s not in local index" % resource)        
             if use_remote == 'True':
                 logger.warning("Fetching %s remotely instead" % resource)
                 return getResourceRemote(resource)

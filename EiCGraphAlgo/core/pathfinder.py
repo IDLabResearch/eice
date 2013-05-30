@@ -76,13 +76,11 @@ class PathFinder:
         
         for key in self.resources:
             prevResources.add(self.resources[key])
-            
-        print (len(additionalRes))
+        
+        self.worker.startQueue(resourceretriever.fetchResource, num_of_threads=32)
         
         if len(additionalRes) == 0: 
             
-            self.worker.startQueue(resourceretriever.fetchResource, num_of_threads=32)
-                
             for resource in prevResources:
                 item = [resource, self.resources_by_parent, additionalResources, blacklist]
                 self.worker.queueFunction(resourceretriever.fetchResource, item)
@@ -90,8 +88,14 @@ class PathFinder:
             self.worker.waitforFunctionsFinish(resourceretriever.fetchResource)
         
         else:
-            additionalResources = additionalRes
             logger.info('Special search iteration: Deep search')
+            for resource in additionalRes:
+                
+                item = [resource, self.resources_by_parent, additionalResources, blacklist]
+                self.worker.queueFunction(resourceretriever.fetchResource, item)
+                
+            self.worker.waitforFunctionsFinish(resourceretriever.fetchResource)
+            
         
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
@@ -157,18 +161,22 @@ class PathFinder:
         return self.stateGraph
     
     def iterateOptimizedNetwork(self, k = 4):
-        for n, resource in self.resources:
-            self.resources_inverse_index[resource] = n
+        for i in self.resources:
+            resource = self.resources[i]
+            self.resources_inverse_index[resource] = i
             if any(e in self.resources_s1 for e in self.resources_by_parent[resource] ):
                 self.resources_s1.add(resource)
             elif any(e in self.resources_s2 for e in self.resources_by_parent[resource] ):
                 self.resources_s2.add(resource)
             else:
                 logger.warning ('resource %s does not belong to any parent' % resource)
-              
-        childs = dict()  
-        childs['start'] = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s1], k)
-        childs['dest'] = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s2], k)
+          
+        start = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s1], k)
+        dest = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s2], k)
+        
+        childs = dict() 
+        childs['start'] = [self.resources[i] for i in start]
+        childs['dest'] = [self.resources[i] for i in dest]
         return childs
     
     def findBestChilds(self,nodes,k = 4):
@@ -194,7 +202,10 @@ class PathFinder:
             logger.error ('Graph is empty')
             logger.error (sys.exc_info())
         
-        return [self.sub(i, node_list) for i in important]
+        dereffed_list = set([self.sub(i, node_list) for i in important])
+        dereffed_list.discard(0)
+        dereffed_list.discard(1)
+        return list(dereffed_list)
     
     def jaccard_node(self,nodeA,nodeB):
         resA = frozenset(self.resources_by_parent[self.resources[nodeA]])

@@ -37,18 +37,7 @@ blacklist = resourceretriever.blacklist
 #s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
-def generateBlackList(blacklist,response):
-    """Expands a given blacklist with a found response"""
-    new_blacklist = set(blacklist)
-    if not response['path'] == False:
-        for step in response['path'][1:-1]:
-            if step['type'] == 'link':
-                print (step['uri'])
-                new_blacklist.add('<%s>' % step['uri'])
-            
-    return new_blacklist
-    
-def search(start,dest,search_blacklist=blacklist,givenP=None):
+def search(start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10):
     """Searches a path between two resources start and dest
 
     **Parameters**
@@ -57,10 +46,12 @@ def search(start,dest,search_blacklist=blacklist,givenP=None):
         resource to start pathfinding
     destination : uri
         destination resource for pathfinding
-    blacklislt : list
+    search_blacklist : list
         list of resources to exclude in search
     pathfinder : Pathfinder
         a given pathfinder state for complex search queries
+    k : integer
+        number of iterations when to break off search
 
     **Returns**
     
@@ -74,13 +65,16 @@ def search(start,dest,search_blacklist=blacklist,givenP=None):
     #Initialization
     if givenP == None:
         p = pathfinder.PathFinder(start,dest)
+        p.iterateMatrix(search_blacklist)
     else:
         p = givenP
+        p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes)
+        
     
     paths = None #Initially no paths exist
     
     #Iteration 1
-    p.iterateMatrix(search_blacklist)
+    
     paths = graph.path(p)
     
     #Following iterations
@@ -95,7 +89,7 @@ def search(start,dest,search_blacklist=blacklist,givenP=None):
         halt_path = time.clock()
         paths = graph.path(p)
         logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
-        if p.iteration == 10:
+        if p.iteration == k:
             break
     resolvedPaths = list()
     
@@ -141,6 +135,80 @@ def search(start,dest,search_blacklist=blacklist,givenP=None):
     result['execution_time'] = r['execution_time']
     return result
 
+class DeepSearcher:
+    def searchAllPaths(self, start,dest,search_blacklist=blacklist):
+        #START
+        start_time = time.clock()
+        #RUN
+        paths = list()
+        prevLenBlacklist = set(search_blacklist)
+        path = search(start,dest,prevLenBlacklist)
+        print (path)
+        new_blacklist = self.generateBlackList(prevLenBlacklist,path)
+        paths.append(path)
+        while len(new_blacklist) > len (prevLenBlacklist):
+            path = search(start,dest,new_blacklist)
+            prevLenBlacklist = set(new_blacklist)
+            new_blacklist = self.generateBlackList(new_blacklist,path)
+            paths.append(path)
+        result=dict()
+        result['paths']=paths
+        finish = int(round((time.clock()-start_time) * 1000))
+        result['execution_time']=finish
+        return result
+
+    def generateBlackList(self, blacklist,response):
+        """Expands a given blacklist with a found response"""
+        new_blacklist = set(blacklist)
+        if not response['path'] == False:
+            for step in response['path'][1:-1]:
+                if step['type'] == 'link':
+                    print (step['uri'])
+                    new_blacklist.add('<%s>' % step['uri'])
+                
+        return new_blacklist
+    
+    def flattenSearchResults(self, response):
+        flattened_path = list()
+        if not response['path'] == False:
+            for step in response['path']:
+                if step['type'] == 'node':
+                    #print (step['uri'])
+                    flattened_path.append('<%s>' % step['uri'])
+        return flattened_path
+        
+        
+    def searchDeep(self, start,dest,search_blacklist,k=4,s=4):
+        """Searches a path between two resources start and dest
+    
+        **Parameters**
+        
+        same as regular search
+        
+        s: integer
+            strength of deepness, how many nodes to trigger for deep search
+    
+        """
+        #START
+        start_time = time.clock()
+    
+        p = pathfinder.PathFinder(start,dest)
+        result = search(start,dest,search_blacklist=search_blacklist,givenP=p,k=k)
+        if not result['path']:
+            print (p.resources)
+            deep_roots = p.iterateOptimizedNetwork(s)
+            print (deep_roots)
+            additionalResources = set()
+            for st in deep_roots['start']:
+                for dt in deep_roots['dest']:
+                    print ("extra path between %s and %s" % (st,dt))
+                    additionalResources = additionalResources.union(set(self.flattenSearchResults(search(st,dt,k=5))))
+            print("finding extra path:")
+            result=search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k)
+        finish = int(round((time.clock()-start_time) * 1000))
+        result['execution_time'] = finish
+        return result    
+
 class FallbackSearcher:
     def __init__(self, worker=Worker()):
         self.worker =worker
@@ -185,19 +253,7 @@ class FallbackSearcher:
             logger.error(sys.exc_info())
             logger.error('path between {0} and {1} not found.'.format(source, destination))
              
-def searchAllPaths(start,dest,search_blacklist=blacklist):
-    paths = list()
-    prevLenBlacklist = set(search_blacklist)
-    path = search(start,dest,prevLenBlacklist)
-    print (path)
-    new_blacklist = generateBlackList(prevLenBlacklist,path)
-    paths.append(path)
-    while len(new_blacklist) > len (prevLenBlacklist):
-        path = search(start,dest,new_blacklist)
-        prevLenBlacklist = set(new_blacklist)
-        new_blacklist = generateBlackList(new_blacklist,path)
-        paths.append(path)
-    return paths
+
 #r = search(start,dest)
 #
 #p = r['path']
@@ -219,6 +275,7 @@ def searchAllPaths(start,dest,search_blacklist=blacklist):
 #path = search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium',new_blacklist)
 ##print (len(new_blacklist))
 
-print (len(searchAllPaths('http://dbpedia.org/resource/China','http://dbpedia.org/resource/Japan',blacklist)))
+print (len(DeepSearcher().searchAllPaths('http://dbpedia.org/resource/China','http://dbpedia.org/resource/Japan',blacklist)))
+print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Gorillaz','http://dbpedia.org/resource/Brussels',blacklist))
         
     
