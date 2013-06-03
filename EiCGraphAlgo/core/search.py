@@ -150,9 +150,11 @@ class DeepSearcher:
             path = search(start,dest,new_blacklist)
             prevLenBlacklist = set(new_blacklist)
             new_blacklist = self.generateBlackList(new_blacklist,path)
-            paths.append(path)
+            if not path['path'] == False:
+                paths.append(path)
         result=dict()
         result['paths']=paths
+        result['num_found']=len(paths)
         finish = int(round((time.clock()-start_time) * 1000))
         result['execution_time']=finish
         return result
@@ -161,7 +163,7 @@ class DeepSearcher:
         """Expands a given blacklist with a found response"""
         new_blacklist = set(blacklist)
         if not response['path'] == False:
-            for step in response['path'][1:-1]:
+            for step in response['path'][2:-2]:
                 if step['type'] == 'link':
                     print (step['uri'])
                     new_blacklist.add('<%s>' % step['uri'])
@@ -202,7 +204,7 @@ class DeepSearcher:
             for st in deep_roots['start']:
                 for dt in deep_roots['dest']:
                     print ("extra path between %s and %s" % (st,dt))
-                    additionalResources = additionalResources.union(set(self.flattenSearchResults(search(st,dt,k=5))))
+                    additionalResources = additionalResources.union(set(self.flattenSearchResults(search(st,dt,k=k+1))))
             print("finding extra path:")
             result=search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k)
         finish = int(round((time.clock()-start_time) * 1000))
@@ -275,7 +277,7 @@ class FallbackSearcher:
 #path = search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium',new_blacklist)
 ##print (len(new_blacklist))
 
-print (len(DeepSearcher().searchAllPaths('http://dbpedia.org/resource/China','http://dbpedia.org/resource/Japan',blacklist)))
-print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Gorillaz','http://dbpedia.org/resource/Brussels',blacklist))
+print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
+print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Tokyo','http://dbpedia.org/resource/Brussels',blacklist))
         
     
