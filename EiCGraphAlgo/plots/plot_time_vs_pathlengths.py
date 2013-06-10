@@ -103,7 +103,8 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     
     
     try:
-        path = "/tmp/scatter_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
+        #path = "/tmp/scatter_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
+        path = "/tmp/scatter.png"
         canvas.print_figure(path)
     except:
         pass
