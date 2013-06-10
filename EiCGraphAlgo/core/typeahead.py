@@ -56,7 +56,7 @@ def prefix(prefix):
     if config.has_option('services','lookup_index'):
         lookup_server = config.get('services', 'lookup_index')
         lookup_solr = Solr(lookup_server)
-        query={'q':'lookup:{0}*'.format(prefix.lower()),'fl':'url label type','timeAllowed':'50'}
+        query={'q':'lookup:{0}*'.format(prefix.lower()),'fl':'url label type','timeAllowed':'1000'}
         response = lookup_solr.search(**query)
     
         if response.status==200 and len(response.documents) > 0:
