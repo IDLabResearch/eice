@@ -120,6 +120,7 @@ class PrefixHandler(MainHandler):
             logger.error (sys.exc_info())
         except:
             self.set_status(500)
+            logger.error (sys.exc_info())
             r = 'Something went wrong. Check the server log files for more information.'
         #self.render("login.html", notification=self.get_argument("notification","") )
         response = ujson.dumps(r)
