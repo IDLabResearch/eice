@@ -4,7 +4,7 @@ import base64
 import tornado.ioloop
 import tornado.options
 import tornado.web
-import os, sys
+import os, sys, time, signal
 from tornado.options import define, options
 from tornado.web import url
 import tornado.httpserver
@@ -16,6 +16,8 @@ from handlers import handlers_module
 logging.config.fileConfig('logging.conf')
 define("port", default=8888, type=int)
 define("config_file", default="app_config.yml", help="app_config file")
+MAX_WAIT_SECONDS_BEFORE_SHUTDOWN = 3
+
 
 # Application class
 class Application(tornado.web.Application):
@@ -49,6 +51,30 @@ class Application(tornado.web.Application):
 
 
         tornado.web.Application.__init__(self, handlers, **settings) # debug=True ,
+
+server = None
+
+def sig_handler(sig, frame):
+    logging.warning('Caught signal: %s', sig)
+    tornado.ioloop.IOLoop.instance().add_callback(shutdown)
+ 
+def shutdown():
+    logging.info('Stopping http server')
+    server.stop()
+ 
+    logging.info('Will shutdown in %s seconds ...', MAX_WAIT_SECONDS_BEFORE_SHUTDOWN)
+    io_loop = tornado.ioloop.IOLoop.instance()
+ 
+    deadline = time.time() + MAX_WAIT_SECONDS_BEFORE_SHUTDOWN
+ 
+    def stop_loop():
+        now = time.time()
+        if now < deadline and (io_loop._callbacks or io_loop._timeouts):
+            io_loop.add_timeout(now + 1, stop_loop)
+        else:
+            io_loop.stop()
+            logging.info('Shutdown')
+    stop_loop()
 
 # to redirect log file run python with : --log_file_prefix=mylog
 def main():

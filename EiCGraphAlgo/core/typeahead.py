@@ -50,9 +50,9 @@ def dbPediaPrefix(prefix):
 
 def prefix(prefix):
     results = list()
-
+    logger.debug('looking up %s on dbpedia lookup' % prefix)
     results += dbPediaPrefix(prefix)
-
+    logger.debug('looking up %s on local index' % prefix)
     if config.has_option('services','lookup_index'):
         lookup_server = config.get('services', 'lookup_index')
         lookup_solr = Solr(lookup_server)
@@ -66,5 +66,6 @@ def prefix(prefix):
                 item['uri']=doc['url']
                 item['label']=(doc['label'].split('.')[0].split('"^^')[0]).strip('\" <>.')
                 results.append(item)
+    logger.debug('done finding matches for %s' % prefix)
                 
     return results
