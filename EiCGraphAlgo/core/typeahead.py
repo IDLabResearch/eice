@@ -52,11 +52,11 @@ def prefix(prefix):
     results = list()
 
     results += dbPediaPrefix(prefix)
-        
+
     if config.has_option('services','lookup_index'):
         lookup_server = config.get('services', 'lookup_index')
         lookup_solr = Solr(lookup_server)
-        query={'q':'lookup:{0}*'.format(prefix.lower()),'fl':'url label type','timeAllowed':'5000'}
+        query={'q':'lookup:{0}*'.format(prefix.lower()),'fl':'url label type','timeAllowed':'50'}
         response = lookup_solr.search(**query)
     
         if response.status==200 and len(response.documents) > 0:
@@ -64,7 +64,7 @@ def prefix(prefix):
                 item = dict()
                 item['category']=doc['type'].split(' ')[0].rsplit('/')[-1].rsplit('#')[-1].strip('<>".')
                 item['uri']=doc['url']
-                item['label']=doc['label'].split('.')[0].split('"^^')[0].strip('<>".')
+                item['label']=(doc['label'].split('.')[0].split('"^^')[0]).strip('\" <>.')
                 results.append(item)
                 
     return results
