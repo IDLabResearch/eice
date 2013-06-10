@@ -67,4 +67,4 @@ def prefix(prefix):
                 item['label']=doc['label'].split('.')[0].split('"^^')[0].strip('<>".')
                 results.append(item)
                 
-        return results
+    return results

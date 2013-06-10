@@ -277,7 +277,7 @@ class FallbackSearcher:
 #path = search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium',new_blacklist)
 ##print (len(new_blacklist))
 
-print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
-print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Tokyo','http://dbpedia.org/resource/Brussels',blacklist))
+#print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
+#print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Tokyo','http://dbpedia.org/resource/Brussels',blacklist))
         
     
