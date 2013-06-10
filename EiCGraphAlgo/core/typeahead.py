@@ -19,7 +19,7 @@ logger = logging.getLogger('pathFinder')
 
 def dbPediaPrefix(prefix):
     server = config.get('services', 'lookup')
-    gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=12&QueryString={1}'.format(server,prefix)
+    gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=7&QueryString={1}'.format(server,prefix)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
     logger.debug('Request %s' % request)
     raw_output = urllib.request.urlopen(request, 2).read()
@@ -56,7 +56,7 @@ def prefix(prefix):
     if config.has_option('services','lookup_index'):
         lookup_server = config.get('services', 'lookup_index')
         lookup_solr = Solr(lookup_server)
-        query={'q':'lookup:{0}*'.format(prefix.lower()),'fl':'url label type','timeAllowed':'1000'}
+        query={'q':'lookup:{0}*'.format(prefix.lower()),'fl':'url label type','timeAllowed':'1000','rows':'7'}
         response = lookup_solr.search(**query)
     
         if response.status==200 and len(response.documents) > 0:
