@@ -22,7 +22,7 @@ def dbPediaPrefix(prefix):
     gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=12&QueryString={1}'.format(server,prefix)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
     logger.debug('Request %s' % request)
-    raw_output = urllib.request.urlopen(request).read()
+    raw_output = urllib.request.urlopen(request, 2).read()
     root = lxml.objectify.fromstring(raw_output)
     results = list()
     if hasattr(root, 'Result'):
