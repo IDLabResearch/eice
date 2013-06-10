@@ -111,7 +111,8 @@ class PrefixHandler(MainHandler):
         q = self.get_argument("query", "")
         #callback = self.get_argument("callback", "")
         try:
-            r =  typeahead.dbPediaPrefix(q)
+            #r =  typeahead.dbPediaPrefix(q)
+            r=typeahead.prefix(q)
         except AttributeError:
             r = []
             self.set_status(404)

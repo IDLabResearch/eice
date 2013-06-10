@@ -54,7 +54,18 @@ if os.path.isfile(os.path.dirname(__file__)+'/config_local.ini'):
 else:
     config.read(os.path.join(os.path.dirname(__file__))+'/config.ini')
     
-index_server = config.get('services', 'index')
+index_server = config.get('services', 'index_main')
+solrs = list()
+solrs.append(Solr(index_server))
+
+if config.has_option('services', 'index_second'):
+    secondary_index_server = config.get('services', 'index_second')
+    solrs.append(Solr(secondary_index_server))
+    
+if config.has_option('services','index_bu'):
+    backup_index_server = config.get('services', 'index_bu')
+    solrs.append(Solr(backup_index_server))
+
 sparql_server = config.get('services', 'sparql')
 use_remote = config.get('services', 'use_remote')
 
@@ -64,7 +75,7 @@ except:
         logger.error ("SPARQL Service down")
         sparql = None
         
-solr = Solr(index_server)
+
 
 def sindiceMatch(value, kind):
     request = "http://api.sindice.com/v3/search?q={0}&fq=domain:dbpedia.org class:{1} format:RDF&format=json".format(value, kind)
@@ -272,7 +283,29 @@ def getResourceLocal(resource):
     source = resource.strip('<>')
 
     query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
-    response = solr.search(**query)
+    response = solrs[0].search(**query)
+    
+    if response.status==200 and len(response.documents) > 0:
+        nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+        nt_cleaned = cleanResultSet(nt)
+        return nt_cleaned
+    
+    else:
+        nt_cleaned = False
+        nt = list()
+        for solr in solrs[1:]:
+            response = solr.search(**query)
+            if response.status==200 and len(response.documents) > 0:
+                nt.append(response.documents[0]['ntriple'].split('.\n')[:-1])
+        nt_cleaned = cleanResultSet(nt)
+        return nt_cleaned        
+
+def getResourceLocalDeprecated(resource):
+    """DEPRECATED Fetch properties and children from a resource given a URI in the configured local INDEX"""
+    source = resource.strip('<>')
+
+    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
+    response = solrs[0].search(**query)
     if response.status==200 and len(response.documents) > 0:
         nt = response.documents[0]['ntriple'].split('.\n')[:-1]
         nt_cleaned = cleanResultSet(nt)
@@ -286,7 +319,7 @@ def getResourceLocalWithType(resource):
     source = resource.strip('<>')
 
     query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type label','timeAllowed':'10000'}
-    response = solr.search(**query)
+    response = solrs[0].search(**query)
     if response.status==200 and len(response.documents) > 0:
         nt = response.documents[0]['ntriple'].split('.\n')[:-1]
         nt_cleaned = cleanResultSet(nt)
