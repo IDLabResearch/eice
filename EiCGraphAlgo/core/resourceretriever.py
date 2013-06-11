@@ -41,7 +41,9 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
 
 valid_domains = frozenset([
                         'dbpedia',
-                        'freebase'
+                        'freebase',
+                        'colinda',
+                        'dblp'
                            ])
 logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
@@ -296,7 +298,7 @@ def getResourceLocal(resource):
         for solr in solrs[1:]:
             response = solr.search(**query)
             if response.status==200 and len(response.documents) > 0:
-                nt.append(response.documents[0]['ntriple'].split('.\n')[:-1])
+                nt += response.documents[0]['ntriple'].split('.\n')[:-1]
         nt_cleaned = cleanResultSet(nt)
         return nt_cleaned        
 
@@ -451,5 +453,5 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-#print(getResourceLocal('http://dbpedia.org/resource/Ireland'))
+print(getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
 #bPediaLookup('Belgium')
