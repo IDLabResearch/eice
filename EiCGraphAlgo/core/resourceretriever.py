@@ -453,5 +453,5 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-print(getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
+#print(getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
 #bPediaLookup('Belgium')
