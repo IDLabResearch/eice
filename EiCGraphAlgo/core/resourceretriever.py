@@ -58,26 +58,187 @@ else:
 
 sparql_server = config.get('services', 'sparql')
 use_remote = config.get('services', 'use_remote')
-index_server = config.get('services', 'index_main')
 
 try:
         sparql = SPARQLWrapper(sparql_server)
 except:
         logger.error ("SPARQL Service down")
         sparql = None
-        
-def openSolrs():
-    solrs = list()
-    solrs.append(Solr(index_server))
+
+class Resourceretriever:
     
-    if config.has_option('services', 'index_second'):
-        secondary_index_server = config.get('services', 'index_second')
-        solrs.append(Solr(secondary_index_server))
+    def __init__(self):
+        self.solrs = self.openSolrs()
         
-    if config.has_option('services','index_bu'):
-        backup_index_server = config.get('services', 'index_bu')
-        solrs.append(Solr(backup_index_server))
-    return solrs
+    def openSolrs(self):
+        index_server = config.get('services', 'index_main')
+        solrs = list()
+        solrs.append(Solr(index_server))
+        
+        if config.has_option('services', 'index_second'):
+            secondary_index_server = config.get('services', 'index_second')
+            solrs.append(Solr(secondary_index_server))
+            
+        if config.has_option('services','index_bu'):
+            backup_index_server = config.get('services', 'index_bu')
+            solrs.append(Solr(backup_index_server))
+        return solrs
+
+    def getResourceLocal(self,resource):
+        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
+        source = resource.strip('<>')
+        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
+        response = self.solrs[0].search(**query)
+        try:
+            if response.status==200 and len(response.documents) > 0:
+                nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+                nt_cleaned = cleanResultSet(nt)
+                return nt_cleaned
+            
+            else:
+                nt_cleaned = False
+                nt = list()
+                for solr in self.solrs[1:]:
+                    if len(nt) == 0:
+                        response = solr.search(**query)
+                        if response.status==200 and len(response.documents) > 0:
+                            nt += response.documents[0]['ntriple'].split('.\n')[:-1]
+                nt_cleaned = cleanResultSet(nt)
+                return nt_cleaned
+        except: 
+            logger.error('Could not fetch resource %s' % resource)
+            return False  
+        
+    def getResourceLocalDeprecated(self, resource):
+        """DEPRECATED Fetch properties and children from a resource given a URI in the configured local INDEX"""
+        source = resource.strip('<>')
+        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
+        response = self.solrs[0].search(**query)
+        if response.status==200 and len(response.documents) > 0:
+            nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+            nt_cleaned = cleanResultSet(nt)
+            return nt_cleaned
+        
+        else:
+            return False
+        
+    def dbPediaIndexLookup(self, value, kind=""):
+        """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured INDEX"""
+        server = config.get('services', 'lookup')
+        gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(server,kind,value)
+        request = urllib.parse.quote(gateway, ':/=?<>"*&')
+        logger.debug ('Request {0}'.format(request))
+        raw_output = urllib.request.urlopen(request).read()
+        root = lxml.objectify.fromstring(raw_output)
+        results = dict()
+    
+        r = dict()
+        klasse = "Miscelaneaous"
+    
+    
+        try:
+            for result in root.Result:
+                results[result.Label[0]] = result.URI[0]
+            klasse = root.Result[0].Classes.Class[0].Label[0].text
+            
+            if value in results:
+                r['uri'] = "<%s>" % (results[value])
+                r['label'] = value
+            else: 
+                r['uri'] = "<%s>" % (root.Result.URI[0])
+                r['label'] = value
+           
+            try:
+                links = len(self.getResourceLocal(r['uri']))
+            except:
+                links = 0
+                
+            r['links'] = links
+        
+        except:
+            klasse = "misc"
+        
+        r['type'] = klasse
+    
+        return r
+
+    def getResource(self,resource):
+        """Wrapper function to find properties of a resource given the URI in the configured INDEX(es)"""
+        try:
+            local = self.getResourceLocal(resource)
+            if local:
+                return local
+            else:
+                #logger.warning("resource %s not in local index" % resource)        
+                if use_remote == 'True':
+                    logger.warning("Fetching %s remotely instead" % resource)
+                    return getResourceRemote(resource)
+                else:
+                    return False
+        except:
+            logger.error ('connection error: could not connect to index. Check the index log files for more info.')
+            return False
+    
+    
+    def dbPediaLookup(self, value, kind=""):
+        """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured SPARQL endpoint"""
+        s = sparqlQueryByLabel(value, kind)
+        if s:
+            l = self.getResourceLocal(s['uri'].strip("<>"))
+        if s and l:
+            s['links'] = len(l)
+            for triple in l:
+                if l[triple][1] in blacklist:
+                    s['links'] = s['links'] - 1
+        else:
+            s = self.dbPediaIndexLookup(value, kind)
+        return s
+    
+    def getResourceLocalWithType(self, resource):
+        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
+        source = resource.strip('<>')
+        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type label','timeAllowed':'10000'}
+        response = self.solrs[0].search(**query)
+        if response.status==200 and len(response.documents) > 0:
+            nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+            nt_cleaned = cleanResultSet(nt)
+            return nt_cleaned
+        
+        else:
+            return False
+        
+    def fetchResource(self, resource, resourcesByParent, additionalResources, blacklist):   
+        newResources = self.getResource(resource)
+        if newResources:
+            for tripleKey, triple in newResources.items():
+                targetRes = triple[2]
+                predicate = triple[1]
+                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
+                    #Add forward link  
+                    addDirectedLink(resource, targetRes, predicate, True, resourcesByParent)
+                    #Add backward link
+                    addDirectedLink(targetRes, resource, predicate, False, resourcesByParent)
+                    additionalResources.add(targetRes)
+                    
+    def describeResource(self, resource):
+        """Wrapper function to describe a resource given a URI either using INDEX lookup or via a SPARQL query"""
+        label='<http://www.w3.org/2000/01/rdf-schema#label>'
+        abstract='<http://dbpedia.org/ontology/abstract>'
+        r = self.getResource(resource)
+        response = dict()
+        if r:
+            properties = dict()
+            [properties.update({triple[1]:triple[2]}) for triple in r.values()]  
+            if label in properties:
+                response['label'] = properties[label]
+            if abstract in properties:
+                response['abstract'] = properties[label]
+        if not r or 'label' not in response or 'abstract' not in response or 'type' not in response:
+            response = sparqlQueryByUri(resource)
+            
+        if response['label'] and not 'type' in response:
+            response['type'] = self.dbPediaIndexLookup(response['label'])['type']
+        return response       
 
 def sindiceMatch(value, kind):
     request = "http://api.sindice.com/v3/search?q={0}&fq=domain:dbpedia.org class:{1} format:RDF&format=json".format(value, kind)
@@ -175,21 +336,7 @@ def sparqlQueryByLabel(value, type=""):
         return r
     else:
         return False
-
-def dbPediaLookup(value, kind=""):
-    """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured SPARQL endpoint"""
-    s = sparqlQueryByLabel(value, kind)
-    if s:
-        l = getResourceLocal(s['uri'].strip("<>"))
-    if s and l:
-        s['links'] = len(l)
-        for triple in l:
-            if l[triple][1] in blacklist:
-                s['links'] = s['links'] - 1
-    else:
-        s = dbPediaIndexLookup(value, kind)
-    return s
-
+    
 def cleanResultSet(resultSet):
     nt_cleaned = dict()
     resultSet = set(resultSet)
@@ -200,138 +347,7 @@ def cleanResultSet(resultSet):
         triple[2] = triple[2].replace('"', '')
         nt_cleaned[i] = triple
         i += 1
-    return nt_cleaned
-
-def dbPediaIndexLookup(value, kind=""):
-    """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured INDEX"""
-    server = config.get('services', 'lookup')
-    gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(server,kind,value)
-    request = urllib.parse.quote(gateway, ':/=?<>"*&')
-    logger.debug ('Request {0}'.format(request))
-    raw_output = urllib.request.urlopen(request).read()
-    root = lxml.objectify.fromstring(raw_output)
-    results = dict()
-
-    r = dict()
-    klasse = "Miscelaneaous"
-
-
-    try:
-        for result in root.Result:
-            results[result.Label[0]] = result.URI[0]
-        klasse = root.Result[0].Classes.Class[0].Label[0].text
-        
-        if value in results:
-            r['uri'] = "<%s>" % (results[value])
-            r['label'] = value
-        else: 
-            r['uri'] = "<%s>" % (root.Result.URI[0])
-            r['label'] = value
-       
-        try:
-            links = len(getResourceLocal(r['uri']))
-        except:
-            links = 0
-            
-        r['links'] = links
-    
-    except:
-        klasse = "misc"
-    
-    r['type'] = klasse
-
-    return r
-
-def getResource(resource):
-    """Wrapper function to find properties of a resource given the URI in the configured INDEX(es)"""
-    try:
-        local = getResourceLocal(resource)
-        if local:
-            return local
-        else:
-            #logger.warning("resource %s not in local index" % resource)        
-            if use_remote == 'True':
-                logger.warning("Fetching %s remotely instead" % resource)
-                return getResourceRemote(resource)
-            else:
-                return False
-    except:
-        logger.error ('connection error: could not connect to index. Check the index log files for more info.')
-        return False
-    
-
-def describeResource(resource):
-    """Wrapper function to describe a resource given a URI either using INDEX lookup or via a SPARQL query"""
-    label='<http://www.w3.org/2000/01/rdf-schema#label>'
-    abstract='<http://dbpedia.org/ontology/abstract>'
-    r = getResource(resource)
-    response = dict()
-    if r:
-        properties = dict()
-        [properties.update({triple[1]:triple[2]}) for triple in r.values()]  
-        if label in properties:
-            response['label'] = properties[label]
-        if abstract in properties:
-            response['abstract'] = properties[label]
-    if not r or 'label' not in response or 'abstract' not in response or 'type' not in response:
-        response = sparqlQueryByUri(resource)
-        
-    if response['label'] and not 'type' in response:
-        response['type'] = dbPediaIndexLookup(response['label'])['type']
-    return response      
-
-def getResourceLocal(resource):
-    """Fetch properties and children from a resource given a URI in the configured local INDEX"""
-    source = resource.strip('<>')
-    solrs = openSolrs()
-    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
-    response = solrs[0].search(**query)
-    try:
-        if response.status==200 and len(response.documents) > 0:
-            nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-            nt_cleaned = cleanResultSet(nt)
-            return nt_cleaned
-        
-        else:
-            nt_cleaned = False
-            nt = list()
-            for solr in solrs[1:]:
-                response = solr.search(**query)
-                if response.status==200 and len(response.documents) > 0:
-                    nt += response.documents[0]['ntriple'].split('.\n')[:-1]
-            nt_cleaned = cleanResultSet(nt)
-            return nt_cleaned
-    except: 
-        logger.error('Could not fetch resourece %s' % resource)
-        return False       
-
-def getResourceLocalDeprecated(resource):
-    """DEPRECATED Fetch properties and children from a resource given a URI in the configured local INDEX"""
-    source = resource.strip('<>')
-    solrs=openSolrs()
-    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
-    response = solrs[0].search(**query)
-    if response.status==200 and len(response.documents) > 0:
-        nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-        nt_cleaned = cleanResultSet(nt)
-        return nt_cleaned
-    
-    else:
-        return False
-    
-def getResourceLocalWithType(resource):
-    """Fetch properties and children from a resource given a URI in the configured local INDEX"""
-    source = resource.strip('<>')
-    solrs = openSolrs()
-    query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type label','timeAllowed':'10000'}
-    response = solrs[0].search(**query)
-    if response.status==200 and len(response.documents) > 0:
-        nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-        nt_cleaned = cleanResultSet(nt)
-        return nt_cleaned
-    
-    else:
-        return False
+    return nt_cleaned  
     
 def getResourceRemote(resource):
     """Fetch properties and children from a resource given a URI in the configured remote INDEX"""
@@ -396,18 +412,7 @@ def addDirectedLink(source, target, predicate, inverse, resourcesByParent):
     link['inverse'] = inverse
     resourcesByParent[target][source] = link
 
-def fetchResource(resource, resourcesByParent, additionalResources, blacklist):   
-    newResources = getResource(resource)
-    if newResources:
-        for tripleKey, triple in newResources.items():
-            targetRes = triple[2]
-            predicate = triple[1]
-            if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
-                #Add forward link  
-                addDirectedLink(resource, targetRes, predicate, True, resourcesByParent)
-                #Add backward link
-                addDirectedLink(targetRes, resource, predicate, False, resourcesByParent)
-                additionalResources.add(targetRes)      
+   
         
 def removeUnimportantResources(unimportant, resources):
     updated_resources = dict()
@@ -456,5 +461,6 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-print(getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
+#resourceretriever = Resourceretriever()
+#print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
 #bPediaLookup('Belgium')

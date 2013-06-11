@@ -3,12 +3,13 @@ from mako.lookup import TemplateLookup
 import ujson
 import signal, os
 import time, sys
-from core import typeahead, search,resourceretriever,graph,randompath
+from core import typeahead, search,graph,randompath
 import sys, traceback,logging
 from core import cached_pathfinder
 import handlers.time_out
 from handlers.time_out import TimeoutError
 import generateplots
+from core.resourceretriever import Resourceretriever
 
 logger = logging.getLogger('handler')
 
@@ -57,7 +58,9 @@ class AnalysisHandler(MainHandler):
         self.finish()
 
 class CacheLookupHandler(MainHandler):
-    
+    def __init__(self):
+        self.resourceretriever = Resourceretriever()
+        
     def get(self):
         uris = self.get_argument("uri", "")
         items = uris.split(",http://")
@@ -69,7 +72,7 @@ class CacheLookupHandler(MainHandler):
                 else:
                     uri = item.strip('<>')
                     
-                r =  resourceretriever.describeResource(uri)
+                r =  self.resourceretriever.describeResource(uri)
                 responses[uri] = r
             except:
                 responses[uri] = {}
@@ -83,6 +86,9 @@ class CacheLookupHandler(MainHandler):
 
 class NeighbourLookupHandler(MainHandler):
     
+    def __init__(self):
+        self.resourceretriever = Resourceretriever()
+        
     def get(self):
         uris = self.get_argument("uri", "")
         items = uris.split(",http://")
@@ -93,7 +99,7 @@ class NeighbourLookupHandler(MainHandler):
                     uri = 'http://%s' % item.strip('<>')
                 else:
                     uri = item.strip('<>')
-                r =  resourceretriever.getResourceLocal(uri)
+                r =  self.resourceretriever.getResourceLocal(uri)
                 responses[uri] = r
             except:
                 responses[uri] = {}
@@ -132,7 +138,9 @@ class PrefixHandler(MainHandler):
         self.finish()
         
 class LookupHandler(MainHandler):
-    
+    def __init__(self):
+        self.resourceretriever = Resourceretriever()
+        
     def get(self):
         label = self.get_argument("label", "")
         logger.debug(label)
@@ -142,7 +150,7 @@ class LookupHandler(MainHandler):
         responses = []
         for label in labels: 
             try:
-                entry = resourceretriever.dbPediaLookup(label, type)
+                entry = self.resourceretriever.dbPediaLookup(label, type)
                 if 'uri' in entry and 'links' in entry:
                     uri = entry['uri'].strip('<>"')
                     links = entry['links']
@@ -178,7 +186,8 @@ class StoredPathHandler(MainHandler):
         self.write(response)
         self.finish()
 
-class CachedPathHandler(MainHandler):   
+class CachedPathHandler(MainHandler):
+    
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
         
@@ -197,6 +206,7 @@ class CachedPathHandler(MainHandler):
         self.finish()
      
 class SearchHandler(MainHandler):
+    
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
         

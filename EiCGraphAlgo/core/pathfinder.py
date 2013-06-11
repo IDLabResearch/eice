@@ -2,9 +2,10 @@ import numpy as np
 import scipy
 import networkx as nx
 from scipy import linalg, spatial
-from core import resourceretriever, graph
+from core import graph, resourceretriever
 import time, gc, sys, logging
 from core.worker_pool import Worker
+from core.resourceretriever import Resourceretriever
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -29,6 +30,7 @@ class PathFinder:
         self.initMatrix(s1, s2)
         self.threshold = threshold
         self.checked_resources = 0
+        self.resourceretriever = Resourceretriever()
         
         
     def initMatrix(self, source1, source2):
@@ -77,24 +79,24 @@ class PathFinder:
         for key in self.resources:
             prevResources.add(self.resources[key])
         
-        self.worker.startQueue(resourceretriever.fetchResource, num_of_threads=32)
+        self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
         
         if len(additionalRes) == 0: 
             
             for resource in prevResources:
                 item = [resource, self.resources_by_parent, additionalResources, blacklist]
-                self.worker.queueFunction(resourceretriever.fetchResource, item)
+                self.worker.queueFunction(self.resourceretriever.fetchResource, item)
             
-            self.worker.waitforFunctionsFinish(resourceretriever.fetchResource)
+            self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
         
         else:
             logger.info('Special search iteration: Deep search')
             for resource in additionalRes:
                 
                 item = [resource, self.resources_by_parent, additionalResources, blacklist]
-                self.worker.queueFunction(resourceretriever.fetchResource, item)
+                self.worker.queueFunction(self.resourceretriever.fetchResource, item)
                 
-            self.worker.waitforFunctionsFinish(resourceretriever.fetchResource)
+            self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
             
         
         toAddResources = list(additionalResources - prevResources)    
@@ -270,7 +272,7 @@ class PathFinder:
         q = self.worker.getQueue(self.resourceFetcher)
         while True:
             item = q.get()
-            resourceretriever.fetchResource(item[0], item[1], item[2], item[3])
+            self.resourceretriever.fetchResource(item[0], item[1], item[2], item[3])
             q.task_done()
                 
     def getResourcesByParent(self):
