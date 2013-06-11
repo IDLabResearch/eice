@@ -180,7 +180,7 @@ class DeepSearcher:
         return flattened_path
         
         
-    def searchDeep(self, start,dest,search_blacklist,k=4,s=4):
+    def searchDeep(self, start,dest,search_blacklist=blacklist,k=4,s=4):
         """Searches a path between two resources start and dest
     
         **Parameters**
