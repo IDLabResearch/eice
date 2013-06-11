@@ -9,12 +9,15 @@ import logging
 import sys
 import configparser
 import os
+import rdflib
+import tempfile
 
 #Define properties to ignore:
-blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
+blacklist = frozenset([
+             '<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://dbpedia.org/property/title>',
              '<http://dbpedia.org/ontology/abstract>',
-             '<http://xmlns.com/foaf/0.1/page>',
+             #'<http://xmlns.com/foaf/0.1/page>',
              '<http://dbpedia.org/property/wikiPageUsesTemplate>',
              '<http://dbpedia.org/ontology/wikiPageExternalLink>',
              #'<http://dbpedia.org/ontology/wikiPageRedirects>',
@@ -25,11 +28,11 @@ blacklist = frozenset(['<http://dbpedia.org/ontology/wikiPageWikiLink>',
              '<http://dbpedia.org/ontology/language>',
              '<http://purl.org/dc/elements/1.1/description>',
              '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>',
-             '<http://www.w3.org/2002/07/owl#sameAs>',
+             #'<http://www.w3.org/2002/07/owl#sameAs>',
              '<http://purl.org/dc/terms/subject>',
-             '<http://dbpedia.org/property/website>',
+             #'<http://dbpedia.org/property/website>',
              '<http://dbpedia.org/property/label>',
-             '<http://xmlns.com/foaf/0.1/homepage>',
+             #'<http://xmlns.com/foaf/0.1/homepage>',
              '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
              '<http://dbpedia.org/ontology/thumbnail>',
              '<http://xmlns.com/foaf/0.1/depiction>',
@@ -45,6 +48,7 @@ valid_domains = frozenset([
                         'colinda',
                         'dblp'
                            ])
+
 logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()
 mappings = configparser.ConfigParser()
@@ -84,6 +88,31 @@ class Resourceretriever:
             solrs.append(Solr(backup_index_server))
         return solrs
 
+    def getResourceLocalInverse(self,resource):
+        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
+        source = resource.strip('<>')
+        query={'nq':'* * <{0}>'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
+        response = self.solrs[0].search(**query)
+        try:
+            if response.status==200 and len(response.documents) > 0:
+                nt = response.documents[0]['ntriple']
+                nt_cleaned = cleanInversResultSet(nt,source)
+                return nt_cleaned
+            
+            else:
+                nt_cleaned = False
+                nt = ""
+                for solr in self.solrs[1:]:
+                    if len(nt) == 0:
+                        response = solr.search(**query)
+                        if response.status==200 and len(response.documents) > 0:
+                            nt += response.documents[0]['ntriple']
+                nt_cleaned = cleanInversResultSet(nt,source)
+                return nt_cleaned
+        except: 
+            logger.error('Could not fetch resource %s' % resource)
+            return False  
+    
     def getResourceLocal(self,resource):
         """Fetch properties and children from a resource given a URI in the configured local INDEX"""
         source = resource.strip('<>')
@@ -213,7 +242,7 @@ class Resourceretriever:
             for tripleKey, triple in newResources.items():
                 targetRes = triple[2]
                 predicate = triple[1]
-                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
+                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>'): #and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
                     #Add forward link  
                     addDirectedLink(resource, targetRes, predicate, True, resourcesByParent)
                     #Add backward link
@@ -336,7 +365,27 @@ def sparqlQueryByLabel(value, type=""):
         return r
     else:
         return False
-    
+
+def cleanInversResultSet(resultSet, target):
+    memory_store = rdflib.plugin.get('IOMemory', rdflib.graph.Store)()
+    g=rdflib.Graph(memory_store)
+    g.parse(data=resultSet, format="nt")
+    qres = g.query(
+    """SELECT DISTINCT ?s ?p
+       WHERE {
+          ?s ?p <%s> .
+       }""" % target)
+    nt_cleaned = dict()
+    i = 0
+    for row in qres:
+        triple = list()
+        triple.append("<%s>" %str(row['s']))
+        triple.append("<%s>" %str(row['p']))
+        triple.append("<%s>" % target)
+        nt_cleaned[i] = triple
+        i += 1
+    return nt_cleaned
+        
 def cleanResultSet(resultSet):
     nt_cleaned = dict()
     resultSet = set(resultSet)
@@ -464,4 +513,5 @@ def importantResources(u, rank):
 resourceretriever = Resourceretriever()
 #print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
 print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
+print(resourceretriever.getResourceLocalInverse('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #bPediaLookup('Belgium')
