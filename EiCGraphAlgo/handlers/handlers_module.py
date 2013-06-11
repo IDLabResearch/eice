@@ -58,7 +58,8 @@ class AnalysisHandler(MainHandler):
         self.finish()
 
 class CacheLookupHandler(MainHandler):
-    def __init__(self):
+    
+    def initialize(self):
         self.resourceretriever = Resourceretriever()
         
     def get(self):
@@ -86,7 +87,7 @@ class CacheLookupHandler(MainHandler):
 
 class NeighbourLookupHandler(MainHandler):
     
-    def __init__(self):
+    def initialize(self):
         self.resourceretriever = Resourceretriever()
         
     def get(self):
@@ -138,7 +139,8 @@ class PrefixHandler(MainHandler):
         self.finish()
         
 class LookupHandler(MainHandler):
-    def __init__(self):
+    
+    def initialize(self):
         self.resourceretriever = Resourceretriever()
         
     def get(self):
