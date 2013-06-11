@@ -55,21 +55,10 @@ if os.path.isfile(os.path.dirname(__file__)+'/config_local.ini'):
     config.read(os.path.join(os.path.dirname(__file__))+'/config_local.ini')
 else:
     config.read(os.path.join(os.path.dirname(__file__))+'/config.ini')
-    
-index_server = config.get('services', 'index_main')
-solrs = list()
-solrs.append(Solr(index_server))
-
-if config.has_option('services', 'index_second'):
-    secondary_index_server = config.get('services', 'index_second')
-    solrs.append(Solr(secondary_index_server))
-    
-if config.has_option('services','index_bu'):
-    backup_index_server = config.get('services', 'index_bu')
-    solrs.append(Solr(backup_index_server))
 
 sparql_server = config.get('services', 'sparql')
 use_remote = config.get('services', 'use_remote')
+index_server = config.get('services', 'index_main')
 
 try:
         sparql = SPARQLWrapper(sparql_server)
@@ -77,7 +66,18 @@ except:
         logger.error ("SPARQL Service down")
         sparql = None
         
-
+def openSolrs():
+    solrs = list()
+    solrs.append(Solr(index_server))
+    
+    if config.has_option('services', 'index_second'):
+        secondary_index_server = config.get('services', 'index_second')
+        solrs.append(Solr(secondary_index_server))
+        
+    if config.has_option('services','index_bu'):
+        backup_index_server = config.get('services', 'index_bu')
+        solrs.append(Solr(backup_index_server))
+    return solrs
 
 def sindiceMatch(value, kind):
     request = "http://api.sindice.com/v3/search?q={0}&fq=domain:dbpedia.org class:{1} format:RDF&format=json".format(value, kind)
@@ -283,7 +283,7 @@ def describeResource(resource):
 def getResourceLocal(resource):
     """Fetch properties and children from a resource given a URI in the configured local INDEX"""
     source = resource.strip('<>')
-
+    solrs = openSolrs()
     query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
     response = solrs[0].search(**query)
     
@@ -305,7 +305,7 @@ def getResourceLocal(resource):
 def getResourceLocalDeprecated(resource):
     """DEPRECATED Fetch properties and children from a resource given a URI in the configured local INDEX"""
     source = resource.strip('<>')
-
+    solrs=openSolrs()
     query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
     response = solrs[0].search(**query)
     if response.status==200 and len(response.documents) > 0:
@@ -319,7 +319,7 @@ def getResourceLocalDeprecated(resource):
 def getResourceLocalWithType(resource):
     """Fetch properties and children from a resource given a URI in the configured local INDEX"""
     source = resource.strip('<>')
-
+    solrs = openSolrs()
     query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type label','timeAllowed':'10000'}
     response = solrs[0].search(**query)
     if response.status==200 and len(response.documents) > 0:
@@ -453,5 +453,5 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-#print(getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
+print(getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
 #bPediaLookup('Belgium')
