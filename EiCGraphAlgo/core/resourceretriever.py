@@ -286,21 +286,24 @@ def getResourceLocal(resource):
     solrs = openSolrs()
     query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
     response = solrs[0].search(**query)
-    
-    if response.status==200 and len(response.documents) > 0:
-        nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-        nt_cleaned = cleanResultSet(nt)
-        return nt_cleaned
-    
-    else:
-        nt_cleaned = False
-        nt = list()
-        for solr in solrs[1:]:
-            response = solr.search(**query)
-            if response.status==200 and len(response.documents) > 0:
-                nt += response.documents[0]['ntriple'].split('.\n')[:-1]
-        nt_cleaned = cleanResultSet(nt)
-        return nt_cleaned        
+    try:
+        if response.status==200 and len(response.documents) > 0:
+            nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+            nt_cleaned = cleanResultSet(nt)
+            return nt_cleaned
+        
+        else:
+            nt_cleaned = False
+            nt = list()
+            for solr in solrs[1:]:
+                response = solr.search(**query)
+                if response.status==200 and len(response.documents) > 0:
+                    nt += response.documents[0]['ntriple'].split('.\n')[:-1]
+            nt_cleaned = cleanResultSet(nt)
+            return nt_cleaned
+    except: 
+        logger.error('Could not fetch resourece %s' % resource)
+        return False       
 
 def getResourceLocalDeprecated(resource):
     """DEPRECATED Fetch properties and children from a resource given a URI in the configured local INDEX"""
