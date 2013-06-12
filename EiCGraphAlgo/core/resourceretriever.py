@@ -62,6 +62,7 @@ else:
 
 sparql_server = config.get('services', 'sparql')
 use_remote = config.get('services', 'use_remote')
+use_inverse = config.get('services', 'use_inverse')
 
 try:
         sparql = SPARQLWrapper(sparql_server)
@@ -193,20 +194,32 @@ class Resourceretriever:
 
     def getResource(self,resource):
         """Wrapper function to find properties of a resource given the URI in the configured INDEX(es)"""
+        response = dict()
         try:
+            inverse = False
             local = self.getResourceLocal(resource)
             if local:
-                return local
+                response.update(local)
+                
+            if use_inverse == 'True':
+                inverse = self.getResourceLocalInverse(resource)
+                if inverse:
+                    base = len(response)
+                    for key in inverse:
+                        response[int(key)+base] = inverse[key]
+
             else:
                 #logger.warning("resource %s not in local index" % resource)        
                 if use_remote == 'True':
                     logger.warning("Fetching %s remotely instead" % resource)
-                    return getResourceRemote(resource)
+                    response = getResourceRemote(resource)
                 else:
-                    return False
+                    response = False
         except:
             logger.error ('connection error: could not connect to index. Check the index log files for more info.')
-            return False
+            response = False
+            
+        return response
     
     
     def dbPediaLookup(self, value, kind=""):
@@ -461,8 +474,6 @@ def addDirectedLink(source, target, predicate, inverse, resourcesByParent):
     link['inverse'] = inverse
     resourcesByParent[target][source] = link
 
-   
-        
 def removeUnimportantResources(unimportant, resources):
     updated_resources = dict()
     for u in unimportant:
@@ -511,7 +522,7 @@ def importantResources(u, rank):
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
 resourceretriever = Resourceretriever()
-#print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/publications/conf/er/YangLL03'))
+print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 print(resourceretriever.getResourceLocalInverse('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #bPediaLookup('Belgium')
