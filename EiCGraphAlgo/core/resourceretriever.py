@@ -255,15 +255,22 @@ class Resourceretriever:
         
     def fetchResource(self, resource, resourcesByParent, additionalResources, blacklist):   
         newResources = self.getResource(resource)
+        print(newResources)
         if newResources:
             for tripleKey, triple in newResources.items():
-                targetRes = triple[2]
+                inverse = False
+                if resource == triple[0]:
+                    targetRes = triple[2]
+                else:
+                    targetRes = triple[0]
+                    inverse = True
                 predicate = triple[1]
+                
                 if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
                     #Add forward link  
-                    addDirectedLink(resource, targetRes, predicate, True, resourcesByParent)
+                    addDirectedLink(resource, targetRes, predicate, not inverse, resourcesByParent)
                     #Add backward link
-                    addDirectedLink(targetRes, resource, predicate, False, resourcesByParent)
+                    addDirectedLink(targetRes, resource, predicate, inverse, resourcesByParent)
                     additionalResources.add(targetRes)
                     
     def describeResource(self, resource):
@@ -530,7 +537,7 @@ def importantResources(u, rank):
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
 resourceretriever = Resourceretriever()
-#print(resourceretriever.getResource('http://dbpedia.org/resource/Gorillaz'))
-#print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
+print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
+print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #print(resourceretriever.getResourceLocalInverse('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #bPediaLookup('Belgium')
