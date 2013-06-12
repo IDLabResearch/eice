@@ -279,7 +279,9 @@ class FallbackSearcher:
 
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
+#print("search")
 #print (search('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
-#print (search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dbpedia.org/resource/Brussels',blacklist))
+#print (search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
+#print (search('http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
         
     

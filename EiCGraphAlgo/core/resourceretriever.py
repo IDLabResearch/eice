@@ -92,11 +92,13 @@ class Resourceretriever:
     def getResourceLocalInverse(self,resource):
         """Fetch properties and children from a resource given a URI in the configured local INDEX"""
         source = resource.strip('<>')
-        query={'nq':'* * <{0}>'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
+        query={'nq':'* * <{0}>'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'10000'}
         response = self.solrs[0].search(**query)
         try:
             if response.status==200 and len(response.documents) > 0:
-                nt = response.documents[0]['ntriple']
+                nt = ""
+                for document in response.documents:
+                    nt += document['ntriple']
                 nt_cleaned = cleanInversResultSet(nt,source)
                 return nt_cleaned
             
@@ -107,11 +109,13 @@ class Resourceretriever:
                     if len(nt) == 0:
                         response = solr.search(**query)
                         if response.status==200 and len(response.documents) > 0:
-                            nt += response.documents[0]['ntriple']
+                            for document in response.documents:
+                                nt += document['ntriple']
                 nt_cleaned = cleanInversResultSet(nt,source)
                 return nt_cleaned
         except: 
-            logger.error('Could not fetch resource %s' % resource)
+            logger.error('Could not fetch resource inverse %s' % resource)
+            print (sys.exc_info())
             return False  
     
     def getResourceLocal(self,resource):
@@ -255,7 +259,7 @@ class Resourceretriever:
             for tripleKey, triple in newResources.items():
                 targetRes = triple[2]
                 predicate = triple[1]
-                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>'): #and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
+                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
                     #Add forward link  
                     addDirectedLink(resource, targetRes, predicate, True, resourcesByParent)
                     #Add backward link
@@ -382,21 +386,25 @@ def sparqlQueryByLabel(value, type=""):
 def cleanInversResultSet(resultSet, target):
     memory_store = rdflib.plugin.get('IOMemory', rdflib.graph.Store)()
     g=rdflib.Graph(memory_store)
-    g.parse(data=resultSet, format="nt")
-    qres = g.query(
-    """SELECT DISTINCT ?s ?p
-       WHERE {
-          ?s ?p <%s> .
-       }""" % target)
-    nt_cleaned = dict()
-    i = 0
-    for row in qres:
-        triple = list()
-        triple.append("<%s>" %str(row['s']))
-        triple.append("<%s>" %str(row['p']))
-        triple.append("<%s>" % target)
-        nt_cleaned[i] = triple
-        i += 1
+    try:
+        g.parse(data=resultSet, format="nt")
+        qres = g.query(
+        """SELECT DISTINCT ?s ?p
+           WHERE {
+              ?s ?p <%s> .
+           }""" % target)
+        nt_cleaned = dict()
+        i = 0
+        for row in qres:
+            triple = list()
+            triple.append("<%s>" %str(row['s']))
+            triple.append("<%s>" %str(row['p']))
+            triple.append("<%s>" % target)
+            nt_cleaned[i] = triple
+            i += 1
+    except:
+        logger.warning('Parsing failed for %s' % target)
+        nt_cleaned = False
     return nt_cleaned
         
 def cleanResultSet(resultSet):
@@ -522,7 +530,7 @@ def importantResources(u, rank):
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
 resourceretriever = Resourceretriever()
-print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
-print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
-print(resourceretriever.getResourceLocalInverse('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
+#print(resourceretriever.getResource('http://dbpedia.org/resource/Gorillaz'))
+#print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
+#print(resourceretriever.getResourceLocalInverse('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #bPediaLookup('Belgium')
