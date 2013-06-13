@@ -10,6 +10,7 @@ import sys
 import configparser
 import os
 import rdflib
+import sys
 import tempfile
 
 #Define properties to ignore:
@@ -411,6 +412,7 @@ def cleanInversResultSet(resultSet, target):
             i += 1
     except:
         logger.warning('Parsing failed for %s' % target)
+        print (sys.exc_info())
         nt_cleaned = False
     return nt_cleaned
         
@@ -536,8 +538,8 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-resourceretriever = Resourceretriever()
-print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
-print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
+#resourceretriever = Resourceretriever()
+#print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
+#print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #print(resourceretriever.getResourceLocalInverse('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #bPediaLookup('Belgium')
