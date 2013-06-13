@@ -82,11 +82,11 @@ except:
         logger.error ("SPARQL Service down")
         sparql = None
 print ("""
-     _\n
-   _(_)_\n
-  (_)+(_)\n
-     |\n
-    _-_\n""")
+     _
+   _(_)_
+  (_)+(_)
+     |
+    _-_""")
 print ("EiCE Server running on: %s :)" % sys.platform)
 
 class Resourceretriever:
