@@ -3,13 +3,14 @@ from mako.lookup import TemplateLookup
 import ujson
 import signal, os
 import time, sys
-from core import typeahead, search,graph,randompath
+from core import typeahead,graph,randompath
 import sys, traceback,logging
 from core import cached_pathfinder
 import handlers.time_out
 from handlers.time_out import TimeoutError
 import generateplots
 from core.resourceretriever import Resourceretriever
+from core.search import Searcher, DeepSearcher
 import threading
 from multiprocessing import Process, Queue
 
@@ -223,13 +224,14 @@ class SearchHandler(MainHandler):
             
             def main(q):
                 print ('Main Search started')
-                r = search.search(source,destination)
+                searcher = Searcher()
+                r = searcher.search(source,destination)
                 print ('Main Search finished')
                 q.put(r)
                 
             def deep(q):
                 print ('Deep Search started')
-                f = search.DeepSearcher()
+                f = DeepSearcher()
                 r = f.searchDeep(source, destination)
                 r['execution_time'] = str(int(self.r['execution_time']) + 32000)
                 print ('Deep Search finished')
