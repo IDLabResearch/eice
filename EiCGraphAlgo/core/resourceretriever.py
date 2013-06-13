@@ -83,7 +83,7 @@ except:
         sparql = None
 print ("""
      _
-   _(_)_
+   _(A)_
   (_)+(_)
      |
     _-_""")
