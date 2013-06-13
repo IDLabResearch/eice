@@ -7,19 +7,16 @@ import time, gc, sys, logging
 from core.worker_pool import Worker
 from core.resourceretriever import Resourceretriever
 
-logger = logging.getLogger('pathFinder')
-query_log = logging.getLogger('query')
-
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
     Besides the adjacency matrix it also holds the fetched resources in a hash set.
     """
-    resources = dict()
-    resources_by_parent = dict()
-    iteration = 0
 
     def __init__(self,s1,s2,threshold=1.1):
         """Initialization of all required containers"""
+        print ('init pathfinder')
+        self.logger = logging.getLogger('pathFinder')
+        self.query_log = logging.getLogger('query')
         self.worker = Worker()
         self.resources_s1 = set()
         self.resources_s2 = set()
@@ -27,15 +24,19 @@ class PathFinder:
         self.resources_inverse_index = dict()
         self.resources_by_parent = dict()   
         self.storedResources = dict()  
-        self.initMatrix(s1, s2)
         self.threshold = threshold
         self.checked_resources = 0
+        print ('done init pathfinder')
         self.resourceretriever = Resourceretriever()
+        self.iteration = 0
+        print('init matrix')
+        self.initMatrix(s1, s2)
+        print('done init matrix')
         
-        
+
     def initMatrix(self, source1, source2):
         """Initialization of the adjacency matrix based on input source and destination."""
-        query_log.info('Path between {0} and {1}'.format(source1,source2))
+        self.query_log.info('Path between {0} and {1}'.format(source1,source2))
         s1 = '<%s>' % source1
         s2 = '<%s>' % source2
         self.resources[0] = s1
@@ -65,12 +66,12 @@ class PathFinder:
         response : stateGraph
             contains the updated adjacency matrix after fetching new resources
         """
-        logger.info ('--- NEW ITERATION ---')
-        logger.info ('Existing resources {0}'.format(str(len(self.resources))))
-        logger.info ('Indexed resources by parents {0}'.format(str(len(self.resources_by_parent))))
-        logger.info ('Grandmother: {0}'.format(self.resources[0]))
-        logger.info ('Grandfather: {0}'.format(self.resources[1]))
-        logger.info ('--- --- ---')
+        self.logger.info ('--- NEW ITERATION ---')
+        self.logger.info ('Existing resources {0}'.format(str(len(self.resources))))
+        self.logger.info ('Indexed resources by parents {0}'.format(str(len(self.resources_by_parent))))
+        self.logger.info ('Grandmother: {0}'.format(self.resources[0]))
+        self.logger.info ('Grandfather: {0}'.format(self.resources[1]))
+        self.logger.info ('--- --- ---')
         
         start = time.clock()
         prevResources = set()
@@ -90,7 +91,7 @@ class PathFinder:
             self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
         
         else:
-            logger.info('Special search iteration: Deep search')
+            self.logger.info('Special search iteration: Deep search')
             for resource in additionalRes:
                 
                 item = [resource, self.resources_by_parent, additionalResources, blacklist]
@@ -104,7 +105,7 @@ class PathFinder:
         
         gc.collect()
         
-        logger.info('Updated indexed resources with parents {0}'.format(str(len(self.resources_by_parent))))    
+        self.logger.info('Updated indexed resources with parents {0}'.format(str(len(self.resources_by_parent))))    
         
         n = len(self.resources)
         
@@ -112,17 +113,17 @@ class PathFinder:
             self.resources[n] = resource
             n = n + 1
             
-        logger.info ('Total resources: %s' % str(n))
+        self.logger.info ('Total resources: %s' % str(n))
 
         self.checked_resources += len(additionalResources)
             
         halt1 = time.clock()
-        logger.info ('resource gathering: %s' % str(halt1 - start))
+        self.logger.info ('resource gathering: %s' % str(halt1 - start))
         self.stateGraph = np.zeros(shape=(n, n), dtype=np.byte)
         
         [self.buildGraph(i, n) for i in range(n)]
         halt2 = time.clock()
-        logger.info ('graph construction: %s' % str(halt2 - halt1))
+        self.logger.info ('graph construction: %s' % str(halt2 - halt1))
         
         #For next iteration, e.g. if no path was found
         #Check for singular values to reduce dimensions of existing resources
@@ -130,13 +131,13 @@ class PathFinder:
         
         if not graph.pathExists(self.stateGraph) and self.iteration > 1:
             try:
-                logger.info ('reducing matrix')
-                logger.debug (len(self.stateGraph))
+                self.logger.info ('reducing matrix')
+                self.logger.debug (len(self.stateGraph))
                 k = np.int((1-np.divide(1,self.iteration))*250)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
-                logger.debug(k)
+                self.logger.debug(k)
                 
                 #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
                 
@@ -151,14 +152,14 @@ class PathFinder:
                 unimportant = res[k:]
                 self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
                 halt3 = time.clock()
-                logger.info ('rank reducing: %s' % str(halt3 - halt2))
-                logger.info('Updated resources amount: %s' % str(len(self.resources)))
+                self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
+                self.logger.info('Updated resources amount: %s' % str(len(self.resources)))
             except:
-                logger.error ('Graph is empty')
-                logger.error (sys.exc_info())
+                self.logger.error ('Graph is empty')
+                self.logger.error (sys.exc_info())
         
-        logger.info ('total %s' % str(time.clock()-start))
-        logger.info ('=== === ===')
+        self.logger.info ('total %s' % str(time.clock()-start))
+        self.logger.info ('=== === ===')
         self.iteration+=1
         return self.stateGraph
     
@@ -171,7 +172,7 @@ class PathFinder:
             elif any(e in self.resources_s2 for e in self.resources_by_parent[resource] ):
                 self.resources_s2.add(resource)
             else:
-                logger.warning ('resource %s does not belong to any parent' % resource)
+                self.logger.warning ('resource %s does not belong to any parent' % resource)
           
         start = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s1], k)
         dest = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s2], k)
@@ -194,15 +195,15 @@ class PathFinder:
         [self.buildSubGraph(i, n, node_list) for i in range(n)]
 
         try:
-            logger.debug (len(self.stateGraph))
+            self.logger.debug (len(self.stateGraph))
             h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
 
             res = list(sorted(h, key=h.__getitem__, reverse=True))
 
             important = res[:k]          
         except:
-            logger.error ('Graph is empty')
-            logger.error (sys.exc_info())
+            self.logger.error ('Graph is empty')
+            self.logger.error (sys.exc_info())
         
         dereffed_list = set([self.sub(i, node_list) for i in important])
         dereffed_list.discard(0)
@@ -263,9 +264,9 @@ class PathFinder:
         
         except:
             row[j] = 0
-            logger.error ('error %s not found in list of resources' % str(j))
-            logger.error (self.resources)
-            logger.error (sys.exc_info())
+            self.logger.error ('error %s not found in list of resources' % str(j))
+            self.logger.error (self.resources)
+            self.logger.error (sys.exc_info())
             
     
     def resourceFetcher(self):

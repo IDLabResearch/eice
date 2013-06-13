@@ -38,7 +38,10 @@ blacklist = resourceretriever.blacklist
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
 class Searcher:
-    
+    def __init__(self):
+        self.logger = logging.getLogger('pathFinder')
+        self.query_log = logging.getLogger('query')
+        
     def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10):
         """Searches a path between two resources start and dest
     
@@ -61,6 +64,7 @@ class Searcher:
             contains execution time, path if found, hash
     
         """
+        #print ('starting search')
         #START
         start_time = time.clock()
         
@@ -72,7 +76,7 @@ class Searcher:
             p = givenP
             p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes)
             
-        
+
         paths = None #Initially no paths exist
         
         #Iteration 1
@@ -84,13 +88,15 @@ class Searcher:
             if not paths == None:
                 if len(paths) > 0:
                     break
-            
-            logger.info ('=== %s-- ===' % str(p.iteration))
+
+            self.logger.info ('=== %s-- ===' % str(p.iteration))
+
             gc.collect()
             m = p.iterateMatrix(blacklist=search_blacklist)
             halt_path = time.clock()
             paths = graph.path(p)
-            logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
+            self.logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
+
             if p.iteration == k:
                 break
         resolvedPaths = list()
@@ -127,10 +133,10 @@ class Searcher:
             file = r['hash']
             pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
         except:
-            logger.warning('could not log and store path between {0} and {1}'.format(start,dest))
-            logger.error(sys.exc_info())
-        query_log.info(r)
-        logger.debug(r)
+            self.logger.warning('could not log and store path between {0} and {1}'.format(start,dest))
+            self.logger.error(sys.exc_info())
+        self.query_log.info(r)
+        self.logger.debug(r)
         result = dict()
         result['path'] = r['path']
         result['hash'] = r['hash']
@@ -148,7 +154,6 @@ class DeepSearcher:
         paths = list()
         prevLenBlacklist = set(search_blacklist)
         path = self.searcher.search(start,dest,prevLenBlacklist)
-        print (path)
         new_blacklist = self.generateBlackList(prevLenBlacklist,path)
         paths.append(path)
         while len(new_blacklist) > len (prevLenBlacklist):
@@ -209,7 +214,6 @@ class DeepSearcher:
                 for dt in deep_roots['dest']:
                     logger.debug ("extra path between %s and %s" % (st,dt))
                     additionalResources = additionalResources.union(set(self.flattenSearchResults(self.searcher.search(st,dt,k=2*k))))
-            print("finding extra path:")
             result=self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k)
         finish = int(round((time.clock()-start_time) * 1000))
         result['execution_time'] = finish
@@ -288,6 +292,6 @@ class FallbackSearcher:
 #searcher = Searcher()
 #print (searcher.search('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
-#print (search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
+#print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
     

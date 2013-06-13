@@ -12,6 +12,7 @@ import os
 import rdflib
 import sys
 import tempfile
+import mysolr
 
 #Define properties to ignore:
 blacklist = frozenset([
@@ -64,31 +65,39 @@ else:
 sparql_server = config.get('services', 'sparql')
 use_remote = config.get('services', 'use_remote')
 use_inverse = config.get('services', 'use_inverse')
+index_server = config.get('services', 'index_main')
 
+solrs = list()
+solr = mysolr.Solr(index_server)
+solrs.append(solr)
+if config.has_option('services', 'index_second'):
+    secondary_index_server = config.get('services', 'index_second')
+    solrs.append(Solr(secondary_index_server))
+if config.has_option('services','index_bu'):
+    backup_index_server = config.get('services', 'index_bu')
+    solrs.append(Solr(backup_index_server))
 try:
         sparql = SPARQLWrapper(sparql_server)
 except:
         logger.error ("SPARQL Service down")
         sparql = None
+print ("""
+     _\n
+   _(_)_\n
+  (_)+(_)\n
+     |\n
+    _-_\n""")
+print ("EiCE Server running on: %s :)" % sys.platform)
 
 class Resourceretriever:
     
     def __init__(self):
-        self.solrs = self.openSolrs()
+        self.logger = logging.getLogger('pathFinder')
+        self.openSolrs()
         
     def openSolrs(self):
-        index_server = config.get('services', 'index_main')
-        solrs = list()
-        solrs.append(Solr(index_server))
-        
-        if config.has_option('services', 'index_second'):
-            secondary_index_server = config.get('services', 'index_second')
-            solrs.append(Solr(secondary_index_server))
-            
-        if config.has_option('services','index_bu'):
-            backup_index_server = config.get('services', 'index_bu')
-            solrs.append(Solr(backup_index_server))
-        return solrs
+        self.config = config
+        self.solrs = solrs
 
     def getResourceLocalInverse(self,resource):
         """Fetch properties and children from a resource given a URI in the configured local INDEX"""
@@ -115,7 +124,7 @@ class Resourceretriever:
                 nt_cleaned = cleanInversResultSet(nt,source)
                 return nt_cleaned
         except: 
-            logger.error('Could not fetch resource inverse %s' % resource)
+            self.logger.error('Could not fetch resource inverse %s' % resource)
             return False  
     
     def getResourceLocal(self,resource):
@@ -140,7 +149,7 @@ class Resourceretriever:
                 nt_cleaned = cleanResultSet(nt)
                 return nt_cleaned
         except: 
-            logger.error('Could not fetch resource %s' % resource)
+            self.logger.error('Could not fetch resource %s' % resource)
             return False  
         
     def getResourceLocalDeprecated(self, resource):
@@ -158,10 +167,10 @@ class Resourceretriever:
         
     def dbPediaIndexLookup(self, value, kind=""):
         """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured INDEX"""
-        server = config.get('services', 'lookup')
+        server = self.config.get('services', 'lookup')
         gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(server,kind,value)
         request = urllib.parse.quote(gateway, ':/=?<>"*&')
-        logger.debug ('Request {0}'.format(request))
+        self.logger.debug ('Request {0}'.format(request))
         raw_output = urllib.request.urlopen(request).read()
         root = lxml.objectify.fromstring(raw_output)
         results = dict()
@@ -206,24 +215,24 @@ class Resourceretriever:
                 response.update(local)
                 
             if use_inverse == 'True' and len(response) > 0:
-                print ('direct links %s for resource: %s' %((len(response)), resource))
+                #print ('direct links %s for resource: %s' %((len(response)), resource))
                 inverse = self.getResourceLocalInverse(resource)
                 if inverse:
                     base = len(response)
                     
                     for key in inverse:
                         response[int(key)+base] = inverse[key]
-                    print ('total links %s for resource: %s' %((len(response)), resource))
+                    #print ('total links %s for resource: %s' %((len(response)), resource))
 
             else:
                 #logger.warning("resource %s not in local index" % resource)        
                 if use_remote == 'True':
-                    logger.warning("Fetching %s remotely instead" % resource)
+                    self.logger.warning("Fetching %s remotely instead" % resource)
                     response = getResourceRemote(resource)
                 else:
                     response = False
         except:
-            logger.error ('connection error: could not connect to index. Check the index log files for more info.')
+            self.logger.error ('connection error: could not connect to index. Check the index log files for more info.')
             response = False
             
         return response
