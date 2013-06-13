@@ -205,12 +205,15 @@ class Resourceretriever:
             if local:
                 response.update(local)
                 
-            if use_inverse == 'True':
+            if use_inverse == 'True' and len(response) > 0:
+                print ('direct links %s for resource: %s' %((len(response)), resource))
                 inverse = self.getResourceLocalInverse(resource)
                 if inverse:
                     base = len(response)
+                    
                     for key in inverse:
                         response[int(key)+base] = inverse[key]
+                    print ('total links %s for resource: %s' %((len(response)), resource))
 
             else:
                 #logger.warning("resource %s not in local index" % resource)        
@@ -392,7 +395,7 @@ def sparqlQueryByLabel(value, type=""):
 def cleanInversResultSet(resultSet, target):
     memory_store = rdflib.plugin.get('IOMemory', rdflib.graph.Store)()
     g=rdflib.Graph(memory_store)
-    try:
+    try:    
         g.parse(data=resultSet, format="nt")
         qres = g.query(
         """SELECT DISTINCT ?s ?p
@@ -409,7 +412,8 @@ def cleanInversResultSet(resultSet, target):
             nt_cleaned[i] = triple
             i += 1
     except:
-        logger.warning('Parsing failed for %s' % target)
+        #print (sys.exc_info())
+        logger.warning('Parsing inverse failed for %s' % target)
         nt_cleaned = False
     return nt_cleaned
         

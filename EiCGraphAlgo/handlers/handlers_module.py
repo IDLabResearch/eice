@@ -10,6 +10,8 @@ import handlers.time_out
 from handlers.time_out import TimeoutError
 import generateplots
 from core.resourceretriever import Resourceretriever
+import threading
+from multiprocessing import Process, Queue
 
 logger = logging.getLogger('handler')
 
@@ -100,7 +102,7 @@ class NeighbourLookupHandler(MainHandler):
                     uri = 'http://%s' % item.strip('<>')
                 else:
                     uri = item.strip('<>')
-                r =  self.resourceretriever.getResourceLocal(uri)
+                r =  self.resourceretriever.getResource(uri)
                 responses[uri] = r
             except:
                 responses[uri] = {}
@@ -211,44 +213,68 @@ class SearchHandler(MainHandler):
     
     def initialize(self):
         self.cpf = cached_pathfinder.CachedPathFinder()
+        self.r = dict()
         
     def get(self):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
-        r = dict()
         failed = False
         try:
             
-            try:
-                with handlers.time_out.time_limit(18):
-                    r = search.search(source,destination)
-            except TimeoutError:
-                logger.warning('No path found in 20 seconds, fallback search.')
-                r = dict()
+            def main(q):
+                print ('Main Search started')
+                r = search.search(source,destination)
+                print ('Main Search finished')
+                q.put(r)
+                
+            def deep(q):
+                print ('Deep Search started')
+                f = search.DeepSearcher()
+                r = f.searchDeep(source, destination)
+                r['execution_time'] = str(int(self.r['execution_time']) + 32000)
+                print ('Deep Search finished')
+                q.put(r)
+            
+            q = Queue()
+            p = Process(target=main, args=(q,))
+            p.start()
+
+            p.join(30)
+            if p.is_alive():
+                print ('Terminating process')
+                p.terminate()
+                logger.warning('No path found in 30 seconds, starting deep search.')
                 failed = True
+            else:
+                self.r = q.get()
                 
             if failed:
-                try:
-                    with handlers.time_out.time_limit(42):
-                        f = search.DeepSearcher()
-                        r = f.searchDeep(source, destination)
-                        r['execution_time'] = str(int(r['execution_time']) + 18000)
-                except TimeoutError:
+                q = Queue()
+                p = Process(target=deep, args=(q,))
+                p.start()
+
+                p.join(60)
+                if p.is_alive():
+                    print ('Terminating process')
+                    p.terminate()
                     self.set_status(503)
-                    r = 'Your process was killed after 60 seconds, sorry! x( Try again' 
+                    self.r = 'Your process was killed after 90 seconds, sorry! x( Try again'
+                else:
+                    self.r = q.get()
+                    
                     
         except AttributeError:
             self.set_status(400)
             logger.error (sys.exc_info())
-            r = 'Invalid arguments :/ Check the server log files if problem persists.'
+            self.r = 'Invalid arguments :/ Check the server log files if problem persists.'
         except:
             self.set_status(404)
             logger.error (sys.exc_info())
-            r = 'Something went wrong x( Probably either the start or destination URI is a dead end. Check the server log files for more information.'
+            self.r = 'Something went wrong x( Probably either the start or destination URI is a dead end. Check the server log files for more information.'
 
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
-        self.write(ujson.dumps(r))
+        self.write(ujson.dumps(self.r))
         self.finish()
             

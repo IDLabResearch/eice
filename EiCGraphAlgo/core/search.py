@@ -37,117 +37,122 @@ blacklist = resourceretriever.blacklist
 #s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
 #s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
-def search(start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10):
-    """Searches a path between two resources start and dest
-
-    **Parameters**
+class Searcher:
     
-    start : uri
-        resource to start pathfinding
-    destination : uri
-        destination resource for pathfinding
-    search_blacklist : list
-        list of resources to exclude in search
-    pathfinder : Pathfinder
-        a given pathfinder state for complex search queries
-    k : integer
-        number of iterations when to break off search
-
-    **Returns**
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10):
+        """Searches a path between two resources start and dest
     
-    response : dictionary
-        contains execution time, path if found, hash
-
-    """
-    #START
-    start_time = time.clock()
-    
-    #Initialization
-    if givenP == None:
-        p = pathfinder.PathFinder(start,dest)
-        p.iterateMatrix(search_blacklist)
-    else:
-        p = givenP
-        p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes)
+        **Parameters**
         
+        start : uri
+            resource to start pathfinding
+        destination : uri
+            destination resource for pathfinding
+        search_blacklist : list
+            list of resources to exclude in search
+        pathfinder : Pathfinder
+            a given pathfinder state for complex search queries
+        k : integer
+            number of iterations when to break off search
     
-    paths = None #Initially no paths exist
-    
-    #Iteration 1
-    
-    paths = graph.path(p)
-    
-    #Following iterations
-    while True:
-        if not paths == None:
-            if len(paths) > 0:
-                break
+        **Returns**
         
-        logger.info ('=== %s-- ===' % str(p.iteration))
-        gc.collect()
-        m = p.iterateMatrix(blacklist=search_blacklist)
-        halt_path = time.clock()
-        paths = graph.path(p)
-        logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
-        if p.iteration == k:
-            break
-    resolvedPaths = list()
+        response : dictionary
+            contains execution time, path if found, hash
     
-    #FINISH
-    if paths:
-        for path in paths:
-    #       logger.debug(path)
-            resolvedPath = graph.resolvePath(path,p.getResources())
-            resolvedLinks = graph.resolveLinks(resolvedPath, p.getResourcesByParent())
-            formattedPath = list()
-            for step in resolvedPath:
-                formattedPath.append(step[1:-1])
-            fullPath = dict()
-            fullPath['vertices'] = formattedPath
-            fullPath['edges'] = resolvedLinks
-            resolvedPaths.append(fullPath)
-    else:
-        return {'path':False,'execution_time':int(round((time.clock()-start_time) * 1000))}
+        """
+        #START
+        start_time = time.clock()
+        
+        #Initialization
+        if givenP == None:
+            p = pathfinder.PathFinder(start,dest)
+            p.iterateMatrix(search_blacklist)
+        else:
+            p = givenP
+            p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes)
             
-    #    graph.visualize(p, path=path)
-    finish = int(round((time.clock()-start_time) * 1000))
-    r = dict()
-    r['execution_time'] = finish
-    r['paths'] = resolvedPaths
-    r['source'] = start
-    r['destination'] = dest
-    r['checked_resources'] = p.checked_resources
-    r['hash'] = 'h%s' % hash('{0}{1}{2}'.format(start_time,dest,time.time()))
-    r['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
-    
-    try:
-        path = os.path.dirname(os.path.abspath(__file__))
-        file = r['hash']
-        pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
-    except:
-        logger.warning('could not log and store path between {0} and {1}'.format(start,dest))
-        logger.error(sys.exc_info())
-    query_log.info(r)
-    logger.debug(r)
-    result = dict()
-    result['path'] = r['path']
-    result['hash'] = r['hash']
-    result['execution_time'] = r['execution_time']
-    return result
+        
+        paths = None #Initially no paths exist
+        
+        #Iteration 1
+        
+        paths = graph.path(p)
+        
+        #Following iterations
+        while True:
+            if not paths == None:
+                if len(paths) > 0:
+                    break
+            
+            logger.info ('=== %s-- ===' % str(p.iteration))
+            gc.collect()
+            m = p.iterateMatrix(blacklist=search_blacklist)
+            halt_path = time.clock()
+            paths = graph.path(p)
+            logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
+            if p.iteration == k:
+                break
+        resolvedPaths = list()
+        
+        #FINISH
+        if paths:
+            for path in paths:
+        #       logger.debug(path)
+                resolvedPath = graph.resolvePath(path,p.getResources())
+                resolvedLinks = graph.resolveLinks(resolvedPath, p.getResourcesByParent())
+                formattedPath = list()
+                for step in resolvedPath:
+                    formattedPath.append(step[1:-1])
+                fullPath = dict()
+                fullPath['vertices'] = formattedPath
+                fullPath['edges'] = resolvedLinks
+                resolvedPaths.append(fullPath)
+        else:
+            return {'path':False,'execution_time':int(round((time.clock()-start_time) * 1000))}
+                
+        #    graph.visualize(p, path=path)
+        finish = int(round((time.clock()-start_time) * 1000))
+        r = dict()
+        r['execution_time'] = finish
+        r['paths'] = resolvedPaths
+        r['source'] = start
+        r['destination'] = dest
+        r['checked_resources'] = p.checked_resources
+        r['hash'] = 'h%s' % hash('{0}{1}{2}'.format(start_time,dest,time.time()))
+        r['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
+        
+        try:
+            path = os.path.dirname(os.path.abspath(__file__))
+            file = r['hash']
+            pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
+        except:
+            logger.warning('could not log and store path between {0} and {1}'.format(start,dest))
+            logger.error(sys.exc_info())
+        query_log.info(r)
+        logger.debug(r)
+        result = dict()
+        result['path'] = r['path']
+        result['hash'] = r['hash']
+        result['execution_time'] = r['execution_time']
+        return result
 
 class DeepSearcher:
+    def __init__(self):
+        self.searcher = Searcher()
+        
     def searchAllPaths(self, start,dest,search_blacklist=blacklist):
         #START
         start_time = time.clock()
         #RUN
         paths = list()
         prevLenBlacklist = set(search_blacklist)
-        path = search(start,dest,prevLenBlacklist)
+        path = self.searcher.search(start,dest,prevLenBlacklist)
         print (path)
         new_blacklist = self.generateBlackList(prevLenBlacklist,path)
         paths.append(path)
         while len(new_blacklist) > len (prevLenBlacklist):
-            path = search(start,dest,new_blacklist)
+            path = self.searcher.search(start,dest,new_blacklist)
             prevLenBlacklist = set(new_blacklist)
             new_blacklist = self.generateBlackList(new_blacklist,path)
             if not path['path'] == False:
@@ -179,8 +184,7 @@ class DeepSearcher:
                     flattened_path.append('<%s>' % step['uri'])
         return flattened_path
         
-        
-    def searchDeep(self, start,dest,search_blacklist=blacklist,k=4,s=4):
+    def searchDeep(self, start,dest,search_blacklist=blacklist,k=4,s=3):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -195,7 +199,7 @@ class DeepSearcher:
         start_time = time.clock()
     
         p = pathfinder.PathFinder(start,dest)
-        result = search(start,dest,search_blacklist=search_blacklist,givenP=p,k=k)
+        result = self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,k=k)
         if not result['path']:
             logger.debug (p.resources)
             deep_roots = p.iterateOptimizedNetwork(s)
@@ -204,16 +208,17 @@ class DeepSearcher:
             for st in deep_roots['start']:
                 for dt in deep_roots['dest']:
                     logger.debug ("extra path between %s and %s" % (st,dt))
-                    additionalResources = additionalResources.union(set(self.flattenSearchResults(search(st,dt,k=k+1))))
+                    additionalResources = additionalResources.union(set(self.flattenSearchResults(self.searcher.search(st,dt,k=2*k))))
             print("finding extra path:")
-            result=search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k)
+            result=self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k)
         finish = int(round((time.clock()-start_time) * 1000))
         result['execution_time'] = finish
         return result    
 
 class FallbackSearcher:
-    def __init__(self, worker=Worker()):
+    def __init__(self, worker=Worker(),searcher=Searcher()):
         self.worker =worker
+        self.searcher=searcher
         
     def searchFallback(self,source,destination):
         resp = dict()
@@ -248,7 +253,7 @@ class FallbackSearcher:
     
     def searchF(self, source, destination, target, index):
         try:
-            target[index] = search(source,destination)
+            target[index] = self.searcher.search(source,destination)
         except:
             target[index] = dict()
             target[index]['path'] = False
@@ -280,7 +285,9 @@ class FallbackSearcher:
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")
-#print (search('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
+#searcher = Searcher()
+#print (searcher.search('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
     
