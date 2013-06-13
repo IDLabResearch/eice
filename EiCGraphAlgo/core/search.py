@@ -197,13 +197,13 @@ class DeepSearcher:
         p = pathfinder.PathFinder(start,dest)
         result = search(start,dest,search_blacklist=search_blacklist,givenP=p,k=k)
         if not result['path']:
-            print (p.resources)
+            logger.debug (p.resources)
             deep_roots = p.iterateOptimizedNetwork(s)
-            print (deep_roots)
+            logger.debug (deep_roots)
             additionalResources = set()
             for st in deep_roots['start']:
                 for dt in deep_roots['dest']:
-                    print ("extra path between %s and %s" % (st,dt))
+                    logger.debug ("extra path between %s and %s" % (st,dt))
                     additionalResources = additionalResources.union(set(self.flattenSearchResults(search(st,dt,k=k+1))))
             print("finding extra path:")
             result=search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k)
@@ -282,5 +282,5 @@ class FallbackSearcher:
 #print("search")
 #print (search('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
-print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
+#print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
     

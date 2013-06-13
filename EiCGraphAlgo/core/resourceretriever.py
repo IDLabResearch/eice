@@ -116,7 +116,6 @@ class Resourceretriever:
                 return nt_cleaned
         except: 
             logger.error('Could not fetch resource inverse %s' % resource)
-            print (sys.exc_info())
             return False  
     
     def getResourceLocal(self,resource):
@@ -256,7 +255,6 @@ class Resourceretriever:
         
     def fetchResource(self, resource, resourcesByParent, additionalResources, blacklist):   
         newResources = self.getResource(resource)
-        print(newResources)
         if newResources:
             for tripleKey, triple in newResources.items():
                 inverse = False
@@ -412,7 +410,6 @@ def cleanInversResultSet(resultSet, target):
             i += 1
     except:
         logger.warning('Parsing failed for %s' % target)
-        print (sys.exc_info())
         nt_cleaned = False
     return nt_cleaned
         
