@@ -88,7 +88,9 @@ def main():
     server = tornado.httpserver.HTTPServer(Application())
     server.add_sockets(sockets)
     tornado.ioloop.IOLoop.instance().start()
-    logging.getLogger('root').info ("Server running on:"+sys.platform)
+    logging.getLogger('root').info ("Server running on: %s" % sys.platform)
 
+    
+    
 if __name__ == '__main__':
     main()

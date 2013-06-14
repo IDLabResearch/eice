@@ -1,6 +1,9 @@
 import numpy as np
 import ujson
-from mysolr import Solr
+#from mysolr import Solr
+import mysolr.compat
+from mysolr.response import SolrResponse
+#from pysolr import Solr
 from SPARQLWrapper import SPARQLWrapper, JSON
 import urllib.request
 import urllib.parse
@@ -12,7 +15,8 @@ import os
 import rdflib
 import sys
 import tempfile
-import mysolr
+import requests
+from urllib.parse import urljoin
 
 #Define properties to ignore:
 blacklist = frozenset([
@@ -65,22 +69,30 @@ else:
 sparql_server = config.get('services', 'sparql')
 use_remote = config.get('services', 'use_remote')
 use_inverse = config.get('services', 'use_inverse')
-index_server = config.get('services', 'index_main')
 
-solrs = list()
-solr = mysolr.Solr(index_server)
-solrs.append(solr)
-if config.has_option('services', 'index_second'):
-    secondary_index_server = config.get('services', 'index_second')
-    solrs.append(Solr(secondary_index_server))
-if config.has_option('services','index_bu'):
-    backup_index_server = config.get('services', 'index_bu')
-    solrs.append(Solr(backup_index_server))
+def openSolrs():
+    solrs = list()
+    index_server = config.get('services', 'index_main')
+    #solr = Solr(index_server)
+    solrs.append(index_server)
+    if config.has_option('services', 'index_second'):
+        secondary_index_server = config.get('services', 'index_second')
+        #solrs.append(Solr(secondary_index_server))
+        solrs.append(secondary_index_server)
+    if config.has_option('services','index_bu'):
+        backup_index_server = config.get('services', 'index_bu')
+        #solrs.append(Solr(backup_index_server))
+        solrs.append(backup_index_server)
+    return solrs
+
+solrs = openSolrs()
+
 try:
         sparql = SPARQLWrapper(sparql_server)
 except:
         logger.error ("SPARQL Service down")
         sparql = None
+        
 print ("""
      _
    _(A)_
@@ -91,19 +103,51 @@ print ("EiCE Server running on: %s :)" % sys.platform)
 
 class Resourceretriever:
     
-    def __init__(self):
+    def __init__(self, solrs=solrs):
         self.logger = logging.getLogger('pathFinder')
-        self.openSolrs()
-        
-    def openSolrs(self):
         self.config = config
         self.solrs = solrs
+        self.auth = None
+    
+    def _build_request(self, query):
+        """ Check solr query and put convenient format """
+        assert 'q' in query
+        mysolr.compat.compat_args(query)
+        query['wt'] = mysolr.compat.get_wt()
+        return query
+        
+    def search(self,url=False,resource='select', **kwargs):
+        """Queries Solr with the given kwargs and returns a SolrResponse
+        object.
 
+        :param resource: Request dispatcher. 'select' by default.
+        :param **kwargs: Dictionary containing any of the available Solr query
+                         parameters described in
+                         http://wiki.apache.org/solr/CommonQueryParameters.
+                         'q' is a mandatory parameter.
+
+        """
+        #print ('building request')
+        query = self._build_request(kwargs)
+        #print (query)
+        if url:
+            #print (url)
+            http_response = requests.post(urljoin(url, resource),
+                                          data=query, auth=self.auth)
+            #print (http_response)
+            solr_response = SolrResponse(http_response)
+        else:
+            solr_response = False
+        #print('returning response')
+        return solr_response
+        
     def getResourceLocalInverse(self,resource):
         """Fetch properties and children from a resource given a URI in the configured local INDEX"""
         source = resource.strip('<>')
-        query={'nq':'* * <{0}>'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'10000'}
-        response = self.solrs[0].search(**query)
+        query={'q':'','nq':'* * <{0}>'.format(source),'qt':'siren','fl':'id ntriple','timeAllowed':'10000'}
+        #print(query)
+        response = self.search(url=self.solrs[0],**query)
+        #print(response)
         try:
             if response.status==200 and len(response.documents) > 0:
                 nt = ""
@@ -117,7 +161,7 @@ class Resourceretriever:
                 nt = ""
                 for solr in self.solrs[1:]:
                     if len(nt) == 0:
-                        response = solr.search(**query)
+                        response = self.search(url=solr,**query)
                         if response.status==200 and len(response.documents) > 0:
                             for document in response.documents:
                                 nt += document['ntriple']
@@ -131,7 +175,9 @@ class Resourceretriever:
         """Fetch properties and children from a resource given a URI in the configured local INDEX"""
         source = resource.strip('<>')
         query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
-        response = self.solrs[0].search(**query)
+        #print (solrs)
+        response = self.search(url=self.solrs[0],**query)
+        #print (response)
         try:
             if response.status==200 and len(response.documents) > 0:
                 nt = response.documents[0]['ntriple'].split('.\n')[:-1]
@@ -143,7 +189,7 @@ class Resourceretriever:
                 nt = list()
                 for solr in self.solrs[1:]:
                     if len(nt) == 0:
-                        response = solr.search(**query)
+                        response = self.search(url=solr,**query)
                         if response.status==200 and len(response.documents) > 0:
                             nt += response.documents[0]['ntriple'].split('.\n')[:-1]
                 nt_cleaned = cleanResultSet(nt)
@@ -207,9 +253,11 @@ class Resourceretriever:
 
     def getResource(self,resource):
         """Wrapper function to find properties of a resource given the URI in the configured INDEX(es)"""
+        #print ('getting resource')
         response = dict()
         try:
             inverse = False
+            #print ('getting resource local')
             local = self.getResourceLocal(resource)
             if local:
                 response.update(local)
@@ -551,5 +599,5 @@ def importantResources(u, rank):
 #resourceretriever = Resourceretriever()
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
-#print(resourceretriever.getResourceLocalInverse('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
+#print(resourceretriever.getResourceLocalInverse('http://dbpedia.org/resource/Elio_Di_Rupo'))
 #bPediaLookup('Belgium')

@@ -9,6 +9,7 @@ import lxml.objectify
 import logging
 import configparser
 import os
+from core.resourceretriever import Resourceretriever
 from core import resourceretriever
 from mysolr import Solr
 
@@ -16,13 +17,12 @@ config = resourceretriever.config
 mapping = resourceretriever.mappings
 logger = logging.getLogger('pathFinder')
 
-
 def dbPediaPrefix(prefix):
     server = config.get('services', 'lookup')
     gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=7&QueryString={1}'.format(server,prefix)
     request = urllib.parse.quote(gateway, ':/=?<>"*&')
     logger.debug('Request %s' % request)
-    raw_output = urllib.request.urlopen(request, 2).read()
+    raw_output = urllib.request.urlopen(request,timeout=2).read()
     root = lxml.objectify.fromstring(raw_output)
     results = list()
     if hasattr(root, 'Result'):
@@ -37,7 +37,7 @@ def dbPediaPrefix(prefix):
                 item['label'] = result.Label[0].text
                 item['category']=klasse.Label.text.capitalize()
                 item['uri']=result.URI[0].text
-                local_hits = resourceretriever.getResourceLocal(item['uri'].strip("<>"))
+                local_hits = Resourceretriever().getResourceLocal(item['uri'].strip("<>"))
                 n_hits = 0
                 if local_hits:
                     for triple in local_hits:
@@ -58,7 +58,6 @@ def prefix(prefix):
         lookup_solr = Solr(lookup_server)
         query={'q':'lookup:{0}*'.format(prefix.lower()),'fl':'url label type','timeAllowed':'1000','rows':'7'}
         response = lookup_solr.search(**query)
-    
         if response.status==200 and len(response.documents) > 0:
             for doc in response.documents:
                 item = dict()

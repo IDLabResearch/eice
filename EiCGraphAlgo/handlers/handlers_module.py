@@ -3,7 +3,7 @@ from mako.lookup import TemplateLookup
 import ujson
 import signal, os
 import time, sys
-from core import typeahead,graph,randompath
+from core import typeahead,graph,randompath,resourceretriever
 import sys, traceback,logging
 from core import cached_pathfinder
 import handlers.time_out
@@ -91,28 +91,51 @@ class CacheLookupHandler(MainHandler):
 class NeighbourLookupHandler(MainHandler):
     
     def initialize(self):
-        self.resourceretriever = Resourceretriever()
+        #self.resourceretriever = Resourceretriever()
+        self.r = dict()
         
     def get(self):
         uris = self.get_argument("uri", "")
         items = uris.split(",http://")
         responses = dict()
-        for item in items: 
-            try:
-                if not 'http://' in item:
-                    uri = 'http://%s' % item.strip('<>')
-                else:
-                    uri = item.strip('<>')
-                r =  self.resourceretriever.getResource(uri)
-                responses[uri] = r
-            except:
-                responses[uri] = {}
-                logger.error(sys.exc_info())
+        #print (items)
+        
+        def retrieve_neighbours(q):
+            logger.debug ('Neighbourlookup started %s' % uris)
+            resourceretriever = Resourceretriever()
+            for item in items: 
+                try:
+                    if not 'http://' in item:
+                        uri = 'http://%s' % item.strip('<>')
+                    else:
+                        uri = item.strip('<>')
+                    #print(uri)  
+                    responses[uri] = resourceretriever.getResource(uri)
+                except:
+                    responses[uri] = {}
+                    logger.error(sys.exc_info())
+            logger.debug ('Neihgbour lookup finished %s' % uris)
+            q.put(responses)
+            
+        q = Queue()
+        p = Process(target=retrieve_neighbours, args=(q,))
+        p.start()
+
+        p.join(30)
+        if p.is_alive():
+            logger.warning ('Terminating process')
+            p.terminate()
+            logger.warning('No neighbours found in 30 seconds.')
+            self.set_status(503)
+            self.r = "Sorry, no neighbours found in 30 seconds. :( Check the log files for more information."
+        else:
+            self.r = q.get()
+                
         self.set_header("Access-Control-Allow-Origin", "*")
         self.set_header("Content-Type", "application/json")
         self.set_header("charset", "utf8")
         #responses = sorted(responses, key=responses.__getitem__, reverse=True)
-        self.write('{0}'.format(ujson.dumps(responses)))
+        self.write('{0}'.format(ujson.dumps(self.r)))
         self.finish()
         
 class PrefixHandler(MainHandler):
@@ -223,18 +246,18 @@ class SearchHandler(MainHandler):
         try:
             
             def main(q):
-                print ('Main Search started')
+                logger.debug ('Main Search started for %s' % source)
                 searcher = Searcher()
                 r = searcher.search(source,destination)
-                print ('Main Search finished')
+                logger.debug ('Main Search finished for %s' % source)
                 q.put(r)
                 
             def deep(q):
-                print ('Deep Search started')
+                logger.debug ('Deep Search started %s' % source)
                 f = DeepSearcher()
                 r = f.searchDeep(source, destination)
                 r['execution_time'] = str(int(self.r['execution_time']) + 32000)
-                print ('Deep Search finished')
+                logger.debug ('Deep Search finished %s' % source)
                 q.put(r)
             
             q = Queue()
@@ -243,7 +266,7 @@ class SearchHandler(MainHandler):
 
             p.join(30)
             if p.is_alive():
-                print ('Terminating process')
+                logger.warning ('Terminating process')
                 p.terminate()
                 logger.warning('No path found in 30 seconds, starting deep search.')
                 failed = True
@@ -257,7 +280,7 @@ class SearchHandler(MainHandler):
 
                 p.join(60)
                 if p.is_alive():
-                    print ('Terminating process')
+                    logger.warning ('Terminating process')
                     p.terminate()
                     self.set_status(503)
                     self.r = 'Your process was killed after 90 seconds, sorry! x( Try again'
