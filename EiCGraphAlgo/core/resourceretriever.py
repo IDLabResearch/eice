@@ -338,14 +338,15 @@ class Resourceretriever:
         abstract='<http://dbpedia.org/ontology/abstract>'
         r = self.getResource(resource)
         response = dict()
+
         if r:
             properties = dict()
-            [properties.update({triple[1]:triple[2]}) for triple in r.values()]  
+            [properties.update({triple[1]:triple[2]}) for triple in r.values()]
             if label in properties:
                 response['label'] = properties[label]
             if abstract in properties:
-                response['abstract'] = properties[label]
-        if not r or 'label' not in response or 'abstract' not in response or 'type' not in response:
+                response['abstract'] = properties[abstract]
+        if not r or ('label' not in response and 'abstract' not in response and 'type' not in response):
             response = sparqlQueryByUri(resource)
             
         if response['label'] and not 'type' in response:
@@ -592,11 +593,13 @@ def importantResources(u, rank):
         important.add(maxindex)
     return important
 
-#describeResource('http://dbpedia.org/resource/Belgium')
+
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-#resourceretriever = Resourceretriever()
+resourceretriever = Resourceretriever()
+resourceretriever.describeResource('http://dbpedia.org/resource/Belgium')
+resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic')
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #print(resourceretriever.getResourceLocalInverse('http://dbpedia.org/resource/Elio_Di_Rupo'))

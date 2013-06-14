@@ -14,7 +14,6 @@ class PathFinder:
 
     def __init__(self,s1,s2,threshold=1.1):
         """Initialization of all required containers"""
-        print ('init pathfinder')
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
         self.worker = Worker()
@@ -26,13 +25,9 @@ class PathFinder:
         self.storedResources = dict()  
         self.threshold = threshold
         self.checked_resources = 0
-        print ('done init pathfinder')
         self.resourceretriever = Resourceretriever()
         self.iteration = 0
-        print('init matrix')
         self.initMatrix(s1, s2)
-        print('done init matrix')
-        
 
     def initMatrix(self, source1, source2):
         """Initialization of the adjacency matrix based on input source and destination."""
