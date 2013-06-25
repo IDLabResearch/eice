@@ -83,7 +83,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     datas = list()
     w = 0.5
     cr = cpf.path_cached_resources
-    cr.pop(len(cpf.path_cached_resources))
+#    cr.pop(len(cpf.path_cached_resources))
     for length in cr:
         sorted = np.sort(cr[length])
         spread = sorted
