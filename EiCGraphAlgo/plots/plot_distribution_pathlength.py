@@ -14,7 +14,8 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     #print (total_paths)
     #print (cpf.path_lengths)
     flattened_lengths = list()
-    cpf.path_lengths.pop(len(cpf.path_lengths))
+    #cpf.path_lengths.pop(len(cpf.path_lengths))
+    #print (list(cpf.path_lengths[:-1])
     for x in cpf.path_lengths:
         i = 0
         for i in range(cpf.path_lengths[x]):
@@ -69,3 +70,5 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         #print (sys.exc_info())
         pass
     return path
+
+print (plot());
