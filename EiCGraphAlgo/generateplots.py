@@ -20,7 +20,10 @@ def generatePlots():
     plots.append(plot_distribution_pathlength.plot(cpf))
     plots.append(plot_time_vs_pathlengths.plot(cpf))
     plots.append(plot_distribution_checked_resources.plot(cpf))
-    plots.append(plot_checked_resources_vs_pathlengths.plot(cpf))
+    try:
+        plots.append(plot_checked_resources_vs_pathlengths.plot(cpf))
+    except:
+        logger.warning("could not plot resources vs pathlengths")
     plots.append(plot_checked_resources_vs_execution_times.plot(cpf))
     
     root = (os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))))
