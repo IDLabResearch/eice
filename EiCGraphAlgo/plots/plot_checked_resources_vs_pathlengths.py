@@ -109,5 +109,3 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         #print (sys.exc_info())
         pass
     return path
-
-print (plot())
