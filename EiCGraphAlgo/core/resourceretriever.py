@@ -471,7 +471,7 @@ def cleanInversResultSet(resultSet, target):
             i += 1
     except:
         #print (sys.exc_info())
-        logger.warning('Parsing inverse failed for %s' % target)
+        #logger.warning('Parsing inverse failed for %s' % target)
         nt_cleaned = False
     return nt_cleaned
         

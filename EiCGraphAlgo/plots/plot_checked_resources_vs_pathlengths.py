@@ -101,7 +101,6 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     # multiple box plots on one figure
     # ax.boxplot(datas,0,'rx',1,1.99)
     
-    
     try:
         path = "/tmp/scatter_{0}_{1}.png".format(hash(time.time()),np.random.randint(10000))
         canvas.print_figure(path)
