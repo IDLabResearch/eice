@@ -11,22 +11,35 @@ import random
 import ujson
 
 queries = [
-            ["Germany","United States","Belgium"]#,
-            #["ISWC 2008","Linked Data","Germany"]
+            #["Germany","United States","Belgium"],
+            ["LDOW","Christian Bizer"],
+            ["ISWC2012","Lyon", "France"],
+            ["ISWC2008","Linked Data","Germany"],
+            ["Linked Data","WWW2012"],
+            ["Selver Softic", "Semantic Web", "Michael Hausenblas"],
+            ["Selver Softic", "Linked Data", "Information Retrieval"],
+            ["Laurens De Vocht", "Selver Softic"],
+            ["Laurens De Vocht", "Selver Softic", "2011"],
+            ["Laurens De Vocht", "Linked Data", "WWW2013"],
+            ["Chris Bizer", "WWW2013", "ISWC2010"],
+            #
            ]
 searcher = Searcher()
 worker = Worker()
 resourceretriever = Resourceretriever()
-iterations = 5
+iterations = 6
+results = []
 
 avps=[]
+
+f = open('results.json','w')
 
 def handleResult(uri, target_uri, rankings):
     print('Looking for path between %s and %s' %(uri, target_uri))
     path = searcher.search(uri, target_uri, k=8)
     if path['path']:
         rank = len(path['path'])
-        uris = rank/2
+        uris = (rank+1)/2
         even = uris % 2 == 0
         halved = False
         half = round(uris/2)
@@ -34,42 +47,27 @@ def handleResult(uri, target_uri, rankings):
         s = 0
         
         for step in path['path']:
-            if s not in rankings:
-                rankings[s] = set()
+            t = min(s,uris-1-s)
+            if t not in rankings:
+                rankings[t] = set()
             if 'node' in step['type']:
                 print (step['uri'])
-                print (s)
-                #print (halved)
-                #print (half)
-                rankings[s].add(step['uri'])
-                if s < half and not halved and not even:
-                    s+=1
-                elif s < half-1 and not halved and even:
-                    s+=1
-                elif s == half-1 and even:
-                    halved = True
-                elif s == half:
-                    halved = True
-                    s-=1
-                elif even and halved:
-                    even = False
-                elif s >= half or halved:
-                    s-=1
-                else:
-                    s-=1
+                print (uris-1)
+                print (t)
+                rankings[t].add(step['uri'])
+                s+=1
                     
         print (rankings)
-    
-worker.createQueue(handleResult)
-worker.startQueue(handleResult, 8)
 
 for query in queries:
     uris = []
     paths = []
     rankings = {}
-    
+    worker.createQueue(handleResult)
+    worker.startQueue(handleResult, 8)
+
     for keyword in query:
-        prefixes = dbPediaPrefix(keyword)
+        prefixes = prefix(keyword)
         pos = random.randrange(0,len(prefixes))
         uris.append(prefixes[pos]['uri'])
        
@@ -92,48 +90,55 @@ for query in queries:
     
     #Iteration 2
     i = 2
-    minRank = 0
+
     expanded = set()
-    
+    minRank = 0
     while (i < iterations):
         print ('Iteration %s' % i)
-        minRank = min(rankings.keys())
         urisToExpand = rankings[minRank] - expanded
         if len(urisToExpand)==0:
+            print ('no uris to expand in rank %s' % minRank)
             minRank=min(x for x in rankings.keys() if x > minRank)
+            print ('new minRank %s' % minRank)
             urisToExpand = rankings[minRank] - expanded
         for uri in urisToExpand:
             expanded.add(uri)
+            print (len(expanded))
+            print (minRank)
             print (uri)
             neighbours = resourceretriever.getResource(uri)
             if neighbours:
+                p = 0;
                 for nb in neighbours:
-                    neighbour = neighbours[nb]
-                    subject = neighbour[0]
-                    obj = neighbour[2]
-                    pred = neighbour[1]
-                    if subject.strip('<>') == uri.strip('<>'):
-                        new_uri = obj
-                    else:
-                        new_uri = subject
-                    if not (minRank+1) in rankings:
-                        rankings[minRank+1] = set()
-                    if '<' in new_uri and not 'XMLSchema' in new_uri and not 'category' in new_uri:
-                        exists = False
-                        for rank in rankings:
-                            if new_uri.strip('<>') in rankings[rank]:
-                                exists = rank
-                        if not exists:
-                            rankings[minRank+1].add(new_uri.strip('<>'))
+                    if p < 5:
+                        neighbour = neighbours[nb]
+                        subject = neighbour[0]
+                        obj = neighbour[2]
+                        pred = neighbour[1]
+                        if subject.strip('<>') == uri.strip('<>'):
+                            new_uri = obj
                         else:
-                            if exists > (minRank + 1):
+                            new_uri = subject
+                        if not (minRank+1) in rankings:
+                            rankings[minRank+1] = set()
+                        if '<' in new_uri and not 'XMLSchema' in new_uri and not 'category' in new_uri:
+                            exists = False
+                            for rank in rankings:
+                                if new_uri.strip('<>') in rankings[rank] or new_uri.strip('<>') == rankings[rank]:
+                                    exists = rank
+                            if not exists:
                                 rankings[minRank+1].add(new_uri.strip('<>'))
-                                rankings[exists].remove(new_uri.strip('<>'))
+                            else:
+                                if exists > (minRank + 1):
+                                    rankings[minRank+1].add(new_uri.strip('<>'))
+                                    rankings[exists].remove(new_uri.strip('<>'))
+                    p += 1
                     
         print (rankings)
         i += 1
     print ('<--- Result for query:' % query)
     print (ujson.dumps(rankings))
+    results.append(ujson.dumps(rankings))
     print ('--->')
     
     print ("Provide Relevancy scores")
@@ -181,7 +186,10 @@ for query in queries:
         avp += precision[rank] * rels[rank]
         
     avp = avp / relevant
+    print (avp)
     avps.append(avp)
 
 print (avps)
 print ('DONE')
+f.write(ujson.dumps(results))
+f.close()
