@@ -22,13 +22,15 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     
     # Set the X Axis label.
     plt.xlabel('Execution time(ms)',fontsize=9)
-    plt.xticks(np.arange(0,np.max(flattened_execution_times),4000))
+    #plt.xscale('log')
+    #plt.xlim(10000,250000)
+    plt.xticks(np.arange(0,np.max(flattened_execution_times),30000))
     
     # Set the Y Axis label.
     plt.ylabel('Occurence (fraction)',fontsize=9)
     #plt.yscale('log')
-    plt.ylim(0.5,1)
-    bins = np.int(np.max(flattened_execution_times) / 2000) + 1
+    plt.ylim(0.2,1)
+    bins = np.int(np.max(flattened_execution_times) / 7500) + 1
     plt.hist(flattened_execution_times, bins = bins, range=[0,np.max(flattened_execution_times)], normed=True,alpha=0.5, cumulative=True)
     
     try:
@@ -38,3 +40,5 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         #print (sys.exc_info())
         pass
     return path
+
+print(plot())
