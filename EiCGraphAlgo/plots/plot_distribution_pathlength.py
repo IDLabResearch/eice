@@ -45,11 +45,11 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     plt.title('Distribution of path length (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
-    plt.xlabel('(steps)',fontsize=9)
+    plt.xlabel('Path length (steps)',fontsize=9)
     plt.xlim(0,np.max(x)+1)
     x_r = np.arange(np.max(x)+1,step = 0.1)
     # Set the Y Axis label.
-    plt.ylabel('(fraction)',fontsize=9)
+    plt.ylabel('Occurence (fraction)',fontsize=9)
     fit_alpha,fit_loc,fit_beta=ss.gamma.fit(flattened_lengths)
     #print(fit_alpha,fit_loc,fit_beta)
     #print(fit_alpha * fit_beta)

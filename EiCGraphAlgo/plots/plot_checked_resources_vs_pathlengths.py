@@ -17,14 +17,17 @@ def violin_plot(ax,data,pos, bp=False):
     dist = max(pos)-min(pos)
     w = min(0.15*max(dist,1.0),0.5)
     for d,p in zip(data,pos):
-        k = gaussian_kde(d) #calculates the kernel density
-        m = k.dataset.min() #lower bound of violin
-        M = k.dataset.max() #upper bound of violin
-        x = arange(m,M,(M-m)/100.) # support for violin
-        v = k.evaluate(x) #violin profile (density curve)
-        v = v/v.max()*w #scaling the violin to the available space
-        ax.fill_betweenx(x,p,v+p,facecolor='b',alpha=0.2)
-        ax.fill_betweenx(x,p,-v+p,facecolor='b',alpha=0.2)
+        try:
+            k = gaussian_kde(d) #calculates the kernel density
+            m = k.dataset.min() #lower bound of violin
+            M = k.dataset.max() #upper bound of violin
+            x = arange(m,M,(M-m)/100.) # support for violin
+            v = k.evaluate(x) #violin profile (density curve)
+            v = v/v.max()*w #scaling the violin to the available space
+            ax.fill_betweenx(x,p,v+p,facecolor='b',alpha=0.2)
+            ax.fill_betweenx(x,p,-v+p,facecolor='b',alpha=0.2)
+        except:
+            pass
     if bp:
         ax.boxplot(data,notch=0,positions=pos,vert=1, whis=1)
 
@@ -63,10 +66,10 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     ax.set_title('Number of checked resources in function of path length (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
-    ax.set_xlabel('(steps)',fontsize=9)
+    ax.set_xlabel('Path length (#steps)',fontsize=9)
     
     # Set the Y Axis label.
-    ax.set_ylabel('(#)',fontsize=9)
+    ax.set_ylabel('(#) Checked resources',fontsize=9)
     
     #ax.set_yscale('log')
     
@@ -92,7 +95,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         data.shape = (-1, 1)
         datas.append(data)
     
-    violin_plot(ax,list(cr.values()),range(1,len(cr)+1),bp=True)
+    violin_plot(ax,list(cr.values()),range(1,len(cr)),bp=True)
         
     # Making a 2-D array only works if all the columns are the
     # same length.  If they are not, then use a list instead.
@@ -108,3 +111,5 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         #print (sys.exc_info())
         pass
     return path
+
+print(plot())

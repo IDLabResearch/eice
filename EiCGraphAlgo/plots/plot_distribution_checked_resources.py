@@ -21,10 +21,10 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     plt.title('Distribution of checked resources (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
-    plt.xlabel('(#)',fontsize=9)
+    plt.xlabel('(#) Checked Resources',fontsize=9)
     
     # Set the Y Axis label.
-    plt.ylabel('(#)',fontsize=9)
+    plt.ylabel('(#) Occurences',fontsize=9)
     #plt.yscale('log')
     
     plt.hist(flattened_checked_resources,bins=15, range=None, normed=False,alpha=0.5)

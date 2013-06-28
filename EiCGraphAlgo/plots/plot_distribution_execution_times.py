@@ -21,11 +21,11 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     plt.title('Distribution of execution times (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
-    plt.xlabel('(ms)',fontsize=9)
+    plt.xlabel('Execution time(ms)',fontsize=9)
     plt.xticks(np.arange(0,np.max(flattened_execution_times),4000))
     
     # Set the Y Axis label.
-    plt.ylabel('(fraction)',fontsize=9)
+    plt.ylabel('Occurence (fraction)',fontsize=9)
     #plt.yscale('log')
     plt.ylim(0.5,1)
     bins = np.int(np.max(flattened_execution_times) / 2000) + 1

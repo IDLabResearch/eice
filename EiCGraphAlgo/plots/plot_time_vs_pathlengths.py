@@ -64,10 +64,10 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     ax.set_title('Execution time in function of path length (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
-    ax.set_xlabel('(steps)',fontsize=9)
+    ax.set_xlabel('Path length (steps)',fontsize=9)
     
     # Set the Y Axis label.
-    ax.set_ylabel('(ms)',fontsize=9)
+    ax.set_ylabel('Execution time (ms)',fontsize=9)
     
     ax.set_yscale('log')
     

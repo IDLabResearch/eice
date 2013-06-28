@@ -62,10 +62,10 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     ax.set_title('Execution time in function of checked resources (n = %s)' % total_paths,fontsize=12)
     
     # Set the X Axis label.
-    ax.set_xlabel('(#)',fontsize=9)
+    ax.set_xlabel('(#) Checked resources',fontsize=9)
     
     # Set the Y Axis label.
-    ax.set_ylabel('(ms)',fontsize=9)
+    ax.set_ylabel('Execution time (ms)',fontsize=9)
     
     #ax.set_yscale('log')
     
