@@ -210,6 +210,20 @@ class PathFinder:
         resB = frozenset(self.resources_by_parent[self.resources[nodeB]])
         return 1-np.divide(len(resA & resB),len(resA | resB))  
     
+    def jaccard_index (self,string1, string2):
+        """ Compute the Jaccard index of two strings, in an efficient way.
+        """
+        set1, set2 = set(string1), set(string2)
+        n = len(set1.intersection(set2))
+        jacc = n / float(len(set1) + len(set2) - n)
+        return jacc
+
+
+    def jaccard_distance (self,string1, string2):
+        """ Compute the Jaccard distance between two strings.
+        """
+        return 1.0 - self.jaccard_index(string1, string2)
+    
     def jaccard(self,nodeA,nodeB):
         """Computes the jaccard between two nodes."""
         respbA = self.resources_by_parent[self.resources[nodeA]].values()

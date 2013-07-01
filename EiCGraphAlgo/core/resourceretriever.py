@@ -168,7 +168,7 @@ class Resourceretriever:
                 nt_cleaned = cleanInversResultSet(nt,source)
                 return nt_cleaned
         except: 
-            self.logger.error('Could not fetch resource inverse %s' % resource)
+            #self.logger.error('Could not fetch resource inverse %s' % resource)
             return False  
     
     def getResourceLocal(self,resource):
@@ -206,7 +206,7 @@ class Resourceretriever:
                 nt_cleaned[len(nt_cleaned)] = tl
                 return nt_cleaned
         except: 
-            self.logger.error('Could not fetch resource %s' % resource)
+            #self.logger.error('Could not fetch resource %s' % resource)
             return False  
         
     def getResourceLocalDeprecated(self, resource):
@@ -292,7 +292,7 @@ class Resourceretriever:
                     response = False
         except:
             self.logger.error ('connection error: could not connect to index. Check the index log files for more info.')
-            print(sys.exc_info())
+            #print(sys.exc_info())
             response = False
             
         return response

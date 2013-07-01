@@ -5,6 +5,8 @@ import logging
 import pickle
 import os, sys
 import handlers.time_out
+import scipy
+from urllib.parse import urlparse
 from handlers.time_out import TimeoutError
 from core.worker_pool import Worker
 
@@ -115,7 +117,7 @@ class Searcher:
                 fullPath['edges'] = resolvedLinks
                 resolvedPaths.append(fullPath)
         else:
-            return {'path':False,'execution_time':int(round((time.clock()-start_time) * 1000))}
+            return {'path':False,'source':start,'destination':dest,'execution_time':int(round((time.clock()-start_time) * 1000))}
                 
         #    graph.visualize(p, path=path)
         finish = int(round((time.clock()-start_time) * 1000))
@@ -128,6 +130,22 @@ class Searcher:
         r['hash'] = 'h%s' % hash('{0}{1}{2}'.format(start_time,dest,time.time()))
         r['path'] = graph.listPath(resolvedPath,p.getResourcesByParent())
         
+        l = 0
+        c = 0
+        refcount = 0
+        for step in r['path']:
+            if l > 2 and l % 2 == 1:
+                c+=1
+                m = urlparse(r['path'][l]['uri'])
+                m_p = urlparse(r['path'][l-2]['uri'])
+                if m.netloc not in r['path'][l-2]['uri']:
+                    refcount += 1/2
+                refcount += p.jaccard_distance(m.path, m_p.path)/2
+            l+=1
+            
+        if l > 0:    
+            r['novelty'] = refcount / c
+            
         try:
             path = os.path.dirname(os.path.abspath(__file__))
             file = r['hash']
@@ -141,6 +159,9 @@ class Searcher:
         result['path'] = r['path']
         result['hash'] = r['hash']
         result['execution_time'] = r['execution_time']
+        result['source'] = r['source']
+        result['destination'] = r['destination']
+        result['novelty'] = r['novelty']
         return result
 
 class DeepSearcher:
@@ -175,7 +196,7 @@ class DeepSearcher:
         if not response['path'] == False:
             for step in response['path'][2:-2]:
                 if step['type'] == 'link':
-                    print (step['uri'])
+                    #print (step['uri'])
                     new_blacklist.add('<%s>' % step['uri'])
                 
         return new_blacklist
@@ -289,8 +310,8 @@ class FallbackSearcher:
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")
-#searcher = Searcher()
-#print (searcher.search('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
+searcher = Searcher()
+print (searcher.search('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
