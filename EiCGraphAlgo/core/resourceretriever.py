@@ -371,7 +371,7 @@ class Resourceretriever:
                     response['seeAlso'] = set()
                 response['seeAlso'].add(properties[seeAlso])
             for prop in properties:
-                if any('.png','.jpg','.gif') in properties[prop].lower():
+                if any(['.png','.jpg','.gif']) in properties[prop].lower():
                     if not 'img' in response:
                         response['img'] = set()
                     response['img'].add(properties[prop])
