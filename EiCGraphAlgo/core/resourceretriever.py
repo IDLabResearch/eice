@@ -174,14 +174,19 @@ class Resourceretriever:
     def getResourceLocal(self,resource):
         """Fetch properties and children from a resource given a URI in the configured local INDEX"""
         source = resource.strip('<>')
-        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
+        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type','timeAllowed':'6000'}
         #print (solrs)
         response = self.search(url=self.solrs[0],**query)
-        #print (response)
         try:
             if response.status==200 and len(response.documents) > 0:
                 nt = response.documents[0]['ntriple'].split('.\n')[:-1]
                 nt_cleaned = cleanResultSet(nt)
+                tl = list()
+                tl.append('<%s>' % resource)
+                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
+                tl.append(response.documents[0]['type'].strip(' .\n'))
+                #print(response.documents[0]['type'])#.strip(' .\n'))
+                nt_cleaned[len(nt_cleaned)] = tl
                 return nt_cleaned
             
             else:
@@ -193,6 +198,12 @@ class Resourceretriever:
                         if response.status==200 and len(response.documents) > 0:
                             nt += response.documents[0]['ntriple'].split('.\n')[:-1]
                 nt_cleaned = cleanResultSet(nt)
+                tl = list()
+                tl.append('<%s>' % resource)
+                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
+                tl.append(response.documents[0]['type'].strip(' .\n'))
+                #print(response.documents[0]['type'])#.strip(' .\n'))
+                nt_cleaned[len(nt_cleaned)] = tl
                 return nt_cleaned
         except: 
             self.logger.error('Could not fetch resource %s' % resource)
@@ -271,7 +282,7 @@ class Resourceretriever:
                     for key in inverse:
                         response[int(key)+base] = inverse[key]
                     #print ('total links %s for resource: %s' %((len(response)), resource))
-
+    
             else:
                 #logger.warning("resource %s not in local index" % resource)        
                 if use_remote == 'True':
@@ -281,6 +292,7 @@ class Resourceretriever:
                     response = False
         except:
             self.logger.error ('connection error: could not connect to index. Check the index log files for more info.')
+            print(sys.exc_info())
             response = False
             
         return response
@@ -336,20 +348,37 @@ class Resourceretriever:
         """Wrapper function to describe a resource given a URI either using INDEX lookup or via a SPARQL query"""
         label='<http://www.w3.org/2000/01/rdf-schema#label>'
         abstract='<http://dbpedia.org/ontology/abstract>'
+        tp='<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>'
+        comment='<http://www.w3.org/2000/01/rdf-schema#comment>'
+        seeAlso='<http://www.w3.org/2000/01/rdf-schema#seeAlso>'
         r = self.getResource(resource)
         response = dict()
 
         if r:
             properties = dict()
             [properties.update({triple[1]:triple[2]}) for triple in r.values()]
+            print (properties)
             if label in properties:
                 response['label'] = properties[label]
             if abstract in properties:
                 response['abstract'] = properties[abstract]
+            if comment in properties:
+                response['comment'] =  properties[comment]
+            if tp in properties:
+                response['type'] = properties[tp]
+            if seeAlso in properties:
+                if not 'seeAlso' in response:
+                    response['seeAlso'] = set()
+                response['seeAlso'].add(properties[seeAlso])
+            for prop in properties:
+                if '.png' in properties[prop] or '.jpg' in properties[prop]:
+                    if not 'img' in response:
+                        response['img'] = set()
+                    response['img'].add(properties[prop])
         if not r or ('label' not in response and 'abstract' not in response and 'type' not in response):
             response = sparqlQueryByUri(resource)
             
-        if response['label'] and not 'type' in response:
+        if 'label' in response and not 'type' in response:
             response['type'] = self.dbPediaIndexLookup(response['label'])['type']
         return response       
 
@@ -597,9 +626,9 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-resourceretriever = Resourceretriever()
-resourceretriever.describeResource('http://dbpedia.org/resource/Belgium')
-resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic')
+#resourceretriever = Resourceretriever()
+#print (resourceretriever.describeResource('http://dbpedia.org/resource/Belgium'))
+#print (resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #print(resourceretriever.getResourceLocalInverse('http://dbpedia.org/resource/Elio_Di_Rupo'))

@@ -69,7 +69,7 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
     # Set the Y Axis label.
     ax.set_ylabel('Execution time (ms)',fontsize=9)
     
-    ax.set_yscale('log')
+    #ax.set_yscale('log')
     
     #ax.set_ylim([0,(np.int(np.max(y)/10000)+1)*10000])
     ax.set_xlim([0,(np.int(np.max(x))+1)])
@@ -110,3 +110,5 @@ def plot(cpf = cached_pathfinder.CachedPathFinder()):
         pass
         #print (sys.exc_info())
     return path
+
+print(plot())
