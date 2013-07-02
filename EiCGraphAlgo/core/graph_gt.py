@@ -138,7 +138,7 @@ def buildWeightedGraph(pathFinder):
     G = pathFinder.getGraph()
     weight = G.new_edge_property("double")
     for e in G.edges():
-        weight[e] = math.log(e.source().degree()+e.target().degree())
+        weight[e] = math.log(e.source().out_degree()+e.target().out_degree())
     return G, weight
 
 class VisitorExample(gt.AStarVisitor):
