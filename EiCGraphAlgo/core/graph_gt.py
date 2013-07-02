@@ -68,7 +68,7 @@ def resolveLinks(resolvedPath,resourcesByParent):
             try:
                 resolvedLinks.append((resourcesByParent[steps[0]][steps[1]])['uri'][1:-1])
             except:
-                print('could not find relation between %s and %s ' % steps[0],steps[1] )
+                print('could not find relation between %s and %s ' % (steps[0],steps[1]) )
                 print(resourcesByParent[steps[0]])
     return resolvedLinks
                                                    
