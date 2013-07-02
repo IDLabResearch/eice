@@ -177,14 +177,10 @@ class PathFinder:
     
     def findBestChilds(self,nodes,k = 4):
         node_list = dict()
-        i = 0
-        for node in nodes:
-            node_list[i] = node
-            i += 1
             
-        self.stateGraph = gt.Graph()
+        stateGraph = gt.Graph()
         
-        [self.buildSubGraph(node, nodes, node_list) for node in nodes]
+        [self.buildSubGraph(node, nodes, node_list, stateGraph) for node in nodes]
 
         try:
             self.logger.debug (len(self.stateGraph))
@@ -197,7 +193,7 @@ class PathFinder:
             self.logger.error ('Graph is empty')
             self.logger.error (sys.exc_info())
         
-        dereffed_list = set([self.sub(i, node_list) for i in important])
+        dereffed_list = set([node_list[i] for i in important])
         dereffed_list.discard(0)
         dereffed_list.discard(1)
         return list(dereffed_list)
@@ -236,31 +232,38 @@ class PathFinder:
     
     def buildGraph(self, resource, toAddResources):
         vi = self.stateGraph.add_vertex()
+        i = self.stateGraph.vertex_index[vi]
+        self.resources[i] = resource
         """Builds a graph based on row number i and size n"""
-        [self.matchResource(vi, self.stateGraph.vertex_index[vi], resource, self.stateGraph) for resource in toAddResources]
+        [self.matchResource(vi, i, res, self.stateGraph) for res in toAddResources]
         
-    def buildSubGraph(self, resource, toAddResources, sub_index):
+    def buildSubGraph(self, resource, toAddResources, sub_index, stateGraph):
         vi = self.stateGraph.add_vertex()
+        sub_index[self.stateGraph.vertex_index[vi]] = resource
         """Builds a graph based on row number i and size n"""
-        [self.matchResource(vi, self.stateGraph.vertex_index[vi], resource, self.stateGraph, sub_index=sub_index) for resource in toAddResources]
+        [self.matchResource(vi, self.stateGraph.vertex_index[vi], res, stateGraph, sub_index=sub_index) for res in toAddResources]
         
-    def sub(self, i, sub_index = None):
-        if sub_index == None:
-            return i
-        else:
-            return sub_index[i]
-        
-    def matchResource(self, vi, i, resource, stateGraph, sub_index = None):
+    def matchResource(self, vi, i, resource, stateGraph = False, sub_index = False):
         vj = stateGraph.add_vertex()
         j = stateGraph.vertex_index[vj]
+        if sub_index:
+            sub_index[j] = resource
+            resources = sub_index
+        else:
+            self.resources[j] = resource
+            resources = self.resources
+            
+        if not stateGraph:
+            stateGraph = self.stateGraph
+            
         """Matches each resource with row and column number i and j in a row from the adjacency matrix"""
         try:
-            if self.sub(i,sub_index) == self.sub(j,sub_index):
+            if i == j:
                 stateGraph.add_edge(vi,vj)
-            elif not self.resources[self.sub(j,sub_index)] in self.resources_by_parent:
+            elif not resources[j] in self.resources_by_parent:
                 pass
-            elif self.sub(i,sub_index) in self.resources:
-                if self.resources[self.sub(i,sub_index)] in self.resources_by_parent[self.resources[self.sub(j,sub_index)]]:
+            elif i in self.resources and j in self.resources:
+                if resources[i] in self.resources_by_parent[resources[j]]:
                     stateGraph.add_edge(vi,vj)
                 else:
                     pass
@@ -271,9 +274,7 @@ class PathFinder:
             self.logger.error ('error %s not found in list of resources' % str(j))
             #self.logger.error (self.resources)
             #self.logger.error (sys.exc_info())
-        self.resources[j] = resource
             
-    
     def resourceFetcher(self):
         q = self.worker.getQueue(self.resourceFetcher)
         while True:
