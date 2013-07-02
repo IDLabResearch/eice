@@ -95,8 +95,8 @@ def listPath(resolvedPath,resourcesByParent):
 def pathExists(M):
     """Checks whether an adjacency matrix M contains a path or not"""
     print('Checking if path exists')
-    print(gt.shortest_distance(M))
-    return gt.shortest_distance(M)
+    print(gt.shortest_distance(M).get_array())
+    return gt.shortest_distance(M).get_array()
 
 def pathLength(pathFinder):
     """Checks the length of a path if it exists in the given PathFinder class"""

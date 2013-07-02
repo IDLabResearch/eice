@@ -125,7 +125,7 @@ class PathFinder:
             try:
                 self.logger.info ('reducing matrix')
                 self.logger.debug (len(self.stateGraph))
-                k = np.int((1-np.divide(1,self.iteration))*500)
+                k = np.int((1-np.divide(1,self.iteration))*300)
                 h = gt.pagerank(self.stateGraph)
                 #h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
