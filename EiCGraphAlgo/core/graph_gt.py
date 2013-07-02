@@ -25,7 +25,8 @@ def resolvePath(path,resources):
     
     """
     resolvedPath = list()
-    for step in path:
+    print (path.get_array())
+    for step in path.get_array():
         resolvedPath.append(resources[step])
     return resolvedPath
 
