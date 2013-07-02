@@ -112,8 +112,8 @@ class PathFinder:
         halt1 = time.clock()
         self.logger.info ('resource gathering: %s' % str(halt1 - start))
         #self.stateGraph = gt.Graph()
-        
-        [self.buildGraph(resource, toAddResources) for resource in toAddResources]
+        ris = [self.createResource(resource, self.stateGraph) for res in toAddResources]
+        [self.buildGraph(ri, self.stateGraph) for ri in ris]
         halt2 = time.clock()
         self.logger.info ('graph construction: %s' % str(halt2 - halt1))
         
@@ -180,11 +180,12 @@ class PathFinder:
             
         stateGraph = gt.Graph()
         
-        [self.buildSubGraph(node, nodes, node_list, stateGraph) for node in nodes]
+        ris = [self.createResource(node, stateGraph, sub_index=node_list) for node in nodes]
+        [self.buildGraph(node, stateGraph, sub_index=node_list) for node in ris]
 
         try:
-            self.logger.debug (len(self.stateGraph))
-            h = gt.pagerank(self.stateGraph)
+            self.logger.debug (len(stateGraph))
+            h = gt.pagerank(stateGraph)
             
             res = list(sorted(h, key=h.__getitem__, reverse=True))
 
@@ -230,33 +231,29 @@ class PathFinder:
         return scipy.spatial.distance.jaccard(np.array(predA), np.array(predB))    
         #return 1-np.divide(len(predA & predB),len(predA | predB))       
     
-    def buildGraph(self, resource, toAddResources):
-        vi = self.stateGraph.add_vertex()
-        i = self.stateGraph.vertex_index[vi]
-        self.resources[i] = resource
+    def buildGraph(self, vi, stateGraph, sub_index = False):
         """Builds a graph based on row number i and size n"""
-        [self.matchResource(vi, i, res, self.stateGraph) for res in toAddResources]
-        
-    def buildSubGraph(self, resource, toAddResources, sub_index, stateGraph):
-        vi = self.stateGraph.add_vertex()
-        sub_index[self.stateGraph.vertex_index[vi]] = resource
-        """Builds a graph based on row number i and size n"""
-        [self.matchResource(vi, self.stateGraph.vertex_index[vi], res, stateGraph, sub_index=sub_index) for res in toAddResources]
-        
-    def matchResource(self, vi, i, resource, stateGraph = False, sub_index = False):
-        vj = stateGraph.add_vertex()
-        j = stateGraph.vertex_index[vj]
+        [self.matchResource(vi, vj, stateGraph, sub_index) for vj in stateGraph.vertices()]
+    
+    def createResource(self, resource, stateGraph = False, sub_index = False):
+        v = stateGraph.add_vertex()
+        i = stateGraph.vertex_index[v]
         if sub_index:
-            sub_index[j] = resource
+            sub_index[i] = resource
+        else:
+            self.resources[i] = resource
+        return v
+
+    def matchResource(self, vi, vj, stateGraph = False, sub_index = False):
+        """Matches each resource with row and column number i and j in a row from the adjacency matrix"""
+        i = stateGraph.vertex_index[vi]
+        j = stateGraph.vertex_index[vj]
+        
+        if sub_index:
             resources = sub_index
         else:
-            self.resources[j] = resource
             resources = self.resources
             
-        if not stateGraph:
-            stateGraph = self.stateGraph
-            
-        """Matches each resource with row and column number i and j in a row from the adjacency matrix"""
         try:
             if i == j:
                 stateGraph.add_edge(vi,vj)

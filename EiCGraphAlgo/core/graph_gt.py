@@ -104,7 +104,7 @@ def pathLength(pathFinder):
             touch_e = G.new_edge_property("bool")
             dist, pred = gt.astar_search(G, G.vertex(0), weight,
                                  VisitorExample(touch_v, touch_e, target),
-                                 heuristic=lambda v: pathFinder.jaccard(v, target))
+                                 heuristic=lambda v: pathFinder.jaccard(G.vertex_index[v], G.vertex_index[target]))
             return dist
         else:
             return -1
@@ -119,11 +119,13 @@ def path(pathFinder):
     try:
         if pathExists(G):
             G, weight = buildWeightedGraph(pathFinder)
+            #for vertex in G.vertices():
+            #    print (vertex)
             touch_v = G.new_vertex_property("bool")
             touch_e = G.new_edge_property("bool")
             dist, pred = gt.astar_search(G, G.vertex(0), weight,
                                  VisitorExample(touch_v, touch_e, target),       
-                                 heuristic=lambda v: pathFinder.jaccard(v, target))
+                                 heuristic=lambda v: pathFinder.jaccard(G.vertex_index[v], G.vertex_index[target]))
             return pred
             #return list(nx.all_simple_paths(G,0,1,cutoff=8))
         else:
