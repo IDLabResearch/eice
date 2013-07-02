@@ -132,6 +132,7 @@ def path(pathFinder):
             dist, pred = gt.astar_search(G, G.vertex(0), weight,
                                  VisitorExample(touch_v, touch_e, target),       
                                  heuristic=lambda v: pathFinder.jaccard(G.vertex_index[v], G.vertex_index[target]))
+            print ([pred])
             return [pred]
             #return list(nx.all_simple_paths(G,0,1,cutoff=8))
         else:
