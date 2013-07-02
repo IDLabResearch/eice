@@ -127,10 +127,10 @@ class PathFinder:
                 #self.logger.debug (len(self.stateGraph))
                 k = np.int((1-np.divide(1,self.iteration))*300)
                 h = gt.pagerank(self.stateGraph)
-                print(h.get_2d_array())
+
                 #h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
-                res = list(sorted(h, key=h.__getitem__, reverse=True))
+                res = list(sorted(self.stateGraph.vertices(), key=h[self.stateGraph.vertices().__getitem__], reverse=True))
                 self.logger.debug(k)
                 
                 #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
