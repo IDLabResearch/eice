@@ -178,7 +178,7 @@ class Searcher:
         if 'novelty' in r:
             result['novelty'] = r['novelty']
         if 'personal_context' in r:
-            result['personal_context'] = r['personal_context']
+            result['user_context'] = r['personal_context']
         return result
 
 class DeepSearcher:
@@ -227,7 +227,7 @@ class DeepSearcher:
                     flattened_path.append('<%s>' % step['uri'])
         return flattened_path
         
-    def searchDeep(self, start,dest,search_blacklist=blacklist,k=4,s=3):
+    def searchDeep(self, start,dest,search_blacklist=blacklist,k=4,s=3,user_context=False):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -242,7 +242,7 @@ class DeepSearcher:
         start_time = time.clock()
     
         p = pathfinder.PathFinder(start,dest)
-        result = self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,k=k)
+        result = self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,k=k,user_context=user_context)
         if not result['path']:
             logger.debug (p.resources)
             deep_roots = p.iterateOptimizedNetwork(s)
@@ -252,7 +252,7 @@ class DeepSearcher:
                 for dt in deep_roots['dest']:
                     logger.debug ("extra path between %s and %s" % (st,dt))
                     additionalResources = additionalResources.union(set(self.flattenSearchResults(self.searcher.search(st,dt,k=2*k))))
-            result=self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k)
+            result=self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k,user_context=user_context)
         finish = int(round((time.clock()-start_time) * 1000))
         result['execution_time'] = finish
         return result    
@@ -327,9 +327,9 @@ class FallbackSearcher:
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")
-searcher = Searcher()
-print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
+#searcher = Searcher()
+#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))

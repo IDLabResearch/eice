@@ -242,23 +242,25 @@ class SearchHandler(MainHandler):
     def get(self):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
+        user_context = self.get_argument("user_context", False)
         failed = False
+        
         try:
             
             def main(q):
                 logger.debug ('Main Search started for %s' % source)
                 searcher = Searcher()
-                r = searcher.search(source,destination)
+                self.r = searcher.search(source,destination,user_context=user_context)
                 logger.debug ('Main Search finished for %s' % source)
-                q.put(r)
+                q.put(self.r)
                 
             def deep(q):
                 logger.debug ('Deep Search started %s' % source)
                 f = DeepSearcher()
-                r = f.searchDeep(source, destination)
-                r['execution_time'] = str(int(self.r['execution_time']) + 32000)
+                self.r = f.searchDeep(source, destination, user_context=user_context)
+                self.r['execution_time'] = str(int(self.r['execution_time']) + 32000)
                 logger.debug ('Deep Search finished %s' % source)
-                q.put(r)
+                q.put(self.r)
             
             q = Queue()
             p = Process(target=main, args=(q,))
