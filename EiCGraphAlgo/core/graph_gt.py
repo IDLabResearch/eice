@@ -97,7 +97,7 @@ def pathExists(M):
     print('Checking if path exists')
     dist = gt.shortest_distance(M,source=M.vertex(0),target=M.vertex(1))
     print(dist > 100)
-    return dist > 100
+    return dist < 100
 
 def pathLength(pathFinder):
     """Checks the length of a path if it exists in the given PathFinder class"""
