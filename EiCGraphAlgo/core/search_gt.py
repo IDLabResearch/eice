@@ -91,7 +91,7 @@ class Searcher:
         #Following iterations
         while True:
             if not paths == None:
-                if len(paths) > 1:
+                if len(paths) > 0:
                     break
 
             self.logger.info ('=== %s-- ===' % str(p.iteration))
