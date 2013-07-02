@@ -80,7 +80,11 @@ def listPath(resolvedPath,resourcesByParent):
         steps = list(iterator)
         #logger.debug (steps)
         if len(steps) == 2:
-            resolvedEdges.append(resourcesByParent[steps[0]][steps[1]])
+            try:
+                resolvedEdges.append(resourcesByParent[steps[0]][steps[1]])
+            except:
+                print('could not find relation between %s and %s ' % (steps[0],steps[1]) )
+                print(resourcesByParent[steps[0]])
             
     for node in resolvedPath:
         step = dict()

@@ -133,7 +133,7 @@ class PathFinder:
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 vertices = dict()
                 for vertex in self.stateGraph.vertices():
-                    vertices[vertex] = h[vertex]
+                    vertices[self.stateGraph.vertex_index[vertex]] = h[vertex]
                 print(vertices)
                 res = list(sorted(vertices.keys(), key=operator.itemgetter(1), reverse=True))
                 self.logger.debug(k)
