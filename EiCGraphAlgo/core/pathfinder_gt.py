@@ -39,7 +39,7 @@ class PathFinder:
         self.stateGraph = gt.Graph(directed=False)
         v1 = self.stateGraph.add_vertex()
         v2 = self.stateGraph.add_vertex()
-        self.stateGraph.add_edge(v1, v2)
+        #self.stateGraph.add_edge(v1, v2)
         self.resources[self.stateGraph.vertex_index[v1]] = s1
         self.resources_s1.add(s1)
         self.resources[self.stateGraph.vertex_index[v2]] = s2

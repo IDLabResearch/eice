@@ -96,7 +96,6 @@ def pathExists(M):
     """Checks whether an adjacency matrix M contains a path or not"""
     print('Checking if path exists')
     dist = gt.shortest_distance(M,source=M.vertex(0),target=M.vertex(1))
-    print(dist)
     return dist
 
 def pathLength(pathFinder):
