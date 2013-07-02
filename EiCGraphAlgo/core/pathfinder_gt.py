@@ -255,11 +255,11 @@ class PathFinder:
         j = stateGraph.vertex_index[vj]
         """Matches each resource with row and column number i and j in a row from the adjacency matrix"""
         try:
-            if i == j:
+            if self.sub(i,sub_index) == self.sub(j,sub_index):
                 stateGraph.add_edge(vi,vj)
             elif not self.resources[self.sub(j,sub_index)] in self.resources_by_parent:
                 pass
-            elif i in self.resources:
+            elif self.sub(i,sub_index) in self.resources:
                 if self.resources[self.sub(i,sub_index)] in self.resources_by_parent[self.resources[self.sub(j,sub_index)]]:
                     stateGraph.add_edge(vi,vj)
                 else:
@@ -269,8 +269,8 @@ class PathFinder:
         
         except:
             self.logger.error ('error %s not found in list of resources' % str(j))
-            self.logger.error (self.resources)
-            self.logger.error (sys.exc_info())
+            #self.logger.error (self.resources)
+            #self.logger.error (sys.exc_info())
         self.resources[j] = resource
             
     
