@@ -183,8 +183,8 @@ def visualize(pathFinder, source=False, target=False):
     if not target:
         target = g.vertex(1)
     dist, pred = gt.astar_search(g, source, weight,
-                                 VisitorExample(touch_v, touch_e, target),
-                                 heuristic=lambda v: pathFinder.jaccard(v, target))
+                                 VisitorExample(touch_v, touch_e, target),       
+                                 heuristic=lambda v: pathFinder.jaccard(g.vertex_index[v], g.vertex_index[target]))
     for e in g.edges():
         ecolor[e] = "blue" if touch_e[e] else "black"
     v = target

@@ -134,7 +134,8 @@ class PathFinder:
                 vertices = dict()
                 for vertex in self.stateGraph.vertices():
                     vertices[vertex] = h[vertex]
-                res = list(sorted(vertices.iteritems(), key=operator.itemgetter(1), reverse=True))
+                print(vertices)
+                res = list(sorted(vertices.keys(), key=operator.itemgetter(1), reverse=True))
                 self.logger.debug(k)
                 
                 #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
