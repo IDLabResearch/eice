@@ -112,7 +112,7 @@ class PathFinder:
         halt1 = time.clock()
         self.logger.info ('resource gathering: %s' % str(halt1 - start))
         #self.stateGraph = gt.Graph()
-        ris = [self.createResource(resource, self.stateGraph) for res in toAddResources]
+        ris = [self.createResource(res, self.stateGraph) for res in toAddResources]
         [self.buildGraph(ri, self.stateGraph) for ri in ris]
         halt2 = time.clock()
         self.logger.info ('graph construction: %s' % str(halt2 - halt1))

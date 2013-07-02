@@ -28,7 +28,7 @@ def resolvePath(path,resources):
     print (path.get_array())
     for step in path.get_array():
         resolvedPath.append(resources[step])
-    print (resolvedPath)
+    print (resolvedPath[:10])
     return resolvedPath
 
 def batch(iterable, size):
@@ -60,7 +60,7 @@ def resolveLinks(resolvedPath,resourcesByParent):
     
     """
     resolvedLinks = list()
-    print (resourcesByParent)
+    print (len(resourcesByParent))
     for iterator in rolling_window(resolvedPath, 2):
         steps = list(iterator)
         #logger.debug (steps)
