@@ -9,8 +9,10 @@ import scipy
 from urllib.parse import urlparse
 from handlers.time_out import TimeoutError
 from core.worker_pool import Worker
+import logging.config
 import math
 
+logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
 
