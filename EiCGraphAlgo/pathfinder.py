@@ -3,10 +3,10 @@ import scipy
 #import networkx as nx
 import graph_tool.all as gt
 from scipy import linalg, spatial
-from core import graph_gt, resourceretriever_gt
+from core import graph, resourceretriever
 import time, gc, sys, logging
 from core.worker_pool import Worker
-from core.resourceretriever_gt import Resourceretriever
+from core.resourceretriever import Resourceretriever
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -35,15 +35,13 @@ class PathFinder:
         self.query_log.info('Path between {0} and {1}'.format(source1,source2))
         s1 = '<%s>' % source1
         s2 = '<%s>' % source2
-
-        self.stateGraph = gt.Graph(directed=False)
-        v1 = self.stateGraph.add_vertex()
-        v2 = self.stateGraph.add_vertex()
-        self.stateGraph.add_edge(v1, v2)
-        self.resources[self.stateGraph.vertex_index[v1]] = s1
+        self.resources[0] = s1
         self.resources_s1.add(s1)
-        self.resources[self.stateGraph.vertex_index[v2]] = s2
+        self.resources[1] = s2
         self.resources_s2.add(s2)
+        self.stateGraph = np.zeros((2, 2), np.byte)
+        self.stateGraph[0] = [1, 0]
+        self.stateGraph[1] = [0, 1]
         self.iteration += 1
         return self.stateGraph
 
@@ -62,7 +60,7 @@ class PathFinder:
         **Returns**
         
         response : stateGraph
-            contains the updated stategraph after fetching new resources
+            contains the updated adjacency matrix after fetching new resources
         """
         self.logger.info ('--- NEW ITERATION ---')
         self.logger.info ('Existing resources {0}'.format(str(len(self.resources))))
@@ -104,16 +102,22 @@ class PathFinder:
         gc.collect()
         
         self.logger.info('Updated indexed resources with parents {0}'.format(str(len(self.resources_by_parent))))    
+        
+        n = len(self.resources)
+        
+        for resource in toAddResources:
+            self.resources[n] = resource
+            n = n + 1
             
-        self.logger.info ('Total resources: %s' % str(len(toAddResources)))
+        self.logger.info ('Total resources: %s' % str(n))
 
         self.checked_resources += len(additionalResources)
             
         halt1 = time.clock()
         self.logger.info ('resource gathering: %s' % str(halt1 - start))
-        #self.stateGraph = gt.Graph()
+        self.stateGraph = np.zeros(shape=(n, n), dtype=np.byte)
         
-        [self.buildGraph(resource, toAddResources) for resource in toAddResources]
+        [self.buildGraph(i, n) for i in range(n)]
         halt2 = time.clock()
         self.logger.info ('graph construction: %s' % str(halt2 - halt1))
         
@@ -121,13 +125,12 @@ class PathFinder:
         #Check for singular values to reduce dimensions of existing resources
         self.storedResources.update(self.resources)
         
-        if not graph_gt.pathExists(self.stateGraph) and self.iteration > 1:
+        if not graph.pathExists(self.stateGraph) and self.iteration > 1:
             try:
                 self.logger.info ('reducing matrix')
                 self.logger.debug (len(self.stateGraph))
-                k = np.int((1-np.divide(1,self.iteration))*1000)
-                h = gt.pagerank(self.stateGraph)
-                #h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
+                k = np.int((1-np.divide(1,self.iteration))*250)
+                h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
                 self.logger.debug(k)
@@ -143,7 +146,7 @@ class PathFinder:
                 #print ('error ratio:')                
                 #print (np.divide(len(unimportant & important)*100,len(important)))
                 unimportant = res[k:]
-                self.resources = resourceretriever_gt.removeUnimportantResources(unimportant, self.resources)            
+                self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 self.logger.info('Updated resources amount: %s' % str(len(self.resources)))
@@ -176,20 +179,21 @@ class PathFinder:
         return childs
     
     def findBestChilds(self,nodes,k = 4):
+        n = len(nodes)
         node_list = dict()
         i = 0
         for node in nodes:
             node_list[i] = node
             i += 1
             
-        self.stateGraph = gt.Graph()
+        self.stateGraph = np.zeros(shape=(n, n), dtype=np.byte)
         
-        [self.buildSubGraph(node, nodes, node_list) for node in nodes]
+        [self.buildSubGraph(i, n, node_list) for i in range(n)]
 
         try:
             self.logger.debug (len(self.stateGraph))
-            h = gt.pagerank(self.stateGraph)
-            
+            h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
+
             res = list(sorted(h, key=h.__getitem__, reverse=True))
 
             important = res[:k]          
@@ -229,49 +233,50 @@ class PathFinder:
         predB = set()
         for link in respbA:
             predA.add(link['uri'])
+            
         for link in respbB:
             predB.add(link['uri'])
         return scipy.spatial.distance.jaccard(np.array(predA), np.array(predB))    
         #return 1-np.divide(len(predA & predB),len(predA | predB))       
     
-    def buildGraph(self, resource, toAddResources):
-        vi = self.stateGraph.add_vertex()
+    def buildGraph(self, i, n):
         """Builds a graph based on row number i and size n"""
-        [self.matchResource(vi, self.stateGraph.vertex_index[vi], resource, self.stateGraph) for resource in toAddResources]
+        row = np.zeros(n, np.byte)
+        [self.matchResource(i, j, row) for j in range(n)]
+        self.stateGraph[i] = row
         
-    def buildSubGraph(self, resource, toAddResources, sub_index):
-        vi = self.stateGraph.add_vertex()
+    def buildSubGraph(self, i, n, sub_index):
         """Builds a graph based on row number i and size n"""
-        [self.matchResource(vi, self.stateGraph.vertex_index[vi], resource, self.stateGraph, sub_index=sub_index) for resource in toAddResources]
-        
+        row = np.zeros(n, np.byte)
+        [self.matchResource(i, j, row, sub_index) for j in range(n)]
+        self.stateGraph[i] = row
+    
     def sub(self, i, sub_index = None):
         if sub_index == None:
             return i
         else:
             return sub_index[i]
         
-    def matchResource(self, vi, i, resource, stateGraph, sub_index = None):
-        vj = stateGraph.add_vertex()
-        j = stateGraph.vertex_index[vj]
+    def matchResource(self, i, j, row, sub_index = None):
         """Matches each resource with row and column number i and j in a row from the adjacency matrix"""
         try:
             if i == j:
-                stateGraph.add_edge(vi,vj)
+                row[j] = 1
             elif not self.resources[self.sub(j,sub_index)] in self.resources_by_parent:
-                pass
+                row[j] = 0
             elif i in self.resources:
                 if self.resources[self.sub(i,sub_index)] in self.resources_by_parent[self.resources[self.sub(j,sub_index)]]:
-                    stateGraph.add_edge(vi,vj)
+                    row[j] = 1
                 else:
-                    pass
+                    row[j] = 0
             else:
-                pass
+                row[j] = 0
         
         except:
+            row[j] = 0
             self.logger.error ('error %s not found in list of resources' % str(j))
             self.logger.error (self.resources)
             self.logger.error (sys.exc_info())
-        self.resources[j] = resource
             
     
     def resourceFetcher(self):
