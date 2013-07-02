@@ -60,12 +60,16 @@ def resolveLinks(resolvedPath,resourcesByParent):
     
     """
     resolvedLinks = list()
-    print (len(resourcesByParent))
+
     for iterator in rolling_window(resolvedPath, 2):
         steps = list(iterator)
         #logger.debug (steps)
         if len(steps) == 2:
-            resolvedLinks.append((resourcesByParent[steps[0]][steps[1]])['uri'][1:-1])
+            try:
+                resolvedLinks.append((resourcesByParent[steps[0]][steps[1]])['uri'][1:-1])
+            except:
+                print('could not find relation between %s and %s ' % steps[0],steps[1] )
+                print(resourcesByParent[steps[0]])
     return resolvedLinks
                                                    
 def listPath(resolvedPath,resourcesByParent):
