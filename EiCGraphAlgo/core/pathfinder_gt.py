@@ -7,6 +7,7 @@ from core import graph_gt, resourceretriever_gt
 import time, gc, sys, logging
 from core.worker_pool import Worker
 from core.resourceretriever_gt import Resourceretriever
+import operator
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -130,10 +131,10 @@ class PathFinder:
 
                 #h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
-                vertices = list()
+                vertices = dict()
                 for vertex in self.stateGraph.vertices():
-                    vertices.append(vertex)
-                res = list(sorted(vertices, key=h[vertices.__getitem__], reverse=True))
+                    vertices[vertex] = h[vertex]
+                res = list(sorted(vertices.iteritems(), key=operator.itemgetter(1), reverse=True))
                 self.logger.debug(k)
                 
                 #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
