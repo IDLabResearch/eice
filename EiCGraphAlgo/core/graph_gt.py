@@ -182,5 +182,5 @@ def visualize(pathFinder, source=False, target=False):
                 ecolor[e] = "#a40000"
                 ewidth[e] = 3
         v = p
-    gt.graph_draw(g, output_size=(300, 300), vertex_fill_color=touch_v, edge_color=ecolor,
+    gt.graph_draw(g, output_size=(600, 600), vertex_fill_color=touch_v, edge_color=ecolor,
                   edge_pen_width=ewidth, output="astar-demo.pdf")
