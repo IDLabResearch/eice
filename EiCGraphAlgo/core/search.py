@@ -9,6 +9,7 @@ import scipy
 from urllib.parse import urlparse
 from handlers.time_out import TimeoutError
 from core.worker_pool import Worker
+import math
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -44,7 +45,7 @@ class Searcher:
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
         
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10,user_context=False):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -133,6 +134,8 @@ class Searcher:
         l = 0
         c = 0
         refcount = 0
+        usercount = 0
+        u = 0
         for step in r['path']:
             if l > 2 and l % 2 == 1:
                 c+=1
@@ -142,9 +145,20 @@ class Searcher:
                     refcount += 1/2
                 refcount += p.jaccard_distance(m.path, m_p.path)/2
             l+=1
-            
-        if l > 0:    
-            r['novelty'] = refcount / c
+            if user_context and l % 2 == 0:
+                u += 1
+                step = r['path'][l]['uri']
+                user_path = self.search(user_context,step,search_blacklist=search_blacklist,givenP=givenP,additionalRes=additionalRes,k = 6)
+                if user_path['path']:
+                    usercount += 1 / (math.floor(len(user_path['path'])-1)/2)
+                else:
+                    usercount += 0
+        if l > 0:
+            r['novelty'] = 0
+            if c > 0:    
+                r['novelty'] = refcount / c
+            if u > 0:
+                r['personal_context'] = usercount / u
             
         try:
             path = os.path.dirname(os.path.abspath(__file__))
@@ -161,7 +175,10 @@ class Searcher:
         result['execution_time'] = r['execution_time']
         result['source'] = r['source']
         result['destination'] = r['destination']
-        result['novelty'] = r['novelty']
+        if 'novelty' in r:
+            result['novelty'] = r['novelty']
+        if 'personal_context' in r:
+            result['personal_context'] = r['personal_context']
         return result
 
 class DeepSearcher:
@@ -311,7 +328,8 @@ class FallbackSearcher:
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")
 searcher = Searcher()
-print (searcher.search('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
