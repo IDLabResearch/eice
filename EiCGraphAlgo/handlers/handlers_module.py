@@ -268,7 +268,7 @@ class SearchGTHandler(MainHandler):
             p = Process(target=main, args=(q,))
             p.start()
 
-            p.join(30)
+            p.join(45)
             if p.is_alive():
                 logger.warning ('Terminating process')
                 p.terminate()
@@ -282,12 +282,12 @@ class SearchGTHandler(MainHandler):
                 p = Process(target=deep, args=(q,))
                 p.start()
 
-                p.join(60)
+                p.join(90)
                 if p.is_alive():
                     logger.warning ('Terminating process')
                     p.terminate()
                     self.set_status(503)
-                    self.r = 'Your process was killed after 90 seconds, sorry! x( Try again'
+                    self.r = 'Your process was killed after 120 seconds, sorry! x( Try again'
                 else:
                     self.r = q.get()
                     
