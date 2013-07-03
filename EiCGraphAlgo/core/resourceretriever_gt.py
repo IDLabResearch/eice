@@ -95,12 +95,13 @@ except:
         sparql = None
         
 print ("""
-     _
-   _(A)_
-  (_)+(_)
-     |
-    _-_""")
-print ("EiCE Server running on: %s :)" % sys.platform)
+.------..------.
+|G.--. ||T.--. |
+| :/\: || :/\: |
+| :\/: || (__) |
+| '--'G|| '--'T|
+`------'`------'""")
+print ("EiCE GT plugin running on: %s :)" % sys.platform)
 
 class Resourceretriever:
     
