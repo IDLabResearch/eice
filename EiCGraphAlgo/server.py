@@ -27,6 +27,8 @@ class Application(tornado.web.Application):
                 url(r'/', handlers_module.MainHandler, name='index'),
                 url(r'/prefixes', handlers_module.PrefixHandler, name='prefixes'),
                 url(r'/paths', handlers_module.SearchHandler, name='paths'),
+                url(r'/multiple_paths', handlers_module.SearchAllHandler, name='multiple_paths'),
+                url(r'/paths_gt', handlers_module.SearchGTHandler, name='paths_gt'),
                 url(r'/subjects', handlers_module.LookupHandler, name = 'subjects'),
                 url(r'/cached_paths', handlers_module.CachedPathHandler, name = 'cached_paths'),
                 url(r'/descriptions', handlers_module.CacheLookupHandler, name = 'descriptions'),

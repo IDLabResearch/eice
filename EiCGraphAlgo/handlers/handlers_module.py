@@ -11,8 +11,10 @@ from handlers.time_out import TimeoutError
 import generateplots
 from core.resourceretriever import Resourceretriever
 from core.search import Searcher, DeepSearcher
+import core.search_gt as sgt
 import threading
 from multiprocessing import Process, Queue
+
 
 logger = logging.getLogger('handler')
 
@@ -231,6 +233,131 @@ class CachedPathHandler(MainHandler):
             r['error'] = 'Something went wrong. Check the server log files for more information. Do not use quotes.'
         response = ujson.dumps(r)
         self.write(response)
+        self.finish()
+
+class SearchGTHandler(MainHandler):
+    
+    def initialize(self):
+        self.cpf = cached_pathfinder.CachedPathFinder()
+        self.r = dict()
+        
+    def get(self):
+        source = self.get_argument("from", "")
+        destination = self.get_argument("to", "")
+        user_context = self.get_argument("user_context", False)
+        failed = False
+        
+        try:
+            
+            def main(q):
+                logger.debug ('Main Search started for %s' % source)
+                searcher = sgt.Searcher()
+                self.r = searcher.search(source,destination,user_context=user_context)
+                logger.debug ('Main Search finished for %s' % source)
+                q.put(self.r)
+                
+            def deep(q):
+                logger.debug ('Deep Search started %s' % source)
+                f = sgt.DeepSearcher()
+                self.r = f.searchDeep(source, destination, user_context=user_context)
+                self.r['execution_time'] = str(int(self.r['execution_time']) + 32000)
+                logger.debug ('Deep Search finished %s' % source)
+                q.put(self.r)
+            
+            q = Queue()
+            p = Process(target=main, args=(q,))
+            p.start()
+
+            p.join(30)
+            if p.is_alive():
+                logger.warning ('Terminating process')
+                p.terminate()
+                logger.warning('No path found in 30 seconds, starting deep search.')
+                failed = True
+            else:
+                self.r = q.get()
+                
+            if failed:
+                q = Queue()
+                p = Process(target=deep, args=(q,))
+                p.start()
+
+                p.join(60)
+                if p.is_alive():
+                    logger.warning ('Terminating process')
+                    p.terminate()
+                    self.set_status(503)
+                    self.r = 'Your process was killed after 90 seconds, sorry! x( Try again'
+                else:
+                    self.r = q.get()
+                    
+                    
+        except AttributeError:
+            self.set_status(400)
+            logger.error (sys.exc_info())
+            self.r = 'Invalid arguments :/ Check the server log files if problem persists.'
+        except:
+            self.set_status(404)
+            logger.error (sys.exc_info())
+            self.r = 'Something went wrong x( Probably either the start or destination URI is a dead end. Check the server log files for more information.'
+
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
+        self.set_header("charset", "utf8")
+        self.write(ujson.dumps(self.r))
+        self.finish()
+
+class SearchAllHandler(MainHandler):
+    
+    def initialize(self):
+        self.cpf = cached_pathfinder.CachedPathFinder()
+        self.r = dict()
+        
+    def get(self):
+        source = self.get_argument("from", "")
+        destination = self.get_argument("to", "")
+        user_context = self.get_argument("user_context", False)
+        failed = False
+        
+        try:
+            
+            def main(q):
+                logger.debug ('Main Search started for %s' % source)
+                searcher = DeepSearcher()
+                self.r = searcher.search(source,destination,user_context=user_context)
+                logger.debug ('Main Search finished for %s' % source)
+                q.put(self.r)
+            
+            q = Queue()
+            p = Process(target=main, args=(q,))
+            p.start()
+
+            p.join(300)
+            if p.is_alive():
+                logger.warning ('Terminating process')
+                p.terminate()
+                logger.warning('Not all paths found in 300 seconds, terminating process.')
+                failed = True
+            else:
+                self.r = q.get()
+                
+            if failed:
+                self.set_status(503)
+                self.r = 'Your process was killed after 90 seconds, sorry! x( Try again'
+                    
+        except AttributeError:
+            self.set_status(400)
+            logger.error (sys.exc_info())
+            self.r = 'Invalid arguments :/ Check the server log files if problem persists.'
+        except:
+            self.set_status(404)
+            logger.error (sys.exc_info())
+            self.r = 'Something went wrong x( Probably either the start or destination URI is a dead end. Check the server log files for more information.'
+
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
+        self.set_header("charset", "utf8")
+        self.write(ujson.dumps(self.r))
         self.finish()
      
 class SearchHandler(MainHandler):
