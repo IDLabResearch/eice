@@ -157,7 +157,7 @@ class PathFinder:
                     #Never delete grandmother and grandfather, even if they become insignificant
                     if u > 1:
                         self.unimportant.add(self.stateGraph.vertex(u))
-                print(self.unimportant)
+                #print(self.unimportant)
                 #self.stateGraph = resourceretriever_gt.removeUnimportantResources(unimportant, self.resources, self.stateGraph)            
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
