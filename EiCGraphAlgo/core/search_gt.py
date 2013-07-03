@@ -12,7 +12,6 @@ from core.worker_pool import Worker
 import logging.config
 import math
 
-logging.config.fileConfig('logging.conf')
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
 
@@ -110,7 +109,7 @@ class Searcher:
         if paths:
             for path in paths:
         #       logger.debug(path)
-                resolvedPath = graph_gt.resolvePath(path,p.getResources())
+                resolvedPath = graph_gt.resolvePath(path,p.getResources(),p.getGraph())
                 resolvedLinks = graph_gt.resolveLinks(resolvedPath, p.getResourcesByParent())
                 formattedPath = list()
                 for step in resolvedPath:
@@ -333,6 +332,9 @@ class FallbackSearcher:
 searcher = Searcher()
 #print (searcher.search('http://www.cibaoblog.com/tag/jose-enrique/','http://www.cibaoblog.com/tag/josephine/',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
+print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
+print (searcher.search('http://dbpedia.org/resource/David_Guetta','http://dbpedia.org/resource/France',blacklist))
 print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))

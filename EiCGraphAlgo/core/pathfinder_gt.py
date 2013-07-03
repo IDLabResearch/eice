@@ -30,6 +30,7 @@ class PathFinder:
         self.resourceretriever = Resourceretriever()
         self.iteration = 0
         self.initMatrix(s1, s2)
+        self.unimportant = set()
 
     def initMatrix(self, source1, source2):
         """Initialization of the adjacency matrix based on input source and destination."""
@@ -41,9 +42,10 @@ class PathFinder:
         v1 = self.stateGraph.add_vertex()
         v2 = self.stateGraph.add_vertex()
         #self.stateGraph.add_edge(v1, v2)
-        self.resources[self.stateGraph.vertex_index[v1]] = s1
+        self.resource = self.stateGraph.new_vertex_property("string")
+        self.resources[v1] = s1
         self.resources_s1.add(s1)
-        self.resources[self.stateGraph.vertex_index[v2]] = s2
+        self.resources[v2] = s2
         self.resources_s2.add(s2)
         self.iteration += 1
         return self.stateGraph
@@ -68,8 +70,8 @@ class PathFinder:
         self.logger.info ('--- NEW ITERATION ---')
         self.logger.info ('Existing resources {0}'.format(str(len(self.resources))))
         self.logger.info ('Indexed resources by parents {0}'.format(str(len(self.resources_by_parent))))
-        self.logger.info ('Grandmother: {0}'.format(self.resources[0]))
-        self.logger.info ('Grandfather: {0}'.format(self.resources[1]))
+        self.logger.info ('Grandmother: {0}'.format(self.resources[self.stateGraph.vertex(0)]))
+        self.logger.info ('Grandfather: {0}'.format(self.resources[self.stateGraph.vertex(1)]))
         self.logger.info ('--- --- ---')
         
         start = time.clock()
@@ -77,7 +79,8 @@ class PathFinder:
         additionalResources = set()
         
         for key in self.resources:
-            prevResources.add(self.resources[key])
+            if not key in self.unimportant:
+                prevResources.add(self.resources[key])
         
         self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
         
@@ -134,8 +137,9 @@ class PathFinder:
                 vertices = dict()
                 for vertex in self.stateGraph.vertices():
                     vertices[self.stateGraph.vertex_index[vertex]] = h[vertex]
-                print(vertices)
-                res = list(sorted(vertices.keys(), key=operator.itemgetter(1), reverse=True))
+                #print(vertices)
+                res = list(sorted(vertices, key=vertices.__getitem__, reverse=True))
+                #print (res)
                 self.logger.debug(k)
                 
                 #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
@@ -149,8 +153,12 @@ class PathFinder:
                 #print ('error ratio:')                
                 #print (np.divide(len(unimportant & important)*100,len(important)))
                 unimportant = res[k:]
-                print(unimportant)
-                self.resources = resourceretriever_gt.removeUnimportantResources(unimportant, self.resources)            
+                for u in unimportant:
+                    #Never delete grandmother and grandfather, even if they become insignificant
+                    if u > 1:
+                        self.unimportant.add(self.stateGraph.vertex(u))
+                print(self.unimportant)
+                #self.stateGraph = resourceretriever_gt.removeUnimportantResources(unimportant, self.resources, self.stateGraph)            
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 self.logger.info('Updated resources amount: %s' % str(len(self.resources)))
@@ -183,10 +191,10 @@ class PathFinder:
         return childs
     
     def findBestChilds(self,nodes,k = 4):
-        node_list = dict()
+        
             
         stateGraph = gt.Graph()
-        
+        node_list = stateGraph.new_vertex_property("string") 
         ris = [self.createResource(node, stateGraph, sub_index=node_list) for node in nodes]
         [self.buildGraph(node, stateGraph, sub_index=node_list) for node in ris]
 
@@ -244,17 +252,16 @@ class PathFinder:
     
     def createResource(self, resource, stateGraph = False, sub_index = False):
         v = stateGraph.add_vertex()
-        i = stateGraph.vertex_index[v]
         if sub_index:
-            sub_index[i] = resource
+            sub_index[v] = resource
         else:
-            self.resources[i] = resource
+            self.resources[v] = resource
         return v
 
     def matchResource(self, vi, vj, stateGraph = False, sub_index = False):
         """Matches each resource with row and column number i and j in a row from the adjacency matrix"""
-        i = stateGraph.vertex_index[vi]
-        j = stateGraph.vertex_index[vj]
+        #i = stateGraph.vertex_index[vi]
+        #j = stateGraph.vertex_index[vj]
         
         if sub_index:
             resources = sub_index
@@ -262,12 +269,12 @@ class PathFinder:
             resources = self.resources
             
         try:
-            if i == j:
+            if vi == vj:
                 stateGraph.add_edge(vi,vj)
-            elif not resources[j] in self.resources_by_parent:
+            elif not resources[vj] in self.resources_by_parent:
                 pass
-            elif i in self.resources and j in self.resources:
-                if resources[i] in self.resources_by_parent[resources[j]]:
+            elif vi in self.resources and vj in self.resources:
+                if resources[vi] in self.resources_by_parent[resources[vj]]:
                     stateGraph.add_edge(vi,vj)
                 else:
                     pass
@@ -275,7 +282,7 @@ class PathFinder:
                 pass
         
         except:
-            self.logger.error ('error %s not found in list of resources' % str(j))
+            self.logger.error ('error %s not found in list of resources' % str(stateGraph.vertex_index[vj]))
             #self.logger.error (self.resources)
             #self.logger.error (sys.exc_info())
             

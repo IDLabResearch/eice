@@ -17,6 +17,7 @@ import sys
 import tempfile
 import requests
 from urllib.parse import urljoin
+import graph_tool.all as gt
 
 #Define properties to ignore:
 blacklist = frozenset([
@@ -579,18 +580,21 @@ def addDirectedLink(source, target, predicate, inverse, resourcesByParent):
     link['inverse'] = inverse
     resourcesByParent[target][source] = link
 
-def removeUnimportantResources(unimportant, resources):
-    updated_resources = dict()
-    for u in unimportant:
+def removeUnimportantResources(unimportant, resources, stateGraph):
+    unimportant_vertices = list()
+    for u in reversed(sorted(unimportant)):
         #Never delete grandmother and grandfather, even if they become insignificant
-        if u > 1: 
-            del resources[u]
-    i = 0
-    for r in resources:
-        updated_resources[i] = resources[r]
-        i += 1        
-    resources = updated_resources
-    return resources
+        if u > 1:
+            unimportant_vertices.append(stateGraph.vertex(u))
+    gv = gt.GraphView(stateGraph,vfilt=lambda x: x not in unimportant_vertices)
+    #stateGraph = gt.Graph(gv,prune=True)
+    
+    #for u in unimportant_vertices:
+    #    stateGraph.remove_vertex(u)
+        
+    #print (stateGraph.vertex(0))
+    #print (stateGraph.vertex(1))            
+    return gv
     
 def rankToKeep(u, singularValues, threshold):
     i = 0

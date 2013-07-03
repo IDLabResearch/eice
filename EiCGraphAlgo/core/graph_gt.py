@@ -11,7 +11,7 @@ logger = logging.getLogger('pathFinder')
 
 
 
-def resolvePath(path,resources):
+def resolvePath(path,resources,stateGraph):
     """Resolves a path between two resources.
     
     **Parameters**
@@ -25,8 +25,17 @@ def resolvePath(path,resources):
     
     """
     resolvedPath = list()
-    print (path.get_array())
-    for step in path.get_array():
+    steps = list()
+    v = stateGraph.vertex(1)
+    while v != stateGraph.vertex(0):
+        p = stateGraph.vertex(path[v])
+        for e in v.out_edges():
+            if e.target() == p:
+                steps.append(v)
+        v = p
+    steps.append(stateGraph.vertex(0))
+    steps.reverse()
+    for step in steps:
         resolvedPath.append(resources[step])
     print (resolvedPath[:10])
     return resolvedPath
@@ -68,8 +77,8 @@ def resolveLinks(resolvedPath,resourcesByParent):
             try:
                 resolvedLinks.append((resourcesByParent[steps[0]][steps[1]])['uri'][1:-1])
             except:
-                print('could not find relation between %s and %s ' % (steps[0],steps[1]) )
-                print(resourcesByParent[steps[0]])
+                logger.error('could not find relation between %s and %s ' % (steps[0],steps[1]) )
+                #print(resourcesByParent[steps[0]])
     return resolvedLinks
                                                    
 def listPath(resolvedPath,resourcesByParent):
@@ -83,8 +92,8 @@ def listPath(resolvedPath,resourcesByParent):
             try:
                 resolvedEdges.append(resourcesByParent[steps[0]][steps[1]])
             except:
-                print('could not find relation between %s and %s ' % (steps[0],steps[1]) )
-                print(resourcesByParent[steps[0]])
+                logger.error('could not find relation between %s and %s ' % (steps[0],steps[1]) )
+                #print(resourcesByParent[steps[0]])
             
     for node in resolvedPath:
         step = dict()
@@ -102,9 +111,8 @@ def listPath(resolvedPath,resourcesByParent):
 
 def pathExists(M):
     """Checks whether an adjacency matrix M contains a path or not"""
-    print('Checking if path exists')
+    #print('Checking if path exists')
     dist = gt.shortest_distance(M,source=M.vertex(0),target=M.vertex(1))
-    print(dist > 100)
     return dist < 100
 
 def pathLength(pathFinder):
@@ -118,7 +126,7 @@ def pathLength(pathFinder):
             touch_e = G.new_edge_property("bool")
             dist, pred = gt.astar_search(G, G.vertex(0), weight,
                                  VisitorExample(touch_v, touch_e, target),
-                                 heuristic=lambda v: pathFinder.jaccard(G.vertex_index[v], G.vertex_index[target]))
+                                 heuristic=lambda v: pathFinder.jaccard(v, target))
             return dist
         else:
             return -1
@@ -139,8 +147,8 @@ def path(pathFinder):
             touch_e = G.new_edge_property("bool")
             dist, pred = gt.astar_search(G, G.vertex(0), weight,
                                  VisitorExample(touch_v, touch_e, target),       
-                                 heuristic=lambda v: pathFinder.jaccard(G.vertex_index[v], G.vertex_index[target]))
-            print ([pred])
+                                 heuristic=lambda v: pathFinder.jaccard(v, target))
+            #print ([pred])
             return [pred]
             #return list(nx.all_simple_paths(G,0,1,cutoff=8))
         else:
@@ -188,7 +196,7 @@ def visualize(pathFinder, source=False, target=False):
         target = g.vertex(1)
     dist, pred = gt.astar_search(g, source, weight,
                                  VisitorExample(touch_v, touch_e, target),       
-                                 heuristic=lambda v: pathFinder.jaccard(g.vertex_index[v], g.vertex_index[target]))
+                                 heuristic=lambda v: pathFinder.jaccard(v, target))
     for e in g.edges():
         ecolor[e] = "blue" if touch_e[e] else "black"
     v = target
