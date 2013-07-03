@@ -116,7 +116,8 @@ class PathFinder:
         halt1 = time.clock()
         self.logger.info ('resource gathering: %s' % str(halt1 - start))
         #self.stateGraph = gt.Graph()
-        ris = [self.createResource(res, self.stateGraph) for res in toAddResources]
+        vlist = self.stateGraph.add_vertex(len(toAddResources))
+        ris = [self.createResource(res, next(vlist)) for res in toAddResources]
         [self.buildGraph(ri, self.stateGraph) for ri in ris]
         halt2 = time.clock()
         self.logger.info ('graph construction: %s' % str(halt2 - halt1))
@@ -191,11 +192,10 @@ class PathFinder:
         return childs
     
     def findBestChilds(self,nodes,k = 4):
-        
-            
         stateGraph = gt.Graph()
-        node_list = stateGraph.new_vertex_property("string") 
-        ris = [self.createResource(node, stateGraph, sub_index=node_list) for node in nodes]
+        node_list = stateGraph.new_vertex_property("string")
+        vlist = stateGraph.add_vertex(len(nodes))
+        ris = [self.createResource(node, next(vlist), sub_index=node_list) for node in nodes]
         [self.buildGraph(node, stateGraph, sub_index=node_list) for node in ris]
 
         try:
@@ -250,8 +250,7 @@ class PathFinder:
         """Builds a graph based on row number i and size n"""
         [self.matchResource(vi, vj, stateGraph, sub_index) for vj in stateGraph.vertices()]
     
-    def createResource(self, resource, stateGraph = False, sub_index = False):
-        v = stateGraph.add_vertex()
+    def createResource(self, resource, v = False, sub_index = False):
         if sub_index:
             sub_index[v] = resource
         else:
@@ -269,11 +268,11 @@ class PathFinder:
             resources = self.resources
             
         try:
-            if vi == vj:
-                stateGraph.add_edge(vi,vj)
-            elif not resources[vj] in self.resources_by_parent:
+            #if vi == vj:
+            #    stateGraph.add_edge(vi,vj)
+            if not resources[vj] in self.resources_by_parent:
                 pass
-            elif vi in self.resources and vj in self.resources:
+            elif vi in resources and vj in resources:
                 if resources[vi] in self.resources_by_parent[resources[vj]]:
                     stateGraph.add_edge(vi,vj)
                 else:
