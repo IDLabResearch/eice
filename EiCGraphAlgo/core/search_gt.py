@@ -118,7 +118,7 @@ class Searcher:
                 fullPath['vertices'] = formattedPath
                 fullPath['edges'] = resolvedLinks
                 resolvedPaths.append(fullPath)
-                graph_gt.visualize(p)
+                #graph_gt.visualize(p)
         else:
             return {'path':False,'source':start,'destination':dest,'execution_time':int(round((time.clock()-start_time) * 1000))}
                 
