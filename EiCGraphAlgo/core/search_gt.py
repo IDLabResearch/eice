@@ -46,7 +46,7 @@ class Searcher:
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
         
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10,user_context=False):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 20,user_context=False):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -109,8 +109,7 @@ class Searcher:
         if paths:
             for path in paths:
         #       logger.debug(path)
-                resolvedPath = graph_gt.resolvePath(path,p.getResources(),p.getGraph())
-                resolvedLinks = graph_gt.resolveLinks(resolvedPath, p.getResourcesByParent())
+                resolvedPath, resolvedLinks = graph_gt.resolvePath(path,p.getResources(),p.getResourcesByParent(),p.getGraph())
                 formattedPath = list()
                 for step in resolvedPath:
                     formattedPath.append(step[1:-1])
@@ -118,7 +117,7 @@ class Searcher:
                 fullPath['vertices'] = formattedPath
                 fullPath['edges'] = resolvedLinks
                 resolvedPaths.append(fullPath)
-                #graph_gt.visualize(p)
+                graph_gt.visualize(p)
         else:
             return {'path':False,'source':start,'destination':dest,'execution_time':int(round((time.clock()-start_time) * 1000))}
                 
@@ -332,8 +331,8 @@ class FallbackSearcher:
 searcher = Searcher()
 #print (searcher.search('http://www.cibaoblog.com/tag/jose-enrique/','http://www.cibaoblog.com/tag/josephine/',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
-print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
-print (searcher.search('http://dbpedia.org/resource/David_Guetta','http://dbpedia.org/resource/France',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/David_Guetta','http://dbpedia.org/resource/France',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))

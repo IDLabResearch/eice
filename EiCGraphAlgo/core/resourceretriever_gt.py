@@ -103,6 +103,10 @@ print ("""
 `------'`------'""")
 print ("EiCE GT plugin running on: %s :)" % sys.platform)
 
+class Triple:
+    pass    
+    
+
 class Resourceretriever:
     
     def __init__(self, solrs=solrs):
@@ -327,24 +331,26 @@ class Resourceretriever:
         else:
             return False
         
-    def fetchResource(self, resource, resourcesByParent, additionalResources, blacklist):   
+    
+    def fetchResource(self, resource, additionalResources, blacklist):   
         newResources = self.getResource(resource)
         if newResources:
             for tripleKey, triple in newResources.items():
-                inverse = False
+                result = Triple()
                 if resource == triple[0]:
-                    targetRes = triple[2]
+                    result.source = triple[0]
+                    result.targetRes = triple[2]
+                    result.inverse = False
                 else:
-                    targetRes = triple[0]
-                    inverse = True
-                predicate = triple[1]
+                    result.targetRes = triple[0]
+                    result.source = triple[2]
+                    result.inverse = True
+                result.predicate = triple[1]
                 
-                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
-                    #Add forward link  
-                    addDirectedLink(resource, targetRes, predicate, not inverse, resourcesByParent)
-                    #Add backward link
-                    addDirectedLink(targetRes, resource, predicate, inverse, resourcesByParent)
-                    additionalResources.add(targetRes)
+                if isResource(result.targetRes) and (result.predicate not in blacklist) and result.targetRes.startswith('<') and result.targetRes.endswith('>') and any(domain in result.targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
+                    if not resource in additionalResources:
+                        additionalResources[resource] = set()
+                    additionalResources[resource].add(result)
                     
     def describeResource(self, resource):
         """Wrapper function to describe a resource given a URI either using INDEX lookup or via a SPARQL query"""
@@ -572,14 +578,6 @@ def isResource(item):
         return True
     else:
         return False        
-
-def addDirectedLink(source, target, predicate, inverse, resourcesByParent):
-    if not target in resourcesByParent:
-        resourcesByParent[target] = dict()
-    link = dict()
-    link['uri'] = predicate
-    link['inverse'] = inverse
-    resourcesByParent[target][source] = link
 
 def removeUnimportantResources(unimportant, resources, stateGraph):
     unimportant_vertices = list()

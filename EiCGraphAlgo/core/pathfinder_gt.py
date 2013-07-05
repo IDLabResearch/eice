@@ -24,13 +24,13 @@ class PathFinder:
         self.resources = dict()
         self.resources_inverse_index = dict()
         self.resources_by_parent = dict()   
-        self.storedResources = dict()  
         self.threshold = threshold
         self.checked_resources = 0
         self.resourceretriever = Resourceretriever()
         self.iteration = 0
         self.initMatrix(s1, s2)
         self.unimportant = set()
+        self.added = set()
 
     def initMatrix(self, source1, source2):
         """Initialization of the adjacency matrix based on input source and destination."""
@@ -41,11 +41,14 @@ class PathFinder:
         self.stateGraph = gt.Graph(directed=False)
         v1 = self.stateGraph.add_vertex()
         v2 = self.stateGraph.add_vertex()
-        #self.stateGraph.add_edge(v1, v2)
-        self.resource = self.stateGraph.new_vertex_property("string")
+        self.stateGraph.add_edge(v1, v2)
+        self.resources = self.stateGraph.new_vertex_property("string")
+        self.resources_by_parent = self.stateGraph.new_edge_property("object")
         self.resources[v1] = s1
+        self.resources_inverse_index[s1] = v1
         self.resources_s1.add(s1)
         self.resources[v2] = s2
+        self.resources_inverse_index[s2] = v2
         self.resources_s2.add(s2)
         self.iteration += 1
         return self.stateGraph
@@ -68,26 +71,40 @@ class PathFinder:
             contains the updated stategraph after fetching new resources
         """
         self.logger.info ('--- NEW ITERATION ---')
-        self.logger.info ('Existing resources {0}'.format(str(len(self.resources))))
-        self.logger.info ('Indexed resources by parents {0}'.format(str(len(self.resources_by_parent))))
+        #self.logger.info ('Existing resources {0}'.format(str(len(self.resources.property_list()))))
+        #self.logger.info ('Indexed resources by parents {0}'.format(str(len(self.resources_by_parent))))
         self.logger.info ('Grandmother: {0}'.format(self.resources[self.stateGraph.vertex(0)]))
         self.logger.info ('Grandfather: {0}'.format(self.resources[self.stateGraph.vertex(1)]))
         self.logger.info ('--- --- ---')
         
         start = time.clock()
         prevResources = set()
-        additionalResources = set()
+        additionalResources = dict()
+        i = 0
+        for v in self.stateGraph.vertices():
+            i += 1
+            if not v in self.unimportant:
+                prevResources.add(self.resources[v])
         
-        for key in self.resources:
-            if not key in self.unimportant:
-                prevResources.add(self.resources[key])
+        print('unimportant') 
+        print(len(self.unimportant))       
+        print('previous')
+        print(len(prevResources))
+        print(prevResources)
+        print('new')
+        print(len(self.added - prevResources))
+        print(self.added)
+        print('added')
+        print(len(self.added))
+        print('total')
+        print(i)
         
         self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
         
         if len(additionalRes) == 0: 
             
             for resource in prevResources:
-                item = [resource, self.resources_by_parent, additionalResources, blacklist]
+                item = [resource, additionalResources, blacklist]
                 self.worker.queueFunction(self.resourceretriever.fetchResource, item)
             
             self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
@@ -96,18 +113,20 @@ class PathFinder:
             self.logger.info('Special search iteration: Deep search')
             for resource in additionalRes:
                 
-                item = [resource, self.resources_by_parent, additionalResources, blacklist]
+                item = [resource, additionalResources, blacklist]
                 self.worker.queueFunction(self.resourceretriever.fetchResource, item)
                 
             self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
             
         
-        toAddResources = list(additionalResources - prevResources)    
+        toAddResources = list(additionalResources.keys() - prevResources) 
+        print('to add resources')
+        print(len(toAddResources))
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
         
         gc.collect()
         
-        self.logger.info('Updated indexed resources with parents {0}'.format(str(len(self.resources_by_parent))))    
+        #self.logger.info('Updated indexed resources with parents {0}'.format(str(len(self.resources_by_parent.list_properties()))))    
             
         self.logger.info ('Total resources: %s' % str(len(toAddResources)))
 
@@ -115,22 +134,27 @@ class PathFinder:
             
         halt1 = time.clock()
         self.logger.info ('resource gathering: %s' % str(halt1 - start))
+        print ('resource gathering: %s' % str(halt1 - start))
         #self.stateGraph = gt.Graph()
-        vlist = self.stateGraph.add_vertex(len(toAddResources))
-        ris = [self.createResource(res, next(vlist)) for res in toAddResources]
-        [self.buildGraph(ri, self.stateGraph) for ri in ris]
+        #vlist = self.stateGraph.add_vertex(len(toAddResources))
+        #[self.buildGraph(ri, self.stateGraph) for ri in ris]
+        
+        [self.addDirectedLink(res, additionalResources, self.stateGraph) for res in prevResources]
+                    
         halt2 = time.clock()
         self.logger.info ('graph construction: %s' % str(halt2 - halt1))
-        
+        print ('graph construction: %s' % str(halt2 - halt1))
         #For next iteration, e.g. if no path was found
         #Check for singular values to reduce dimensions of existing resources
-        self.storedResources.update(self.resources)
-        
+        gt.graph_draw(self.stateGraph, vertex_text=self.stateGraph.vertex_index, vertex_font_size=18,
+                   output_size=(800, 800), output="two-nodes.pdf")
         if not graph_gt.pathExists(self.stateGraph) and self.iteration > 1:
             try:
                 self.logger.info ('reducing matrix')
+                print ('reducing matrix, max important nodes')
                 #self.logger.debug (len(self.stateGraph))
-                k = np.int((1-np.divide(1,self.iteration))*300)
+                k = np.int((1-np.divide(1,self.iteration))*100)
+                print (k)
                 h = gt.pagerank(self.stateGraph)
 
                 #h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
@@ -144,7 +168,6 @@ class PathFinder:
                 self.logger.debug(k)
                 
                 #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
-                
                 
                 #rank = resourceretriever.rankToKeep(u, s, self.threshold)
                 #unimportant resources are unlikely to provide a path
@@ -162,7 +185,8 @@ class PathFinder:
                 #self.stateGraph = resourceretriever_gt.removeUnimportantResources(unimportant, self.resources, self.stateGraph)            
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
-                self.logger.info('Updated resources amount: %s' % str(len(self.resources)))
+                #self.logger.info('Updated resources amount: %s' % str(len(self.stateGraph.vertices())))
+                print(self.stateGraph)
             except:
                 self.logger.error ('Graph is empty')
                 self.logger.error (sys.exc_info())
@@ -171,6 +195,36 @@ class PathFinder:
         self.logger.info ('=== === ===')
         self.iteration+=1
         return self.stateGraph
+    
+    def addDirectedLink(self, res, additionalResources, stateGraph, sub_index = False, sub_parent_index = False, sub_added = False):
+        if sub_added:
+            added = sub_added
+        else:
+            added = self.added
+            
+        if res in additionalResources:
+            vi = self.resources_inverse_index[res]
+            for newLink in additionalResources[res]:
+                if not newLink.targetRes in added:
+                    added.add(newLink.targetRes)
+                    vj = stateGraph.add_vertex()
+                    e = stateGraph.add_edge(vi,vj)
+                    f = stateGraph.add_edge(vj,vi)
+                    if sub_index:
+                        sub_index[vj] = newLink.targetRes
+                    else:
+                        self.resources[vj] = newLink.targetRes
+                        self.resources_inverse_index[newLink.targetRes] = vj
+                    link = dict()
+                    link['uri'] = newLink.predicate
+                    link['inverse'] = newLink.inverse
+                    
+                    if sub_index:
+                        sub_parent_index[e] = link
+                        #sub_parent_index[f] = link
+                    else:
+                        self.resources_by_parent[e] = link
+                        self.resources_by_parent[f] = link
     
     def iterateOptimizedNetwork(self, k = 4):
         for i in self.resources:
@@ -194,22 +248,32 @@ class PathFinder:
     def findBestChilds(self,nodes,k = 4):
         stateGraph = gt.Graph()
         node_list = stateGraph.new_vertex_property("string")
-        vlist = stateGraph.add_vertex(len(nodes))
-        ris = [self.createResource(node, next(vlist), sub_index=node_list) for node in nodes]
-        [self.buildGraph(node, stateGraph, sub_index=node_list) for node in ris]
+        node_parents = stateGraph.new_edge_property("object")
+        
+        [self.addDirectedLink(node, nodes, stateGraph, node_list, node_parents) for node in nodes]
 
         try:
-            self.logger.debug (len(stateGraph))
+            #self.logger.debug (len(stateGraph))
             h = gt.pagerank(stateGraph)
             
             res = list(sorted(h, key=h.__getitem__, reverse=True))
+            
+            vertices = dict()
+            for vertex in stateGraph.vertices():
+                vertices[stateGraph.vertex_index[vertex]] = h[vertex]
 
-            important = res[:k]          
+            res = list(sorted(vertices, key=vertices.__getitem__, reverse=True))
+
+            important = res[:k]
+            important.remove(0)
+            important.remove(1)
+            important_v = set()
+            [important_v.add(stateGraph.vertex(i)) for i in important]          
         except:
             self.logger.error ('Graph is empty')
             self.logger.error (sys.exc_info())
         
-        dereffed_list = set([node_list[i] for i in important])
+        dereffed_list = set([node_list[i] for i in important_v])
         dereffed_list.discard(0)
         dereffed_list.discard(1)
         return list(dereffed_list)
@@ -227,23 +291,26 @@ class PathFinder:
         jacc = n / float(len(set1) + len(set2) - n)
         return jacc
 
-
     def jaccard_distance (self,string1, string2):
         """ Compute the Jaccard distance between two strings.
         """
         return 1.0 - self.jaccard_index(string1, string2)
     
     def jaccard(self,nodeA,nodeB):
+        respbA = set()
+        respbB = set()
+        for e in nodeA.out_edges():
+            link = self.resources_by_parent[e]
+            if link:
+                respbA.add(link['uri'])
+            
+        for f in nodeB.out_edges():
+            link = self.resources_by_parent[f]
+            if link:
+                respbB.add(link['uri'])
+                
         """Computes the jaccard between two nodes."""
-        respbA = self.resources_by_parent[self.resources[nodeA]].values()
-        respbB = self.resources_by_parent[self.resources[nodeB]].values()
-        predA = set()
-        predB = set()
-        for link in respbA:
-            predA.add(link['uri'])
-        for link in respbB:
-            predB.add(link['uri'])
-        return scipy.spatial.distance.jaccard(np.array(predA), np.array(predB))    
+        return scipy.spatial.distance.jaccard(np.array(respbA), np.array(respbB))    
         #return 1-np.divide(len(predA & predB),len(predA | predB))       
     
     def buildGraph(self, vi, stateGraph, sub_index = False):
@@ -299,4 +366,4 @@ class PathFinder:
         return self.stateGraph    
     
     def getResources(self):
-        return self.storedResources
+        return self.resources

@@ -11,7 +11,7 @@ logger = logging.getLogger('pathFinder')
 
 
 
-def resolvePath(path,resources,stateGraph):
+def resolvePath(path,resources,resourcesByParents,stateGraph):
     """Resolves a path between two resources.
     
     **Parameters**
@@ -25,20 +25,26 @@ def resolvePath(path,resources,stateGraph):
     
     """
     resolvedPath = list()
+    resolvedLinks = list()
     steps = list()
+    links = list()
     v = stateGraph.vertex(1)
     while v != stateGraph.vertex(0):
         p = stateGraph.vertex(path[v])
         for e in v.out_edges():
             if e.target() == p:
                 steps.append(v)
+                links.append(e)
         v = p
     steps.append(stateGraph.vertex(0))
     steps.reverse()
     for step in steps:
         resolvedPath.append(resources[step])
+    for link in links:
+        resolvedLinks.append(resourcesByParents[link]['uri'])
     print (resolvedPath[:10])
-    return resolvedPath
+    print (resolvedLinks[:10])
+    return (resolvedPath,resolvedLinks)
 
 def batch(iterable, size):
     sourceiter = iter(iterable)

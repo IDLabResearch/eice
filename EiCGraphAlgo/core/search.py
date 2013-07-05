@@ -56,10 +56,12 @@ class Searcher:
             destination resource for pathfinding
         search_blacklist : list
             list of resources to exclude in search
-        pathfinder : Pathfinder
+        givenP : Pathfinder
             a given pathfinder state for complex search queries
         k : integer
             number of iterations when to break off search
+        user_context : uri
+            a third resource to compute the score of the path in the context of the third resource.
     
         **Returns**
         

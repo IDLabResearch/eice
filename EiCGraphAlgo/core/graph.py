@@ -9,8 +9,6 @@ import logging
 
 logger = logging.getLogger('pathFinder')
 
-
-
 def resolvePath(path,resources):
     """Resolves a path between two resources.
     

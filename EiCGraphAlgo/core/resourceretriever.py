@@ -1,9 +1,7 @@
 import numpy as np
 import ujson
-#from mysolr import Solr
 import mysolr.compat
 from mysolr.response import SolrResponse
-#from pysolr import Solr
 from SPARQLWrapper import SPARQLWrapper, JSON
 import urllib.request
 import urllib.parse
@@ -117,15 +115,15 @@ class Resourceretriever:
         return query
         
     def search(self,url=False,resource='select', **kwargs):
-        """Queries Solr with the given kwargs and returns a SolrResponse
-        object.
+        """Queries Solr with the given kwargs and returns a SolrResponse object.
 
-        :param resource: Request dispatcher. 'select' by default.
-        :param **kwargs: Dictionary containing any of the available Solr query
-                         parameters described in
-                         http://wiki.apache.org/solr/CommonQueryParameters.
-                         'q' is a mandatory parameter.
-
+        **Parameters**
+        
+        resource : Request dispatcher. 'select' by default.
+        
+        kwargs : Dictionary containing any of the available Solr query parameters described in 
+                http://wiki.apache.org/solr/CommonQueryParameters.
+                q is a mandatory parameter.
         """
         #print ('building request')
         query = self._build_request(kwargs)
@@ -142,7 +140,7 @@ class Resourceretriever:
         return solr_response
         
     def getResourceLocalInverse(self,resource):
-        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
+        """Fetch subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
         source = resource.strip('<>')
         query={'q':'','nq':'* * <{0}>'.format(source),'qt':'siren','fl':'id ntriple','timeAllowed':'10000'}
         #print(query)
