@@ -45,7 +45,65 @@ class Searcher:
     def __init__(self):
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
+        self.resourceretriever = resourceretriever_gt.Resourceretriever()
+    
+    def search_ida(self, start,dest,search_blacklist=blacklist,k = 4):
+        node_properties = dict()
+        node_properties[start] = self.resourceretriever.expandResource(start)
+        node_properties[dest] = self.resourceretriever.expandResource(dest)
         
+        def g(node, path_so_far):
+            return len(path_so_far)
+        
+        def h(node, path_so_far):
+            if not node in node_properties:
+                node_properties[node] = self.resourceretriever.expandResource(node)
+            j = self.resourceretriever.jaccard(node_properties[node], node_properties[dest])
+            return j * len(path_so_far)
+            
+        def successors(node):
+            successors = set()
+            if not node in node_properties:
+                node_properties[node] = self.resourceretriever.expandResource(node)
+            for child in node_properties[node]:
+                successors.add(child.targetRes)
+            return successors
+            
+        def cost(node, path_so_far):
+            return g(node, path_so_far) + h(node, path_so_far)
+            
+        def depth_limited_search(path_so_far, cost_limit):
+            #print(path_so_far)
+            node = path_so_far[-1]
+            minimum_cost = cost(node, path_so_far)
+            #print (minimum_cost)
+            if minimum_cost > cost_limit:
+                return None, minimum_cost
+            if node == dest:
+                return path_so_far, cost_limit
+            
+            next_cost_limit = float("inf")
+            solutions = []
+            
+            for s in successors(node):
+                solution, new_cost_limit = depth_limited_search(path_so_far + [s], cost_limit)
+                if solution != None:
+                    solutions.append((solution, new_cost_limit))
+                next_cost_limit = min(next_cost_limit,new_cost_limit)
+                
+            if len(solutions) > 0:
+                solutions_sorted = sorted(solutions, key=lambda x: x[1])
+                return solutions_sorted[0]
+            return None, next_cost_limit
+
+        while True:
+            solution, cost_limit = depth_limited_search([start], k)
+            if solution != None:
+                return solution
+            if math.isinf(cost_limit):
+                return False
+            
+                
     def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 20,user_context=False):
         """Searches a path between two resources start and dest
     
@@ -109,7 +167,7 @@ class Searcher:
         if paths:
             for path in paths:
         #       logger.debug(path)
-                resolvedPath, resolvedLinks = graph_gt.resolvePath(path,p.getResources(),p.getResourcesByParent(),p.getGraph())
+                resolvedPath, resolvedLinks = p.resolvePath(path,p.getResources(),p.getResourcesByParent(),p.getGraph())
                 formattedPath = list()
                 for step in resolvedPath:
                     formattedPath.append(step[1:-1])
@@ -117,7 +175,7 @@ class Searcher:
                 fullPath['vertices'] = formattedPath
                 fullPath['edges'] = resolvedLinks
                 resolvedPaths.append(fullPath)
-                graph_gt.visualize(p)
+                #graph_gt.visualize(p)
         else:
             return {'path':False,'source':start,'destination':dest,'execution_time':int(round((time.clock()-start_time) * 1000))}
                 
@@ -130,7 +188,7 @@ class Searcher:
         r['destination'] = dest
         r['checked_resources'] = p.checked_resources
         r['hash'] = 'h%s' % hash('{0}{1}{2}'.format(start_time,dest,time.time()))
-        r['path'] = graph_gt.listPath(resolvedPath,p.getResourcesByParent())
+        r['path'] = graph_gt.listPath(resolvedPaths[0]['vertices'],resolvedPaths[0]['edges'])
         
         l = 0
         c = 0
@@ -331,8 +389,10 @@ class FallbackSearcher:
 searcher = Searcher()
 #print (searcher.search('http://www.cibaoblog.com/tag/jose-enrique/','http://www.cibaoblog.com/tag/josephine/',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
-print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/David_Guetta','http://dbpedia.org/resource/France',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
+#print (searcher.search_ida('<http://dbpedia.org/resource/Belgium>','<http://dbpedia.org/resource/Elio_Di_Rupo>',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Elio_Di_Rupo','http://dbpedia.org/resource/Belgium',blacklist))
+print (searcher.search_ida('http://dbpedia.org/resource/David_Guetta','http://dbpedia.org/resource/France',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))

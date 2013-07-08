@@ -331,8 +331,22 @@ class Resourceretriever:
         else:
             return False
         
-    
-    def fetchResource(self, resource, additionalResources, blacklist):   
+    def jaccard(self,nodeA,nodeB):
+        respbA = set()
+        respbB = set()
+        for link in nodeA:
+            if link:
+                respbA.add(link.predicate)
+            
+        for link in nodeB:
+            if link:
+                respbB.add(link.predicate)
+                
+        """Computes the jaccard between two nodes."""
+        return 1- ( len(respbA & respbB) / len(respbA | respbB) )
+       
+    def expandResource(self, resource):
+        results = set()
         newResources = self.getResource(resource)
         if newResources:
             for tripleKey, triple in newResources.items():
@@ -340,17 +354,23 @@ class Resourceretriever:
                 if resource == triple[0]:
                     result.source = triple[0]
                     result.targetRes = triple[2]
-                    result.inverse = False
+                    result.inverse = True
                 else:
                     result.targetRes = triple[0]
                     result.source = triple[2]
-                    result.inverse = True
+                    result.inverse = False
                 result.predicate = triple[1]
-                
                 if isResource(result.targetRes) and (result.predicate not in blacklist) and result.targetRes.startswith('<') and result.targetRes.endswith('>') and any(domain in result.targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
-                    if not resource in additionalResources:
+                    results.add(result)
+        return results
+         
+    def fetchResource(self, resource, additionalResources, blacklist):   
+        results = self.expandResource(resource)
+        
+        if results:
+            if not resource in additionalResources:
                         additionalResources[resource] = set()
-                    additionalResources[resource].add(result)
+            additionalResources[resource] = additionalResources[resource].union(results)
                     
     def describeResource(self, resource):
         """Wrapper function to describe a resource given a URI either using INDEX lookup or via a SPARQL query"""

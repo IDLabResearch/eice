@@ -9,43 +9,6 @@ import logging
 
 logger = logging.getLogger('pathFinder')
 
-
-
-def resolvePath(path,resources,resourcesByParents,stateGraph):
-    """Resolves a path between two resources.
-    
-    **Parameters**
-    
-    path : list of numbers corresponding with resources list indices
-    resources : list of resources containing hashes to the resources
-    
-    **Returns**
-    
-    resolvedPath : sequential list of hashes of the nodes in the path
-    
-    """
-    resolvedPath = list()
-    resolvedLinks = list()
-    steps = list()
-    links = list()
-    v = stateGraph.vertex(1)
-    while v != stateGraph.vertex(0):
-        p = stateGraph.vertex(path[v])
-        for e in v.out_edges():
-            if e.target() == p:
-                steps.append(v)
-                links.append(e)
-        v = p
-    steps.append(stateGraph.vertex(0))
-    steps.reverse()
-    for step in steps:
-        resolvedPath.append(resources[step])
-    for link in links:
-        resolvedLinks.append(resourcesByParents[link]['uri'])
-    print (resolvedPath[:10])
-    print (resolvedLinks[:10])
-    return (resolvedPath,resolvedLinks)
-
 def batch(iterable, size):
     sourceiter = iter(iterable)
     while True:
@@ -60,46 +23,11 @@ def rolling_window(seq, window_size):
         win[:-1] = win[1:]
         win[-1] = e
         yield win
-        
-def resolveLinks(resolvedPath,resourcesByParent):
-    """Resolves the links in a path between two resources.
-    
-    **Parameters**
-    
-    resolvedPath : list of hash corresponding with resources in the path
-    resourcesByParent : map that contains a list of hashes with the corresponding sets of children for each parent
-    
-    **Returns**
-    
-    resolvedLinks : sequential list of predicates (URIs) connecting the resources in the path
-    
-    """
-    resolvedLinks = list()
-
-    for iterator in rolling_window(resolvedPath, 2):
-        steps = list(iterator)
-        #logger.debug (steps)
-        if len(steps) == 2:
-            try:
-                resolvedLinks.append((resourcesByParent[steps[0]][steps[1]])['uri'][1:-1])
-            except:
-                logger.error('could not find relation between %s and %s ' % (steps[0],steps[1]) )
-                #print(resourcesByParent[steps[0]])
-    return resolvedLinks
                                                    
-def listPath(resolvedPath,resourcesByParent):
+def listPath(resolvedPath,resolvedLinks):
     """Converts a resolved path containing hashes of the resources to the actual URIs of each resource"""
-    resolvedEdges = list()
+    resolvedEdges = resolvedLinks
     listedPath = list()
-    for iterator in rolling_window(resolvedPath, 2):
-        steps = list(iterator)
-        #logger.debug (steps)
-        if len(steps) == 2:
-            try:
-                resolvedEdges.append(resourcesByParent[steps[0]][steps[1]])
-            except:
-                logger.error('could not find relation between %s and %s ' % (steps[0],steps[1]) )
-                #print(resourcesByParent[steps[0]])
             
     for node in resolvedPath:
         step = dict()
@@ -115,22 +43,23 @@ def listPath(resolvedPath,resourcesByParent):
             del resolvedEdges[0]
     return listedPath
 
-def pathExists(M):
+def pathExists(M,source,target):
     """Checks whether an adjacency matrix M contains a path or not"""
     #print('Checking if path exists')
-    dist = gt.shortest_distance(M,source=M.vertex(0),target=M.vertex(1))
+    dist = gt.shortest_distance(M,source=source,target=target)
     return dist < 100
 
 def pathLength(pathFinder):
     """Checks the length of a path if it exists in the given PathFinder class"""
     G = pathFinder.getGraph()
+    target = pathFinder.target
+    source = pathFinder.source
     try:
-        if pathExists(G):
-            target = G.vertex(1)
+        if pathExists(G,source,target):
             G, weight = buildWeightedGraph(pathFinder)
             touch_v = G.new_vertex_property("bool")
             touch_e = G.new_edge_property("bool")
-            dist, pred = gt.astar_search(G, G.vertex(0), weight,
+            dist, pred = gt.astar_search(G, source, weight,
                                  VisitorExample(touch_v, touch_e, target),
                                  heuristic=lambda v: pathFinder.jaccard(v, target))
             return dist
@@ -143,15 +72,16 @@ def pathLength(pathFinder):
 def path(pathFinder):
     """Computes the astar path if it exists in the given PathFinder class"""
     G = pathFinder.getGraph()
-    target = G.vertex(1)
+    target = pathFinder.target
+    source = pathFinder.source
     try:
-        if pathExists(G):
+        if pathExists(G,source,target):
             G, weight = buildWeightedGraph(pathFinder)
             #for vertex in G.vertices():
             #    print (vertex)
             touch_v = G.new_vertex_property("bool")
             touch_e = G.new_edge_property("bool")
-            dist, pred = gt.astar_search(G, G.vertex(0), weight,
+            dist, pred = gt.astar_search(G, source, weight,
                                  VisitorExample(touch_v, touch_e, target),       
                                  heuristic=lambda v: pathFinder.jaccard(v, target))
             #print ([pred])
@@ -197,16 +127,16 @@ def visualize(pathFinder, source=False, target=False):
     touch_v = g.new_vertex_property("bool")
     touch_e = g.new_edge_property("bool")
     if not source:
-        source = g.vertex(0)
+        source = pathFinder.source
     if not target:
-        target = g.vertex(1)
+        target = pathFinder.target
     dist, pred = gt.astar_search(g, source, weight,
                                  VisitorExample(touch_v, touch_e, target),       
                                  heuristic=lambda v: pathFinder.jaccard(v, target))
     for e in g.edges():
         ecolor[e] = "blue" if touch_e[e] else "black"
     v = target
-    while v != g.vertex(0):
+    while v != source:
         p = g.vertex(pred[v])
         for e in v.out_edges():
             if e.target() == p:

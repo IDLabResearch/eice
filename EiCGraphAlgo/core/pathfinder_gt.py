@@ -39,16 +39,16 @@ class PathFinder:
         s2 = '<%s>' % source2
 
         self.stateGraph = gt.Graph(directed=False)
-        v1 = self.stateGraph.add_vertex()
-        v2 = self.stateGraph.add_vertex()
-        self.stateGraph.add_edge(v1, v2)
+        self.source = self.stateGraph.add_vertex()
+        self.target = self.stateGraph.add_vertex()
+        #self.stateGraph.add_edge(self.source, self.target)
         self.resources = self.stateGraph.new_vertex_property("string")
         self.resources_by_parent = self.stateGraph.new_edge_property("object")
-        self.resources[v1] = s1
-        self.resources_inverse_index[s1] = v1
+        self.resources[self.source] = s1
+        self.resources_inverse_index[s1] = self.source
         self.resources_s1.add(s1)
-        self.resources[v2] = s2
-        self.resources_inverse_index[s2] = v2
+        self.resources[self.target] = s2
+        self.resources_inverse_index[s2] = self.target
         self.resources_s2.add(s2)
         self.iteration += 1
         return self.stateGraph
@@ -83,21 +83,21 @@ class PathFinder:
         i = 0
         for v in self.stateGraph.vertices():
             i += 1
-            if not v in self.unimportant:
+            if not v in self.unimportant and not v in self.added:
                 prevResources.add(self.resources[v])
         
-        print('unimportant') 
-        print(len(self.unimportant))       
-        print('previous')
-        print(len(prevResources))
-        print(prevResources)
-        print('new')
-        print(len(self.added - prevResources))
-        print(self.added)
-        print('added')
-        print(len(self.added))
-        print('total')
-        print(i)
+        #print('unimportant') 
+        #print(len(self.unimportant))       
+        #print('previous')
+        #print(len(prevResources))
+        #print(prevResources)
+        #print('new')
+        #print(len(self.added - prevResources))
+        #print(self.added)
+        #print('added')
+        #print(len(self.added))
+        #print('total')
+        #print(i)
         
         self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
         
@@ -120,8 +120,8 @@ class PathFinder:
             
         
         toAddResources = list(additionalResources.keys() - prevResources) 
-        print('to add resources')
-        print(len(toAddResources))
+        #print('to add resources')
+        #print(len(toAddResources))
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
         
         gc.collect()
@@ -138,6 +138,8 @@ class PathFinder:
         #self.stateGraph = gt.Graph()
         #vlist = self.stateGraph.add_vertex(len(toAddResources))
         #[self.buildGraph(ri, self.stateGraph) for ri in ris]
+        #gt.graph_draw(self.stateGraph, vertex_text=self.stateGraph.vertex_index, vertex_font_size=10,
+        #           output_size=(800,800), output="two-nodes.pdf")
         
         [self.addDirectedLink(res, additionalResources, self.stateGraph) for res in prevResources]
                     
@@ -146,14 +148,14 @@ class PathFinder:
         print ('graph construction: %s' % str(halt2 - halt1))
         #For next iteration, e.g. if no path was found
         #Check for singular values to reduce dimensions of existing resources
-        gt.graph_draw(self.stateGraph, vertex_text=self.stateGraph.vertex_index, vertex_font_size=18,
-                   output_size=(800, 800), output="two-nodes.pdf")
-        if not graph_gt.pathExists(self.stateGraph) and self.iteration > 1:
+        #gt.graph_draw(self.stateGraph, vertex_text=self.stateGraph.vertex_index, vertex_font_size=10,
+        #           output_size=(800,800), output="two-nodes.pdf")
+        if not graph_gt.pathExists(self.stateGraph,self.source,self.target) and self.iteration > 1:
             try:
                 self.logger.info ('reducing matrix')
                 print ('reducing matrix, max important nodes')
                 #self.logger.debug (len(self.stateGraph))
-                k = np.int((1-np.divide(1,self.iteration))*100)
+                k = np.int((1-np.divide(1,self.iteration))*500)
                 print (k)
                 h = gt.pagerank(self.stateGraph)
 
@@ -166,27 +168,19 @@ class PathFinder:
                 res = list(sorted(vertices, key=vertices.__getitem__, reverse=True))
                 #print (res)
                 self.logger.debug(k)
-                
-                #u, s, vt = scipy.linalg.svd(self.stateGraph.astype('float32'), full_matrices=False)
-                
-                #rank = resourceretriever.rankToKeep(u, s, self.threshold)
-                #unimportant resources are unlikely to provide a path
-                #unimportant = resourceretriever.unimportantResources(u, rank, s)
-                #important = resourceretriever.importantResources(u, rank)
-
-                #print ('error ratio:')                
-                #print (np.divide(len(unimportant & important)*100,len(important)))
                 unimportant = res[k:]
+                self.unimportant = set()
                 for u in unimportant:
                     #Never delete grandmother and grandfather, even if they become insignificant
                     if u > 1:
                         self.unimportant.add(self.stateGraph.vertex(u))
+                        #pass
                 #print(self.unimportant)
                 #self.stateGraph = resourceretriever_gt.removeUnimportantResources(unimportant, self.resources, self.stateGraph)            
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 #self.logger.info('Updated resources amount: %s' % str(len(self.stateGraph.vertices())))
-                print(self.stateGraph)
+                #printprint(self.stateGraph)
             except:
                 self.logger.error ('Graph is empty')
                 self.logger.error (sys.exc_info())
@@ -207,9 +201,13 @@ class PathFinder:
             for newLink in additionalResources[res]:
                 if not newLink.targetRes in added:
                     added.add(newLink.targetRes)
-                    vj = stateGraph.add_vertex()
+                    if not newLink.targetRes in self.resources_inverse_index:
+                        vj = stateGraph.add_vertex()
+                    else:
+                        vj = self.resources_inverse_index[newLink.targetRes]
+
+                    
                     e = stateGraph.add_edge(vi,vj)
-                    f = stateGraph.add_edge(vj,vi)
                     if sub_index:
                         sub_index[vj] = newLink.targetRes
                     else:
@@ -221,11 +219,9 @@ class PathFinder:
                     
                     if sub_index:
                         sub_parent_index[e] = link
-                        #sub_parent_index[f] = link
                     else:
                         self.resources_by_parent[e] = link
-                        self.resources_by_parent[f] = link
-    
+
     def iterateOptimizedNetwork(self, k = 4):
         for i in self.resources:
             resource = self.resources[i]
@@ -244,6 +240,44 @@ class PathFinder:
         childs['start'] = [self.resources[i] for i in start]
         childs['dest'] = [self.resources[i] for i in dest]
         return childs
+    
+    def resolvePath(self, path,resources,resourcesByParents,stateGraph):
+        """Resolves a path between two resources.
+        
+        **Parameters**
+        
+        path : list of numbers corresponding with resources list indices
+        resources : list of resources containing hashes to the resources
+        
+        **Returns**
+        
+        resolvedPath : sequential list of hashes of the nodes in the path
+        
+        """
+        resolvedPath = list()
+        resolvedLinks = list()
+        steps = list()
+        links = list()
+        v = self.target
+        while v != self.source:
+            p = stateGraph.vertex(path[v])
+            for e in v.out_edges():
+                if e.target() == p and not v in steps:
+                    steps.append(v)
+                    links.append(e)
+            v = p
+        steps.append(self.source)
+        steps.reverse()
+        for step in steps:
+            resolvedPath.append(resources[step])
+        for link in links:
+            try:
+                resolvedLinks.append(resourcesByParents[link])
+            except:
+                print ('%s not found' % link)
+        print (resolvedPath[:10])
+        print (resolvedLinks[:10])
+        return (resolvedPath,resolvedLinks)
     
     def findBestChilds(self,nodes,k = 4):
         stateGraph = gt.Graph()

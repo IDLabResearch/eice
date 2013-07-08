@@ -255,41 +255,22 @@ class SearchGTHandler(MainHandler):
                 self.r = searcher.search(source,destination,user_context=user_context)
                 logger.debug ('Main Search finished for %s' % source)
                 q.put(self.r)
-                
-            def deep(q):
-                logger.debug ('Deep Search started %s' % source)
-                f = sgt.DeepSearcher()
-                self.r = f.searchDeep(source, destination, user_context=user_context)
-                self.r['execution_time'] = str(int(self.r['execution_time']) + 32000)
-                logger.debug ('Deep Search finished %s' % source)
-                q.put(self.r)
             
             q = Queue()
             p = Process(target=main, args=(q,))
             p.start()
 
-            p.join(45)
+            p.join(90)
             if p.is_alive():
                 logger.warning ('Terminating process')
                 p.terminate()
-                logger.warning('No path found in 30 seconds, starting deep search.')
                 failed = True
             else:
                 self.r = q.get()
                 
             if failed:
-                q = Queue()
-                p = Process(target=deep, args=(q,))
-                p.start()
-
-                p.join(90)
-                if p.is_alive():
-                    logger.warning ('Terminating process')
-                    p.terminate()
-                    self.set_status(503)
-                    self.r = 'Your process was killed after 120 seconds, sorry! x( Try again'
-                else:
-                    self.r = q.get()
+                self.set_status(503)
+                self.r = 'Your process was killed after 90 seconds, sorry! x( Try again'
                     
                     
         except AttributeError:
@@ -343,7 +324,7 @@ class SearchAllHandler(MainHandler):
                 
             if failed:
                 self.set_status(503)
-                self.r = 'Your process was killed after 90 seconds, sorry! x( Try again'
+                self.r = 'Your process was killed after 300 seconds, sorry! x( Try again'
                     
         except AttributeError:
             self.set_status(400)
@@ -393,11 +374,11 @@ class SearchHandler(MainHandler):
             p = Process(target=main, args=(q,))
             p.start()
 
-            p.join(30)
+            p.join(60)
             if p.is_alive():
                 logger.warning ('Terminating process')
                 p.terminate()
-                logger.warning('No path found in 30 seconds, starting deep search.')
+                logger.warning('No path found in 60 seconds, starting deep search.')
                 failed = True
             else:
                 self.r = q.get()
@@ -412,7 +393,7 @@ class SearchHandler(MainHandler):
                     logger.warning ('Terminating process')
                     p.terminate()
                     self.set_status(503)
-                    self.r = 'Your process was killed after 90 seconds, sorry! x( Try again'
+                    self.r = 'Your process was killed after 120 seconds, sorry! x( Try again'
                 else:
                     self.r = q.get()
                     
