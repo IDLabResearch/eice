@@ -364,8 +364,12 @@ class SearchHandler(MainHandler):
             def deep(q):
                 logger.debug ('Deep Search started %s' % source)
                 f = DeepSearcher()
-                self.r = f.searchDeep(source, destination, user_context=user_context)
-                self.r['execution_time'] = str(int(self.r['execution_time']) + 32000)
+                try:
+                    self.r = f.searchDeep(source, destination, user_context=user_context)
+                except:
+                    logger.error(sys.exc_info())
+                    self.r = dict()
+                self.r['execution_time'] = str(int(self.r['execution_time']) + 60000)
                 logger.debug ('Deep Search finished %s' % source)
                 q.put(self.r)
             
