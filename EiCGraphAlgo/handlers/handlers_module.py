@@ -366,10 +366,12 @@ class SearchHandler(MainHandler):
                 f = DeepSearcher()
                 try:
                     self.r = f.searchDeep(source, destination, user_context=user_context)
+                    self.r['execution_time'] = str(int(self.r['execution_time']) + 60000)
                 except:
                     logger.error(sys.exc_info())
                     self.r = dict()
-                self.r['execution_time'] = str(int(self.r['execution_time']) + 60000)
+                    self.r['execution_time'] = str(90000)
+                    self.r['path'] = False
                 logger.debug ('Deep Search finished %s' % source)
                 q.put(self.r)
             
