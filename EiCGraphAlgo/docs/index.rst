@@ -11,20 +11,30 @@ Contents:
 .. toctree::
    :maxdepth: 2
  
+.. automodule:: core
+    :members:
+    
 .. automodule:: search
     :members:
-
+    
+.. autoclass:: Searcher
+    :members: 
+    
+.. autoclass:: DeepSearcher
+    :members: 
+    
 .. automodule:: pathfinder
- 
-.. autoclass:: PathFinder
     :members: 
 
 .. automodule:: graph
-    :members:
+    :members: 
 
 .. automodule:: resourceretriever
-    :members:
-        
+    :members: 
+   
+.. autoclass:: Resourceretriever
+    :members: 
+    
 Indices and tables
 ==================
 

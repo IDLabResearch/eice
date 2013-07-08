@@ -297,7 +297,6 @@ class SearchAllHandler(MainHandler):
     def get(self):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
-        user_context = self.get_argument("user_context", False)
         failed = False
         
         try:
@@ -305,7 +304,7 @@ class SearchAllHandler(MainHandler):
             def main(q):
                 logger.debug ('Main Search started for %s' % source)
                 searcher = DeepSearcher()
-                self.r = searcher.search(source,destination,user_context=user_context)
+                self.r = searcher.searchAllPaths(source,destination)
                 logger.debug ('Main Search finished for %s' % source)
                 q.put(self.r)
             
