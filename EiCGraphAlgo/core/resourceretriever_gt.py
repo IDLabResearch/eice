@@ -53,8 +53,9 @@ valid_domains = frozenset([
                         'dbpedia',
                         'freebase',
                         'colinda',
-                        'dblp'
-                           ])
+                        'dblp',
+                        'localhost'
+                        ])
 
 logger = logging.getLogger('pathFinder')
 config = configparser.ConfigParser()

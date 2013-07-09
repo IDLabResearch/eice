@@ -392,6 +392,7 @@ class FallbackSearcher:
 #print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
 #print (searcher.search_ida('<http://dbpedia.org/resource/Belgium>','<http://dbpedia.org/resource/Elio_Di_Rupo>',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Elio_Di_Rupo','http://dbpedia.org/resource/Belgium',blacklist))
+#print (searcher.search('http://localhost/selvers','http://localhost/welf',blacklist))
 #print (searcher.search_ida('http://dbpedia.org/resource/David_Guetta','http://dbpedia.org/resource/France',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
