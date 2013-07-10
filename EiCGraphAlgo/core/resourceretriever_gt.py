@@ -95,13 +95,13 @@ except:
         logger.error ("SPARQL Service down")
         sparql = None
         
-print ("""
-.------..------.
-|G.--. ||T.--. |
-| :/\: || :/\: |
-| :\/: || (__) |
-| '--'G|| '--'T|
-`------'`------'""")
+#print ("""
+#.------..------.
+#|G.--. ||T.--. |
+#| :/\: || :/\: |
+#| :\/: || (__) |
+#| '--'G|| '--'T|
+#`------'`------'""")
 print ("EiCE GT plugin running on: %s :)" % sys.platform)
 
 class Triple:
