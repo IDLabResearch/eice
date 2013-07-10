@@ -21,7 +21,7 @@ logger = logging.getLogger('handler')
 class MainHandler(tornado.web.RequestHandler):
     
     def get(self):
-        logger.info("Pathfinding Service Version 20130610.1 running on %s" % sys.platform)
+        logger.info("Pathfinding Service Version 20130710.1 running on %s" % sys.platform)
         self.render('landing.html')
 
 class NodeDataHandler(MainHandler):
@@ -138,6 +138,32 @@ class NeighbourLookupHandler(MainHandler):
         self.set_header("charset", "utf8")
         #responses = sorted(responses, key=responses.__getitem__, reverse=True)
         self.write('{0}'.format(ujson.dumps(self.r)))
+        self.finish()
+
+class DbPediaPrefixHandler(MainHandler):
+
+    def get(self):
+        q = self.get_argument("query", "")
+        #callback = self.get_argument("callback", "")
+        try:
+            r =  typeahead.dbPediaPrefix(q)
+            #r=typeahead.prefix(q)
+        except AttributeError:
+            r = []
+            self.set_status(404)
+            logger.info( 'Invalid argument. Please check the provided argument. Check the server log files if error persists.')
+            logger.error (sys.exc_info())
+        except:
+            self.set_status(500)
+            logger.error (sys.exc_info())
+            r = 'Something went wrong. Check the server log files for more information.'
+        #self.render("login.html", notification=self.get_argument("notification","") )
+        response = ujson.dumps(r)
+        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Content-Type", "application/json")
+        self.set_header("charset", "utf8")
+        self.write('{0}'.format(response))
+        #self.write('{0}({1})'.format(callback, response))
         self.finish()
         
 class PrefixHandler(MainHandler):
