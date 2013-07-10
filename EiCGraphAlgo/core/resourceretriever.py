@@ -358,11 +358,15 @@ class Resourceretriever:
             [properties.update({triple[1]:triple[2]}) for triple in r.values()]
             #print (properties)
             if label in properties:
+                if '@' in properties[label][-3:]:
+                    response['label'] = properties[label][:-3]
                 response['label'] = properties[label][:-3]
             if abstract in properties:
-                response['abstract'] = properties[abstract][:-3]
+                if '@' in properties[abstract][-3:]:
+                    response['abstract'] = properties[abstract][:-3]
             if comment in properties:
-                response['comment'] =  properties[comment].strip('@en')[:-3]
+                if '@' in properties[comment][-3:]:
+                    response['comment'] =  properties[comment][:-3]
             if tp in properties:
                 response['type'] = properties[tp]
             if seeAlso in properties:
