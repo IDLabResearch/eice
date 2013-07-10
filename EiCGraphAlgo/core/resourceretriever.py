@@ -358,11 +358,11 @@ class Resourceretriever:
             [properties.update({triple[1]:triple[2]}) for triple in r.values()]
             #print (properties)
             if label in properties:
-                response['label'] = properties[label].strip('@en')
+                response['label'] = properties[label][:-3]
             if abstract in properties:
-                response['abstract'] = properties[abstract].strip('@en')
+                response['abstract'] = properties[abstract][:-3]
             if comment in properties:
-                response['comment'] =  properties[comment].strip('@en')
+                response['comment'] =  properties[comment].strip('@en')[:-3]
             if tp in properties:
                 response['type'] = properties[tp]
             if seeAlso in properties:
@@ -373,7 +373,7 @@ class Resourceretriever:
                 if any([f in properties[prop].lower() for f in ['.png','.jpg','.gif']]):
                     if not 'img' in response:
                         response['img'] = set()
-                    response['img'].add(properties[prop])
+                    response['img'].add(properties[prop].strip('<>'))
         if not r or ('label' not in response and 'abstract' not in response and 'type' not in response):
             response = sparqlQueryByUri(resource)
             
@@ -625,8 +625,8 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-#resourceretriever = Resourceretriever()
-#print (resourceretriever.describeResource('http://dbpedia.org/resource/Belgium'))
+resourceretriever = Resourceretriever()
+print (resourceretriever.describeResource('http://dbpedia.org/resource/London'))
 #print (resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
