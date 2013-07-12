@@ -367,6 +367,8 @@ class Resourceretriever:
             if comment in properties:
                 if '@' in properties[comment][-3:]:
                     response['comment'] =  properties[comment][:-3]
+                    if not abstract in properties:
+                        response['abstract'] = response['comment']
             if tp in properties:
                 response['type'] = properties[tp]
             if seeAlso in properties:
