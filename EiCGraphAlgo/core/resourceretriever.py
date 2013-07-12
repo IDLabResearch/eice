@@ -629,7 +629,7 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-resourceretriever = Resourceretriever()
+#resourceretriever = Resourceretriever()
 #print (resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))

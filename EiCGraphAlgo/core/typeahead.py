@@ -6,12 +6,14 @@ Created on 17-sep.-2012
 import urllib.request
 import urllib.parse
 import lxml.objectify
+import requests
 import logging
 import configparser
 import os
 from core.resourceretriever import Resourceretriever
 from core import resourceretriever
 from mysolr import Solr
+import requests
 
 config = resourceretriever.config
 mapping = resourceretriever.mappings
@@ -20,12 +22,15 @@ logger = logging.getLogger('pathFinder')
 def dbPediaPrefix(prefix):
     server = config.get('services', 'lookup')
     gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=7&QueryString={1}'.format(server,prefix)
-    request = urllib.parse.quote(gateway, ':/=?<>"*&')
-    logger.debug('Request %s' % request)
-    raw_output = urllib.request.urlopen(request,timeout=2).read()
+    requestUrl = urllib.parse.quote(gateway, ':/=?<>"*&')
+    logger.debug('Request %s' % requestUrl)
+    #raw_output = urllib.request.urlopen(requestUrl,timeout=2).read()
+    r = requests.get(requestUrl)
+    raw_output = r.content
     root = lxml.objectify.fromstring(raw_output)
     results = list()
     if hasattr(root, 'Result'):
+        logger.debug('Found %s results' % len(root.Result))
         for result in root.Result:
             if prefix.lower() in result.Label[0].text.lower() and hasattr(result.Classes, 'Class'):
                 klasses = result.Classes.Class
@@ -37,7 +42,10 @@ def dbPediaPrefix(prefix):
                 item['label'] = result.Label[0].text
                 item['category']=klasse.Label.text.capitalize()
                 item['uri']=result.URI[0].text
+                logger.debug('Fetching local hits for %s' % len(item['uri']))
                 local_hits = Resourceretriever().getResourceLocal(item['uri'].strip("<>"))
+                if local_hits:
+                    logger.debug('Found %s hits' % len(local_hits))
                 n_hits = 0
                 if local_hits:
                     for triple in local_hits:
@@ -45,6 +53,8 @@ def dbPediaPrefix(prefix):
                             n_hits += 1
                     if n_hits > 8:
                         results.append(item)
+    else:
+        logger.debug('Found nothing for prefix %s' % prefix)
 
     return results
 

@@ -443,4 +443,3 @@ class SearchHandler(MainHandler):
         self.set_header("charset", "utf8")
         self.write(ujson.dumps(self.r))
         self.finish()
-            

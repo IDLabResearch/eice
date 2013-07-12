@@ -25,8 +25,8 @@ class Application(tornado.web.Application):
         #self.config = self._get_config()
         handlers = [
                 url(r'/', handlers_module.MainHandler, name='index'),
-                url(r'/prefixes', handlers_module.PrefixHandler, name='prefixes'),
-                url(r'/dbprefixes', handlers_module.DbPediaPrefixHandler, name='dbprefixes'),
+                url(r'/allprefixes', handlers_module.PrefixHandler, name='allprefixes'),
+                url(r'/prefixes', handlers_module.DbPediaPrefixHandler, name='prefixes'),
                 url(r'/paths', handlers_module.SearchHandler, name='paths'),
                 url(r'/multiple_paths', handlers_module.SearchAllHandler, name='multiple_paths'),
                 url(r'/paths_gt', handlers_module.SearchGTHandler, name='paths_gt'),
