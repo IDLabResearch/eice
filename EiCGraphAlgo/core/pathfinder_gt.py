@@ -83,19 +83,19 @@ class PathFinder:
         i = 0
         for v in self.stateGraph.vertices():
             i += 1
-            if not v in self.unimportant and not v in self.added:
+            if not v in self.added and not v in self.unimportant:
                 prevResources.add(self.resources[v])
         
         #print('unimportant') 
         #print(len(self.unimportant))       
-        #print('previous')
-        #print(len(prevResources))
+        print('previous')
+        print(len(prevResources))
         #print(prevResources)
         #print('new')
         #print(len(self.added - prevResources))
         #print(self.added)
-        #print('added')
-        #print(len(self.added))
+        print('added')
+        print(len(self.added))
         #print('total')
         #print(i)
         
@@ -104,6 +104,7 @@ class PathFinder:
         if len(additionalRes) == 0: 
             
             for resource in prevResources:
+                self.added.add(resource)
                 item = [resource, additionalResources, blacklist]
                 self.worker.queueFunction(self.resourceretriever.fetchResource, item)
             
@@ -112,7 +113,7 @@ class PathFinder:
         else:
             self.logger.info('Special search iteration: Deep search')
             for resource in additionalRes:
-                
+                self.added.add(resource)
                 item = [resource, additionalResources, blacklist]
                 self.worker.queueFunction(self.resourceretriever.fetchResource, item)
                 
@@ -155,7 +156,8 @@ class PathFinder:
                 self.logger.info ('reducing matrix')
                 print ('reducing matrix, max important nodes')
                 #self.logger.debug (len(self.stateGraph))
-                k = np.int((1-np.divide(1,self.iteration))*500)
+                #k = np.int((1-np.divide(1,self.iteration))*500)
+                k = np.int((1-np.divide(1,self.iteration))*250)
                 print (k)
                 h = gt.pagerank(self.stateGraph)
 
@@ -180,9 +182,10 @@ class PathFinder:
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 #self.logger.info('Updated resources amount: %s' % str(len(self.stateGraph.vertices())))
-                #printprint(self.stateGraph)
+                #print('Updated resources amount: %s' % str(len(self.stateGraph.vertices())))
+                print(len(self.unimportant))
             except:
-                self.logger.error ('Graph is empty')
+                self.logger.error ('Pathfinding reductione error')
                 self.logger.error (sys.exc_info())
         
         self.logger.info ('total %s' % str(time.clock()-start))
@@ -190,45 +193,38 @@ class PathFinder:
         self.iteration+=1
         return self.stateGraph
     
-    def addDirectedLink(self, res, additionalResources, stateGraph, sub_index = False, sub_parent_index = False, sub_added = False):
-        if sub_added:
-            added = sub_added
-        else:
-            added = self.added
-            
+    def addDirectedLink(self, res, additionalResources, stateGraph, sub_index = False, sub_parent_index = False, sub_added = False):            
         if res in additionalResources:
             vi = self.resources_inverse_index[res]
             for newLink in additionalResources[res]:
-                if not newLink.targetRes in added:
-                    added.add(newLink.targetRes)
-                    if not newLink.targetRes in self.resources_inverse_index:
-                        vj = stateGraph.add_vertex()
-                    else:
-                        vj = self.resources_inverse_index[newLink.targetRes]
+                if not newLink.targetRes in self.resources_inverse_index:
+                    vj = stateGraph.add_vertex()
+                else:
+                    vj = self.resources_inverse_index[newLink.targetRes]
 
-                    
-                    e = stateGraph.add_edge(vi,vj)
-                    if sub_index:
-                        sub_index[vj] = newLink.targetRes
-                    else:
-                        self.resources[vj] = newLink.targetRes
-                        self.resources_inverse_index[newLink.targetRes] = vj
-                    link = dict()
-                    link['uri'] = newLink.predicate
-                    link['inverse'] = newLink.inverse
-                    
-                    if sub_index:
-                        sub_parent_index[e] = link
-                    else:
-                        self.resources_by_parent[e] = link
+                
+                e = stateGraph.add_edge(vi,vj)
+                if sub_index:
+                    sub_index[vj] = newLink.targetRes
+                else:
+                    self.resources[vj] = newLink.targetRes
+                    self.resources_inverse_index[newLink.targetRes] = vj
+                link = dict()
+                link['uri'] = newLink.predicate
+                link['inverse'] = newLink.inverse
+                
+                if sub_index:
+                    sub_parent_index[e] = link
+                else:
+                    self.resources_by_parent[e] = link
 
     def iterateOptimizedNetwork(self, k = 4):
-        for i in self.resources:
+        for i in self.stateGraph.vertices():
             resource = self.resources[i]
             self.resources_inverse_index[resource] = i
-            if any(e in self.resources_s1 for e in self.resources_by_parent[resource] ):
+            if any(e in self.resources_s1 for e in resource.out_edges() ):
                 self.resources_s1.add(resource)
-            elif any(e in self.resources_s2 for e in self.resources_by_parent[resource] ):
+            elif any(e in self.resources_s2 for e in self.resources_by_parent[i] ):
                 self.resources_s2.add(resource)
             else:
                 self.logger.warning ('resource %s does not belong to any parent' % resource)
