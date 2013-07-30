@@ -141,12 +141,14 @@ class NeighbourLookupHandler(MainHandler):
         self.finish()
 
 class DbPediaPrefixHandler(MainHandler):
-
+    def initialize(self):
+        self.th = typeahead.TypeAhead()
+        
     def get(self):
         q = self.get_argument("query", "")
         #callback = self.get_argument("callback", "")
         try:
-            r =  typeahead.dbPediaPrefix(q)
+            r =  self.th.dbPediaPrefix(q)
             #r=typeahead.prefix(q)
         except AttributeError:
             r = []
@@ -167,13 +169,16 @@ class DbPediaPrefixHandler(MainHandler):
         self.finish()
         
 class PrefixHandler(MainHandler):
-
+    def initialize(self):
+        self.th = typeahead.TypeAhead()
+        
     def get(self):
         q = self.get_argument("query", "")
         #callback = self.get_argument("callback", "")
         try:
             #r =  typeahead.dbPediaPrefix(q)
-            r=typeahead.prefix(q)
+            r = self.th.prefix(q)
+            
         except AttributeError:
             r = []
             self.set_status(404)
