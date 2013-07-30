@@ -47,7 +47,6 @@ class PathFinder:
         return self.stateGraph
 
     def iterateMatrix(self, blacklist=set(), additionalRes = set(), kp=50):
-        #print('kp %s' % kp)
         """Iteration phase,
         During this phase the children of the current bottom level nodes are fetched and added to the hashed set.
         

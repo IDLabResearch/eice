@@ -358,17 +358,26 @@ class Resourceretriever:
             [properties.update({triple[1]:triple[2]}) for triple in r.values()]
             #print (properties)
             if label in properties:
+                
                 if '@' in properties[label][-3:]:
                     response['label'] = properties[label][:-3]
-                response['label'] = properties[label][:-3]
+                else:
+                    response['label'] = properties[label]
+                
             if abstract in properties:
                 if '@' in properties[abstract][-3:]:
                     response['abstract'] = properties[abstract][:-3]
+                else:
+                    response['abstract'] = properties[abstract]
             if comment in properties:
                 if '@' in properties[comment][-3:]:
                     response['comment'] =  properties[comment][:-3]
-                    if not abstract in properties:
-                        response['abstract'] = response['comment']
+                else:
+                    response['comment'] =  properties[comment]
+                    
+                if not abstract in properties:
+                    response['abstract'] = response['comment']
+                        
             if tp in properties:
                 response['type'] = properties[tp]
             if seeAlso in properties:
@@ -631,8 +640,8 @@ def importantResources(u, rank):
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-#resourceretriever = Resourceretriever()
-#print (resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
+resourceretriever = Resourceretriever()
+print (resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #print(resourceretriever.getResourceLocalInverse('http://dbpedia.org/resource/Elio_Di_Rupo'))
