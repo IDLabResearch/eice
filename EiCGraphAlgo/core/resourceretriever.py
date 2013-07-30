@@ -606,7 +606,7 @@ def rankToKeep(u, singularValues, threshold):
         
 def rankToRemove(u, singularValues, threshold):
     i = 0
-    for sVal in singularValues:      
+    for sVal in singularValues:
         if sVal > threshold:
             return i
         i += 1
