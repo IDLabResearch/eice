@@ -20,12 +20,10 @@ import re
 config = resourceretriever.config
 mapping = resourceretriever.mappings
 logger = logging.getLogger('pathFinder')
+lookup_server = config.get('services', 'lookup_index')
+lookup_solr = Solr(lookup_server)
 
-class TypeAhead:
-    def __init__(self):
-        lookup_server = config.get('services', 'lookup_index')
-        self.lookup_solr = Solr(lookup_server)
-        
+class TypeAhead:        
     def dbPediaPrefix(self, prefix):
         server = config.get('services', 'lookup')
         gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=7&QueryString={1}'.format(server,prefix)
@@ -65,7 +63,7 @@ class TypeAhead:
     
         return results
     
-    def prefix(self, prefix):
+    def prefix(self, prefix,lookup_server=lookup_solr):
         results = list()
         if len(prefix) > 2:
             logger.debug('looking up %s on dbpedia lookup' % prefix)
@@ -73,7 +71,7 @@ class TypeAhead:
             logger.debug('looking up %s on local index' % prefix)
             if config.has_option('services','lookup_index'):
                 query={'q':'lookup:"{0}*"'.format(re.escape(prefix).lower()),'fl':'url label type','timeAllowed':'100','rows':'7'}
-                response = self.lookup_solr.search(**query)
+                response = lookup_solr.search(**query)
                 if response.status==200 and len(response.documents) > 0:
                     for doc in response.documents:
                         item = dict()
@@ -86,3 +84,25 @@ class TypeAhead:
             logger.debug('done finding matches for %s' % prefix)
                     
         return results
+start = time.perf_counter()    
+th = TypeAhead()
+th = TypeAhead()
+th = TypeAhead()
+th = TypeAhead()
+th = TypeAhead()
+halt = time.perf_counter()
+print (halt - start)
+th.dbPediaPrefix("Michael Hausenblas")
+th.dbPediaPrefix("Michael Hausenblas")
+th.dbPediaPrefix("Michael Hausenblas")
+th.dbPediaPrefix("Michael Hausenblas")
+th.dbPediaPrefix("Michael Hausenblas")
+halt1 = time.perf_counter()
+print (halt1 - halt)
+th.prefix("Michael Hausenblas")
+th.prefix("Michael Hausenblas")
+th.prefix("Michael Hausenblas")
+th.prefix("Michael Hausenblas")
+th.prefix("Michael Hausenblas")
+stop = time.perf_counter()
+print (stop - halt1)
