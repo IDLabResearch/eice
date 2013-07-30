@@ -104,7 +104,7 @@ class Searcher:
                 return False
             
                 
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 20,user_context=False):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 20,user_context=False,kp=450):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -133,10 +133,10 @@ class Searcher:
         #Initialization
         if givenP == None:
             p = pathfinder_gt.PathFinder(start,dest)
-            p.iterateMatrix(search_blacklist)
+            p.iterateMatrix(search_blacklist,kp=kp)
         else:
             p = givenP
-            p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes)
+            p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes,kp=kp)
             
 
         paths = None #Initially no paths exist
@@ -154,7 +154,7 @@ class Searcher:
             self.logger.info ('=== %s-- ===' % str(p.iteration))
 
             gc.collect()
-            m = p.iterateMatrix(blacklist=search_blacklist)
+            m = p.iterateMatrix(blacklist=search_blacklist,kp=kp)
             halt_path = time.clock()
             paths = graph_gt.path(p)
             self.logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
@@ -393,9 +393,7 @@ searcher = Searcher()
 #print (searcher.search_ida('<http://dbpedia.org/resource/Belgium>','<http://dbpedia.org/resource/Elio_Di_Rupo>',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Elio_Di_Rupo','http://dbpedia.org/resource/Belgium',blacklist))
 #print (searcher.search('http://localhost/selvers','http://localhost/welf',blacklist))
-print (searcher.search('http://dbpedia.org/resource/David_Guetta','http://dbpedia.org/resource/France',blacklist))
-print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
     

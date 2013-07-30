@@ -45,7 +45,7 @@ class Searcher:
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
         
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10,user_context=False):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10,user_context=False,kp=75):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -76,10 +76,10 @@ class Searcher:
         #Initialization
         if givenP == None:
             p = pathfinder.PathFinder(start,dest)
-            p.iterateMatrix(search_blacklist)
+            p.iterateMatrix(search_blacklist,kp=kp)
         else:
             p = givenP
-            p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes)
+            p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes,kp=kp)
             
 
         paths = None #Initially no paths exist
@@ -97,7 +97,7 @@ class Searcher:
             self.logger.info ('=== %s-- ===' % str(p.iteration))
 
             gc.collect()
-            m = p.iterateMatrix(blacklist=search_blacklist)
+            m = p.iterateMatrix(blacklist=search_blacklist,kp=kp)
             halt_path = time.clock()
             paths = graph.path(p)
             self.logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
@@ -329,11 +329,10 @@ class FallbackSearcher:
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")
-searcher = Searcher()
-#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist))
+#searcher = Searcher()
+#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://localhost/selvers','http://localhost/welf',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
-print (searcher.search('http://dbpedia.org/resource/David_Guetta','http://dbpedia.org/resource/France',blacklist))
-print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
+#print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
     

@@ -53,7 +53,7 @@ class PathFinder:
         self.iteration += 1
         return self.stateGraph
 
-    def iterateMatrix(self, blacklist=set(), additionalRes = set()):
+    def iterateMatrix(self, blacklist=set(), additionalRes = set(),kp=250):
         """Iteration phase,
         During this phase the children of the current bottom level nodes are fetched and added to the hashed set.
         
@@ -88,14 +88,14 @@ class PathFinder:
         
         #print('unimportant') 
         #print(len(self.unimportant))       
-        print('previous')
-        print(len(prevResources))
+        #print('previous')
+        #print(len(prevResources))
         #print(prevResources)
         #print('new')
         #print(len(self.added - prevResources))
         #print(self.added)
-        print('added')
-        print(len(self.added))
+        #print('added')
+        #print(len(self.added))
         #print('total')
         #print(i)
         
@@ -135,7 +135,7 @@ class PathFinder:
             
         halt1 = time.clock()
         self.logger.info ('resource gathering: %s' % str(halt1 - start))
-        print ('resource gathering: %s' % str(halt1 - start))
+        #print ('resource gathering: %s' % str(halt1 - start))
         #self.stateGraph = gt.Graph()
         #vlist = self.stateGraph.add_vertex(len(toAddResources))
         #[self.buildGraph(ri, self.stateGraph) for ri in ris]
@@ -146,7 +146,7 @@ class PathFinder:
                     
         halt2 = time.clock()
         self.logger.info ('graph construction: %s' % str(halt2 - halt1))
-        print ('graph construction: %s' % str(halt2 - halt1))
+        #print ('graph construction: %s' % str(halt2 - halt1))
         #For next iteration, e.g. if no path was found
         #Check for singular values to reduce dimensions of existing resources
         #gt.graph_draw(self.stateGraph, vertex_text=self.stateGraph.vertex_index, vertex_font_size=10,
@@ -154,11 +154,11 @@ class PathFinder:
         if not graph_gt.pathExists(self.stateGraph,self.source,self.target) and self.iteration > 1:
             try:
                 self.logger.info ('reducing matrix')
-                print ('reducing matrix, max important nodes')
+                #print ('reducing matrix, max important nodes')
                 #self.logger.debug (len(self.stateGraph))
                 #k = np.int((1-np.divide(1,self.iteration))*500)
-                k = np.int((1-np.divide(1,self.iteration))*250)
-                print (k)
+                k = np.int((1-np.divide(1,self.iteration))*kp)
+                #print (k)
                 h = gt.pagerank(self.stateGraph)
 
                 #h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
@@ -183,7 +183,7 @@ class PathFinder:
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 #self.logger.info('Updated resources amount: %s' % str(len(self.stateGraph.vertices())))
                 #print('Updated resources amount: %s' % str(len(self.stateGraph.vertices())))
-                print(len(self.unimportant))
+                #print(len(self.unimportant))
             except:
                 self.logger.error ('Pathfinding reductione error')
                 self.logger.error (sys.exc_info())
@@ -271,8 +271,8 @@ class PathFinder:
                 resolvedLinks.append(resourcesByParents[link])
             except:
                 print ('%s not found' % link)
-        print (resolvedPath[:10])
-        print (resolvedLinks[:10])
+        #print (resolvedPath[:10])
+        #print (resolvedLinks[:10])
         return (resolvedPath,resolvedLinks)
     
     def findBestChilds(self,nodes,k = 4):

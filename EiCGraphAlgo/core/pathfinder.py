@@ -6,6 +6,7 @@ from core import graph, resourceretriever
 import time, gc, sys, logging
 from core.worker_pool import Worker
 from core.resourceretriever import Resourceretriever
+import math
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -45,7 +46,8 @@ class PathFinder:
         self.iteration += 1
         return self.stateGraph
 
-    def iterateMatrix(self, blacklist=set(), additionalRes = set()):
+    def iterateMatrix(self, blacklist=set(), additionalRes = set(), kp=50):
+        #print('kp %s' % kp)
         """Iteration phase,
         During this phase the children of the current bottom level nodes are fetched and added to the hashed set.
         
@@ -78,10 +80,10 @@ class PathFinder:
             if not self.resources[key] in self.added:
                 prevResources.add(res)
             
-        print('previous')
-        print(len(prevResources))
-        print('added')
-        print(len(self.added))
+        #print('previous')
+        #print(len(prevResources))
+        #print('added')
+        #print(len(self.added))
         
         self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
         
@@ -123,13 +125,13 @@ class PathFinder:
             
         halt1 = time.clock()
         self.logger.info ('resource gathering: %s' % str(halt1 - start))
-        print ('resource gathering: %s' % str(halt1 - start))
+        #print ('resource gathering: %s' % str(halt1 - start))
         self.stateGraph = np.zeros(shape=(n, n), dtype=np.byte)
         
         [self.buildGraph(i, n) for i in range(n)]
         halt2 = time.clock()
         self.logger.info ('graph construction: %s' % str(halt2 - halt1))
-        print ('graph construction: %s' % str(halt2 - halt1))
+        #print ('graph construction: %s' % str(halt2 - halt1))
         #For next iteration, e.g. if no path was found
         #Check for singular values to reduce dimensions of existing resources
         self.storedResources.update(self.resources)
@@ -138,9 +140,9 @@ class PathFinder:
             try:
                 self.logger.info ('reducing matrix')
                 self.logger.debug (len(self.stateGraph))
-                k = np.int((1-np.divide(1,self.iteration))*250)
-                print ('reducing matrix, max important nodes')
-                print (k)
+                k = self.iteration*kp
+                #print ('reducing matrix, max important nodes')
+                #print (k)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
@@ -161,7 +163,7 @@ class PathFinder:
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 self.logger.info('Updated resources amount: %s' % str(len(self.resources)))
-                print ('Updated resources amount: %s' % str(len(self.resources)))
+                #print ('Updated resources amount: %s' % str(len(self.resources)))
             except:
                 self.logger.error ('Graph is empty')
                 self.logger.error (sys.exc_info())
