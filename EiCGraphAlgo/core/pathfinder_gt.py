@@ -270,7 +270,7 @@ class PathFinder:
             try:
                 resolvedLinks.append(resourcesByParents[link])
             except:
-                print ('%s not found' % link)
+                logging.error ('%s not found' % link)
         #print (resolvedPath[:10])
         #print (resolvedLinks[:10])
         return (resolvedPath,resolvedLinks)
