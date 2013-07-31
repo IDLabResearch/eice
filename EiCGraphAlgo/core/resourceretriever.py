@@ -14,7 +14,10 @@ import rdflib
 import sys
 import tempfile
 import requests
+import time
 from urllib.parse import urljoin
+import re
+
 
 #Define properties to ignore:
 blacklist = frozenset([
@@ -143,7 +146,7 @@ class Resourceretriever:
     def getResourceLocalInverse(self,resource):
         """Fetch subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
         source = resource.strip('<>')
-        query={'q':'','nq':'* * <{0}>'.format(source),'qt':'siren','fl':'id ntriple','timeAllowed':'10000'}
+        query={'q':'','nq':'* * <{0}>'.format(source),'qt':'siren','fl':'id ntriple','timeAllowed':'100'}
         #print(query)
         response = self.search(url=self.solrs[0],**query)
         #print(response)
@@ -152,7 +155,7 @@ class Resourceretriever:
                 nt = ""
                 for document in response.documents:
                     nt += document['ntriple']
-                nt_cleaned = cleanInversResultSet(nt,source)
+                nt_cleaned = cleanInversResultSetFast(nt,source)
                 return nt_cleaned
             
             else:
@@ -164,7 +167,7 @@ class Resourceretriever:
                         if response.status==200 and len(response.documents) > 0:
                             for document in response.documents:
                                 nt += document['ntriple']
-                nt_cleaned = cleanInversResultSet(nt,source)
+                nt_cleaned = cleanInversResultSetFast(nt,source)
                 return nt_cleaned
         except: 
             #self.logger.error('Could not fetch resource inverse %s' % resource)
@@ -173,7 +176,7 @@ class Resourceretriever:
     def getResourceLocal(self,resource):
         """Fetch properties and children from a resource given a URI in the configured local INDEX"""
         source = resource.strip('<>')
-        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type','timeAllowed':'6000'}
+        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type','timeAllowed':'100'}
         #print (solrs)
         response = self.search(url=self.solrs[0],**query)
         try:
@@ -518,6 +521,22 @@ def cleanInversResultSet(resultSet, target):
         nt_cleaned = False
     return nt_cleaned
         
+def cleanInversResultSetFast(resultSet, target):
+    resultSets = re.split(' .\n',resultSet)
+    try:    
+        nt_cleaned = dict()
+        i = 0
+        for row in resultSets[:-1]:
+            triple = re.split(' ',row)
+            if triple[2] == "<%s>" % target:
+                nt_cleaned[i] = triple
+                i += 1
+    except:
+        #print (sys.exc_info())
+        #logger.warning('Parsing inverse failed for %s' % target)
+        nt_cleaned = False
+    return nt_cleaned        
+
 def cleanResultSet(resultSet):
     nt_cleaned = dict()
     resultSet = set(resultSet)
@@ -642,7 +661,9 @@ def importantResources(u, rank):
 #print (getResource(res))
 #resourceretriever = Resourceretriever()
 #print (resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
-#print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
+#start = time.perf_counter()
+#print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
+#print (time.perf_counter() - start)
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #print(resourceretriever.getResourceLocalInverse('http://dbpedia.org/resource/Elio_Di_Rupo'))
 #bPediaLookup('Belgium')
