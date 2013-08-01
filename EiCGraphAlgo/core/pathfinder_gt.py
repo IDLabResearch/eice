@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+import math
 #import networkx as nx
 import graph_tool.all as gt
 from scipy import linalg, spatial
@@ -157,7 +158,8 @@ class PathFinder:
                 #print ('reducing matrix, max important nodes')
                 #self.logger.debug (len(self.stateGraph))
                 #k = np.int((1-np.divide(1,self.iteration))*500)
-                k = np.int((1-np.divide(1,self.iteration))*kp)
+                #k = np.int((1-np.divide(1,self.iteration))*kp)
+                k = int(kp*math.pow(1.2,self.iteration))
                 #print (k)
                 h = gt.pagerank(self.stateGraph)
 

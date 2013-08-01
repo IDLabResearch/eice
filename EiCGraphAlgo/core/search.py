@@ -1,4 +1,4 @@
-from core import pathfinder,resourceretriever,randompath,graph
+from core import resourceretriever,randompath,graph
 import time
 import gc
 import logging
@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 from handlers.time_out import TimeoutError
 from core.worker_pool import Worker
 import math
+from core.pathfinder import PathFinder
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -45,7 +46,7 @@ class Searcher:
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
         
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 10,user_context=False,kp=75):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 15,user_context=False,kp=75):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -75,7 +76,7 @@ class Searcher:
         
         #Initialization
         if givenP == None:
-            p = pathfinder.PathFinder(start,dest)
+            p = PathFinder(start,dest)
             p.iterateMatrix(search_blacklist,kp=kp)
         else:
             p = givenP
@@ -165,7 +166,10 @@ class Searcher:
         try:
             path = os.path.dirname(os.path.abspath(__file__))
             file = r['hash']
-            pickle.dump(r,open("{0}/stored_paths/{1}.dump".format(path,file),"wb"))
+            file_path = "{0}/stored_paths/{1}.dump".format(path,file)
+            f = open(file_path,"wb")
+            pickle.dump(r,f)
+            f.close()
         except:
             self.logger.warning('could not log and store path between {0} and {1}'.format(start,dest))
             self.logger.error(sys.exc_info())
@@ -229,7 +233,7 @@ class DeepSearcher:
                     flattened_path.append('<%s>' % step['uri'])
         return flattened_path
         
-    def searchDeep(self, start,dest,search_blacklist=blacklist,k=4,s=3,user_context=False):
+    def searchDeep(self, start,dest,search_blacklist=blacklist,k=6,s=3,user_context=False):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -243,7 +247,7 @@ class DeepSearcher:
         #START
         start_time = time.clock()
     
-        p = pathfinder.PathFinder(start,dest)
+        p = PathFinder(start,dest)
         result = self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,k=k,user_context=user_context)
         if not result['path']:
             logger.debug (p.resources)
@@ -328,11 +332,14 @@ class FallbackSearcher:
 
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
-#print("search")
+#print("search")python profiling like webgrind
 #searcher = Searcher()
-#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz',blacklist))
 #print (searcher.search('http://localhost/selvers','http://localhost/welf',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
+#print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Brussels','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
+#print (DeepSearcher().searchDeep('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dbpedia.org/resource/Brussels',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (search('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
     

@@ -45,8 +45,11 @@ class PathFinder:
         self.stateGraph[1] = [0, 1]
         self.iteration += 1
         return self.stateGraph
-
-    def iterateMatrix(self, blacklist=set(), additionalRes = set(), kp=50):
+    
+    def handle_request(self, response):
+        print('hello %s' % response)
+        
+    def iterateMatrix(self, blacklist=set(), additionalRes = set(), kp=75):
         """Iteration phase,
         During this phase the children of the current bottom level nodes are fetched and added to the hashed set.
         
@@ -84,7 +87,7 @@ class PathFinder:
         #print('added')
         #print(len(self.added))
         
-        self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
+        self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=8)
         
         if len(additionalRes) == 0: 
             
@@ -92,7 +95,6 @@ class PathFinder:
                 self.added.add(resource)
                 item = [resource, self.resources_by_parent, additionalResources, blacklist]
                 self.worker.queueFunction(self.resourceretriever.fetchResource, item)
-            
             self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
         
         else:
@@ -139,7 +141,7 @@ class PathFinder:
             try:
                 self.logger.info ('reducing matrix')
                 self.logger.debug (len(self.stateGraph))
-                k = self.iteration*kp
+                k = int(kp*math.pow(1.2,self.iteration))
                 #print ('reducing matrix, max important nodes')
                 #print (k)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
@@ -168,6 +170,7 @@ class PathFinder:
                 self.logger.error (sys.exc_info())
         
         self.logger.info ('total %s' % str(time.clock()-start))
+        #print ('total %s' % str(time.clock()-start))
         self.logger.info ('=== === ===')
         self.iteration+=1
         return self.stateGraph

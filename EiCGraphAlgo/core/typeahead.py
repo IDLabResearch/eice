@@ -29,9 +29,13 @@ class TypeAhead:
         gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=7&QueryString={1}'.format(server,prefix)
         requestUrl = urllib.parse.quote(gateway, ':/=?<>"*&')
         logger.debug('Request %s' % requestUrl)
-        #raw_output = urllib.request.urlopen(requestUrl,timeout=2).read()
-        r = requests.get(requestUrl)
-        raw_output = r.content
+        raw_output = urllib.request.urlopen(requestUrl,timeout=2).read()
+        #s = requests.Session()
+        #s.headers.update({'Connection': 'close'})
+        #r = s.get(requestUrl)
+        #(s.headers)
+        #print(r.headers)
+        #raw_output = r.content
         root = lxml.objectify.fromstring(raw_output)
         results = list()
         if hasattr(root, 'Result'):
