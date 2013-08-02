@@ -89,9 +89,7 @@ class PathFinder:
         #print('added')
         #print(len(self.added))
         
-        m = pycurl.CurlMulti()
         reqs = list()
-        num_handles = 0
         
         if len(additionalRes) == 0: 
             
