@@ -1,12 +1,15 @@
 import numpy as np
 import scipy
-#import networkx as nx
-import graph_tool.all as gt
+import networkx as nx
 from scipy import linalg, spatial
-from core import graph, resourceretriever
+from core import graph, resourceretriever_async
 import time, gc, sys, logging
 from core.worker_pool import Worker
-from core.resourceretriever import Resourceretriever
+from core.resourceretriever_async import Resourceretriever
+import math
+import pycurl
+import io
+import grequests
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -25,6 +28,7 @@ class PathFinder:
         self.resources_by_parent = dict()   
         self.storedResources = dict()  
         self.threshold = threshold
+        self.added = set()
         self.checked_resources = 0
         self.resourceretriever = Resourceretriever()
         self.iteration = 0
@@ -44,8 +48,11 @@ class PathFinder:
         self.stateGraph[1] = [0, 1]
         self.iteration += 1
         return self.stateGraph
-
-    def iterateMatrix(self, blacklist=set(), additionalRes = set()):
+    
+    def handle_request(self, response):
+        print('hello %s' % response)
+        
+    def iterateMatrix(self, blacklist=set(), additionalRes = set(), kp=75):
         """Iteration phase,
         During this phase the children of the current bottom level nodes are fetched and added to the hashed set.
         
@@ -74,27 +81,48 @@ class PathFinder:
         additionalResources = set()
         
         for key in self.resources:
-            prevResources.add(self.resources[key])
+            res = self.resources[key]
+            if not self.resources[key] in self.added:
+                prevResources.add(res)
+            
+        #print('previous')
+        #print(len(prevResources))
+        #print('added')
+        #print(len(self.added))
         
-        self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
+        m = pycurl.CurlMulti()
+        reqs = list()
+        num_handles = 0
         
         if len(additionalRes) == 0: 
             
             for resource in prevResources:
-                item = [resource, self.resources_by_parent, additionalResources, blacklist]
-                self.worker.queueFunction(self.resourceretriever.fetchResource, item)
-            
-            self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
-        
+                self.added.add(resource)
+            for url in self.resourceretriever.genMultiUrls(prevResources):
+                reqs.append(url)
+                        
         else:
             self.logger.info('Special search iteration: Deep search')
             for resource in additionalRes:
+                self.added.add(resource)
+            for url in self.resourceretriever.genMultiUrls(additionalRes):
+                reqs.append(url)
                 
-                item = [resource, self.resources_by_parent, additionalResources, blacklist]
-                self.worker.queueFunction(self.resourceretriever.fetchResource, item)
+        # Perform multi-request.
+        # This code copied from pycurl docs, modified to explicitly
+        # set num_handles before the outer while loop.
+        
+        self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)
+        
+        if len(reqs) > 0: 
+            for res in reqs:
+                rs = (grequests.get(u) for u in res['urls'])
+                resps = grequests.map(rs)
+                for rp in resps:
+                    item = [res['resources'], rp, self.resources_by_parent, additionalResources, blacklist]
+                    self.worker.queueFunction(self.resourceretriever.processMultiResource, item)
                 
-            self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
-            
+            self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
         
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
@@ -115,12 +143,13 @@ class PathFinder:
             
         halt1 = time.clock()
         self.logger.info ('resource gathering: %s' % str(halt1 - start))
+        #print ('resource gathering: %s' % str(halt1 - start))
         self.stateGraph = np.zeros(shape=(n, n), dtype=np.byte)
         
         [self.buildGraph(i, n) for i in range(n)]
         halt2 = time.clock()
         self.logger.info ('graph construction: %s' % str(halt2 - halt1))
-        
+        #print ('graph construction: %s' % str(halt2 - halt1))
         #For next iteration, e.g. if no path was found
         #Check for singular values to reduce dimensions of existing resources
         self.storedResources.update(self.resources)
@@ -129,7 +158,10 @@ class PathFinder:
             try:
                 self.logger.info ('reducing matrix')
                 self.logger.debug (len(self.stateGraph))
-                k = np.int((1-np.divide(1,self.iteration))*250)
+                #k = self.iteration*kp
+                k = int(kp*math.pow(1.2,self.iteration))
+                #print ('reducing matrix, max important nodes')
+                #print (k)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
@@ -146,10 +178,11 @@ class PathFinder:
                 #print ('error ratio:')                
                 #print (np.divide(len(unimportant & important)*100,len(important)))
                 unimportant = res[k:]
-                self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
+                self.resources = resourceretriever_async.removeUnimportantResources(unimportant, self.resources)            
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 self.logger.info('Updated resources amount: %s' % str(len(self.resources)))
+                #print ('Updated resources amount: %s' % str(len(self.resources)))
             except:
                 self.logger.error ('Graph is empty')
                 self.logger.error (sys.exc_info())
@@ -163,12 +196,15 @@ class PathFinder:
         for i in self.resources:
             resource = self.resources[i]
             self.resources_inverse_index[resource] = i
-            if any(e in self.resources_s1 for e in self.resources_by_parent[resource] ):
-                self.resources_s1.add(resource)
-            elif any(e in self.resources_s2 for e in self.resources_by_parent[resource] ):
-                self.resources_s2.add(resource)
+            if (resource in self.resources_by_parent):
+                if any(e in self.resources_s1 for e in self.resources_by_parent[resource] ):
+                    self.resources_s1.add(resource)
+                elif any(e in self.resources_s2 for e in self.resources_by_parent[resource] ):
+                    self.resources_s2.add(resource)
+                else:
+                    self.logger.warning ('resource %s does not belong to any parent' % resource)
             else:
-                self.logger.warning ('resource %s does not belong to any parent' % resource)
+                self.logger.warning ('resource %s has no children' % resource)
           
         start = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s1], k)
         dest = self.findBestChilds([self.resources_inverse_index[resource] for resource in self.resources_s2], k)
@@ -202,8 +238,9 @@ class PathFinder:
             self.logger.error (sys.exc_info())
         
         dereffed_list = set([self.sub(i, node_list) for i in important])
-        dereffed_list.discard(0)
-        dereffed_list.discard(1)
+        if len(dereffed_list) > 1:
+            dereffed_list.discard(0)
+            dereffed_list.discard(1)
         return list(dereffed_list)
     
     def jaccard_node(self,nodeA,nodeB):

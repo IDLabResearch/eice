@@ -10,7 +10,8 @@ from urllib.parse import urlparse
 from handlers.time_out import TimeoutError
 from core.worker_pool import Worker
 import math
-from core.pathfinder import PathFinder
+import ujson
+from core.pathfinder_async import PathFinder
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -46,7 +47,7 @@ class Searcher:
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
         
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 15,user_context=False,kp=75):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 25,user_context=False,kp=75):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -81,7 +82,6 @@ class Searcher:
         else:
             p = givenP
             p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes,kp=kp)
-            
 
         paths = None #Initially no paths exist
         
@@ -217,7 +217,8 @@ class DeepSearcher:
         """Expands a given blacklist with a found response"""
         new_blacklist = set(blacklist)
         if not response['path'] == False:
-            for step in response['path'][2:-2]:
+            l = int(len(response['path'])/2)
+            for step in response['path'][l-1:l+1]:
                 if step['type'] == 'link':
                     #print (step['uri'])
                     new_blacklist.add('<%s>' % step['uri'])
@@ -233,7 +234,7 @@ class DeepSearcher:
                     flattened_path.append('<%s>' % step['uri'])
         return flattened_path
         
-    def searchDeep(self, start,dest,search_blacklist=blacklist,k=6,s=3,user_context=False):
+    def searchDeep(self, start,dest,search_blacklist=blacklist,k=5,s=3,user_context=False):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -253,11 +254,13 @@ class DeepSearcher:
             logger.debug (p.resources)
             deep_roots = p.iterateOptimizedNetwork(s)
             logger.debug (deep_roots)
+            print (deep_roots)
             additionalResources = set()
             for st in deep_roots['start']:
                 for dt in deep_roots['dest']:
                     logger.debug ("extra path between %s and %s" % (st,dt))
-                    additionalResources = additionalResources.union(set(self.flattenSearchResults(self.searcher.search(st,dt,k=2*k))))
+                    print ("extra path between %s and %s" % (st,dt))
+                    additionalResources = additionalResources.union(set(self.flattenSearchResults(self.searcher.search(st,dt,k=3*k))))
             result=self.searcher.search(start,dest,search_blacklist=search_blacklist,givenP=p,additionalRes=additionalResources,k = k,user_context=user_context)
         finish = int(round((time.clock()-start_time) * 1000))
         result['execution_time'] = finish
@@ -330,13 +333,16 @@ class FallbackSearcher:
 #path = search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Belgium',new_blacklist)
 ##print (len(new_blacklist))
 
-#print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
+
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")python profiling like webgrind
-#searcher = Searcher()
-#print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz',blacklist))
+searcher = Searcher()
+print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
+#print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
+#print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://localhost/selvers','http://localhost/welf',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Ireland',blacklist))
+
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling',blacklist))
 #print (DeepSearcher().searchDeep('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dbpedia.org/resource/Brussels',blacklist))

@@ -18,6 +18,7 @@ import time
 from urllib.parse import urljoin
 import requests
 import re
+import ujson
 
 
 #Define properties to ignore:
@@ -28,8 +29,8 @@ blacklist = frozenset([
              #'<http://xmlns.com/foaf/0.1/page>',
              '<http://dbpedia.org/property/wikiPageUsesTemplate>',
              '<http://dbpedia.org/ontology/wikiPageExternalLink>',
-             '<http://purl.org/muto/core#tagMeans>',
              #'<http://dbpedia.org/ontology/wikiPageRedirects>',
+             '<http://purl.org/muto/core#tagMeans>',
              '<http://dbpedia.org/ontology/wikiPageDisambiguates>',
              '<http://dbpedia.org/ontology/governmentType>',
              '<http://dbpedia.org/ontology/officialLanguage>',
@@ -120,97 +121,45 @@ class Resourceretriever:
         query['wt'] = mysolr.compat.get_wt()
         return query
         
-    def search(self,url=False,resource='select', **kwargs):
-        """Queries Solr with the given kwargs and returns a SolrResponse object.
-
-        **Parameters**
-        
-        resource : Request dispatcher. 'select' by default.
-        
-        kwargs : Dictionary containing any of the available Solr query parameters described in 
-                http://wiki.apache.org/solr/CommonQueryParameters.
-                q is a mandatory parameter.
-        """
-        #print ('building request')
-        query = self._build_request(kwargs)
-        #print (query)
-        if url:
-            #print (url)
-            http_response = requests.post(urljoin(url, resource),
-                                          data=query, auth=self.auth)
-            #print (http_response)
-            solr_response = SolrResponse(http_response)
-            
-            
-        else:
-            solr_response = False
-        #print('returning response')
-        return solr_response
-        
-    def getResourceLocalInverse(self,resource):
-        """Fetch subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
-        source = resource.strip('<>')
-        query={'q':'','nq':'* * <{0}>'.format(source),'qt':'siren','fl':'id ntriple','timeAllowed':'100'}
-        #print(query)
-        response = self.search(url=self.solrs[0],**query)
-        #print(response)
+    def processResourceLocalInverse(self,source,response):
+        """Process subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
         try:
-            if response.status==200 and len(response.documents) > 0:
+            if len(response.documents) > 0:
                 nt = ""
                 for document in response.documents:
                     nt += document['ntriple']
+                #print('hello')
                 nt_cleaned = cleanInversResultSetFast(nt,source)
                 return nt_cleaned
             
             else:
-                nt_cleaned = False
-                nt = ""
-                for solr in self.solrs[1:]:
-                    if len(nt) == 0:
-                        response = self.search(url=solr,**query)
-                        if response.status==200 and len(response.documents) > 0:
-                            for document in response.documents:
-                                nt += document['ntriple']
-                nt_cleaned = cleanInversResultSetFast(nt,source)
-                return nt_cleaned
+                return False
         except: 
             #self.logger.error('Could not fetch resource inverse %s' % resource)
             return False  
     
-    def getResourceLocal(self,resource):
-        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
-        source = resource.strip('<>')
-        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type','timeAllowed':'100'}
-        #print (solrs)
-        response = self.search(url=self.solrs[0],**query)
+    def processResourceLocal(self,resource,response):
+        """Process properties and children from a resource given a URI in the configured local INDEX"""
         try:
-            if response.status==200 and len(response.documents) > 0:
-                nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+            if len(response['docs']) > 0:
+                nt = response['docs'][0]['ntriple'].split('.\n')[:-1]
+                #print(nt)
+                #print('hello1')
                 nt_cleaned = cleanResultSet(nt)
+                #print('hello2')
                 tl = list()
-                tl.append('<%s>' % resource)
+                tl.append(resource)
                 tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
-                tl.append(response.documents[0]['type'].strip(' .\n'))
+                tl.append(response['docs'][0]['type'].strip(' .\n'))
                 #print(response.documents[0]['type'])#.strip(' .\n'))
+                #print('hello')
+                #print (len(nt_cleaned))
                 nt_cleaned[len(nt_cleaned)] = tl
+                #print (nt_cleaned)
                 return nt_cleaned
-            
             else:
-                nt_cleaned = False
-                nt = list()
-                for solr in self.solrs[1:]:
-                    if len(nt) == 0:
-                        response = self.search(url=solr,**query)
-                        if response.status==200 and len(response.documents) > 0:
-                            nt += response.documents[0]['ntriple'].split('.\n')[:-1]
-                nt_cleaned = cleanResultSet(nt)
-                tl = list()
-                tl.append('<%s>' % resource)
-                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
-                tl.append(response.documents[0]['type'].strip(' .\n'))
-                #print(response.documents[0]['type'])#.strip(' .\n'))
-                nt_cleaned[len(nt_cleaned)] = tl
-                return nt_cleaned
+                return False
+            
         except: 
             #self.logger.error('Could not fetch resource %s' % resource)
             return False  
@@ -268,7 +217,102 @@ class Resourceretriever:
         r['type'] = klasse
     
         return r
-
+    
+    def dbPediaLookup(self, value, kind=""):
+        """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured SPARQL endpoint"""
+        s = sparqlQueryByLabel(value, kind)
+        if s:
+            l = self.getResourceLocal(s['uri'].strip("<>"))
+        if s and l:
+            s['links'] = len(l)
+            for triple in l:
+                if l[triple][1] in blacklist:
+                    s['links'] = s['links'] - 1
+        else:
+            s = self.dbPediaIndexLookup(value, kind)
+        return s
+    
+    def getResourceLocalWithType(self, resource):
+        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
+        source = resource.strip('<>')
+        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type label','timeAllowed':'10000'}
+        response = self.solrs[0].search(**query)
+        if response.status==200 and len(response.documents) > 0:
+            nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+            nt_cleaned = cleanResultSet(nt)
+            return nt_cleaned
+        
+        else:
+            return False
+    
+    def getResourceLocal(self,resource):
+        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
+        source = resource.strip('<>')
+        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type','timeAllowed':'100'}
+        #print (solrs)
+        response = self.search(url=self.solrs[0],**query)
+        try:
+            if response.status==200 and len(response.documents) > 0:
+                nt = response.documents[0]['ntriple'].split('.\n')[:-1]
+                nt_cleaned = cleanResultSet(nt)
+                tl = list()
+                tl.append('<%s>' % resource)
+                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
+                tl.append(response.documents[0]['type'].strip(' .\n'))
+                #print(response.documents[0]['type'])#.strip(' .\n'))
+                nt_cleaned[len(nt_cleaned)] = tl
+                return nt_cleaned
+            
+            else:
+                nt_cleaned = False
+                nt = list()
+                for solr in self.solrs[1:]:
+                    if len(nt) == 0:
+                        response = self.search(url=solr,**query)
+                        if response.status==200 and len(response.documents) > 0:
+                            nt += response.documents[0]['ntriple'].split('.\n')[:-1]
+                nt_cleaned = cleanResultSet(nt)
+                tl = list()
+                tl.append('<%s>' % resource)
+                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
+                tl.append(response.documents[0]['type'].strip(' .\n'))
+                #print(response.documents[0]['type'])#.strip(' .\n'))
+                nt_cleaned[len(nt_cleaned)] = tl
+                return nt_cleaned
+        except: 
+            #self.logger.error('Could not fetch resource %s' % resource)
+            return False  
+    
+    def getResourceLocalInverse(self,resource):
+        """Fetch subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
+        source = resource.strip('<>')
+        query={'q':'','nq':'* * <{0}>'.format(source),'qt':'siren','fl':'id ntriple','timeAllowed':'100'}
+        #print(query)
+        response = self.search(url=self.solrs[0],**query)
+        #print(response)
+        try:
+            if response.status==200 and len(response.documents) > 0:
+                nt = ""
+                for document in response.documents:
+                    nt += document['ntriple']
+                nt_cleaned = cleanInversResultSetFast(nt,source)
+                return nt_cleaned
+            
+            else:
+                nt_cleaned = False
+                nt = ""
+                for solr in self.solrs[1:]:
+                    if len(nt) == 0:
+                        response = self.search(url=solr,**query)
+                        if response.status==200 and len(response.documents) > 0:
+                            for document in response.documents:
+                                nt += document['ntriple']
+                nt_cleaned = cleanInversResultSetFast(nt,source)
+                return nt_cleaned
+        except: 
+            #self.logger.error('Could not fetch resource inverse %s' % resource)
+            return False  
+        
     def getResource(self,resource):
         """Wrapper function to find properties of a resource given the URI in the configured INDEX(es)"""
         #print ('getting resource')
@@ -304,36 +348,91 @@ class Resourceretriever:
             
         return response
     
+    def genUrls(self, resource):
+        resource = resource.strip('<>')
+        bases = []
+        for solr in self.solrs:
+            bases.append("%sselect?nq=<%s> * *&fl=id ntriple type&wt=json&qt=siren" % (solr,resource))
+        return bases
     
-    def dbPediaLookup(self, value, kind=""):
-        """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured SPARQL endpoint"""
-        s = sparqlQueryByLabel(value, kind)
-        if s:
-            l = self.getResourceLocal(s['uri'].strip("<>"))
-        if s and l:
-            s['links'] = len(l)
-            for triple in l:
-                if l[triple][1] in blacklist:
-                    s['links'] = s['links'] - 1
-        else:
-            s = self.dbPediaIndexLookup(value, kind)
-        return s
+    def genMultiUrls(self, resources):
+        multi_urls = []
+        resource_chunks = chunks(list(resources), 10)
+        for resource_chunk in resource_chunks:
+            queryParts = []
+            for resource in resource_chunk:
+                resource = resource.strip('<>!+')
+                resource = urllib.parse.quote(resource, ':/=?<>"*&')
+                queryParts.append("<%s> * * OR * * <%s>" % (resource,resource))
+            query = " OR ".join(queryParts)
+            bases = []
+            for solr in self.solrs:
+                bases.append("%sselect?nq=%s&fl=id ntriple type&wt=json&qt=siren" % (solr,query))
+            #for base in bases:
+            #    print(len(base))
+            multi_urls.append({'resources' : resource_chunk, 'urls' : bases})
+        return multi_urls
     
-    def getResourceLocalWithType(self, resource):
-        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
-        source = resource.strip('<>')
-        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type label','timeAllowed':'10000'}
-        response = self.solrs[0].search(**query)
-        if response.status==200 and len(response.documents) > 0:
-            nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-            nt_cleaned = cleanResultSet(nt)
-            return nt_cleaned
-        
-        else:
-            return False
+    def processMultiResourceLocal(self, resources, resp):
+        """Process subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
+        #print (resp)
+        try:
+            if len(resp['docs']) > 0:
+                nt = ""
+                for document in resp['docs']:
+                    nt += document['ntriple']
+                nt_cleaned = cleanMultiResultSet(nt,resources)
+                return nt_cleaned
             
-    def fetchResource(self, resource, resourcesByParent, additionalResources, blacklist):   
-        newResources = self.getResource(resource)
+            else:
+                return False
+        except: 
+            #self.logger.error('Could not fetch resource inverse %s' % resource)
+            return False
+    
+    def genInverseUrls(self, resource):
+        resource = resource.strip('<>')
+        bases = []
+        for solr in self.solrs:
+            bases.append("%sselect?nq=* * <%s>&fl=id ntriple type&wt=json&qt=siren" % (solr,resource))
+        return bases
+    
+    def processMultiResource(self, resources, resp, resourcesByParent, additionalResources, blacklist, inverse = False):   
+        try:
+            resp = ujson.decode(resp.content)['response']
+        except:
+            logger.error('error for %s' % resp.request.url)
+            logger.error('error in retrieving %s' % resources)
+            print('error in retrieving %s' % resources)
+            logger.error(sys.exc_info())
+        newResources = []
+        newResources = self.processMultiResourceLocal(resources, resp)
+        if newResources:
+            for tripleKey, triple in newResources.items():
+                inverse = False
+                if triple[0] in resources:
+                    targetRes = triple[2]
+                    resource = triple[0]
+                else:
+                    targetRes = triple[0]
+                    resource = triple[2]
+                    inverse = True
+                predicate = triple[1]
+                
+                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
+                    #Add forward link  
+                    addDirectedLink(resource, targetRes, predicate, not inverse, resourcesByParent)
+                    #Add backward link
+                    addDirectedLink(targetRes, resource, predicate, inverse, resourcesByParent)
+                    additionalResources.add(targetRes)
+
+    def processResource(self, resource, resp, resourcesByParent, additionalResources, blacklist, inverse = False):   
+        resp = resp.json()['response']
+        newResources = []
+        if inverse:
+            newResources = self.processResourceLocalInverse(resource, resp)
+        else:
+            newResources = self.processResourceLocal(resource, resp)
         if newResources:
             for tripleKey, triple in newResources.items():
                 inverse = False
@@ -527,6 +626,22 @@ def cleanInversResultSet(resultSet, target):
         #logger.warning('Parsing inverse failed for %s' % target)
         nt_cleaned = False
     return nt_cleaned
+
+def cleanMultiResultSet(resultSet, targets):#
+    resultSets = re.split(' .\n',resultSet)
+    try:    
+        nt_cleaned = dict()
+        i = 0
+        for row in resultSets[:-1]:
+            triple = re.split(' ',row)
+            if triple[2] in targets or triple[0] in targets:
+                nt_cleaned[i] = triple
+                i += 1
+    except:
+        #print (sys.exc_info())
+        #logger.warning('Parsing inverse failed for %s' % target)
+        nt_cleaned = False
+    return nt_cleaned
         
 def cleanInversResultSetFast(resultSet, target):
     resultSets = re.split(' .\n',resultSet)
@@ -554,6 +669,7 @@ def cleanResultSet(resultSet):
         triple[2] = triple[2].replace('"', '')
         nt_cleaned[i] = triple
         i += 1
+    #print('done')
     return nt_cleaned  
     
 def getResourceRemote(resource):
@@ -664,11 +780,13 @@ def importantResources(u, rank):
         important.add(maxindex)
     return important
 
+def chunks(l, n):
+    return [l[i:i+n] for i in range(0, len(l), n)]
 
 #print (sindiceMatch('David Guetta','person'))
 #res = dbPediaLookup('David Guetta','')
 #print (getResource(res))
-
+#resourceretriever = Resourceretriever()
 #print (resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
 #start = time.perf_counter()
 #print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
@@ -676,3 +794,6 @@ def importantResources(u, rank):
 #print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
 #print(resourceretriever.getResourceLocalInverse('http://dbpedia.org/resource/Elio_Di_Rupo'))
 #bPediaLookup('Belgium')
+#resourceretriever = Resourceretriever()
+#print(resourceretriever.genUrls('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
+#print(resourceretriever.genMultiUrls(['http://dblp.l3s.de/d2r/resource/authors/Selver_Softic','http://dbpedia.org/resource/Elio_Di_Rupo']))
