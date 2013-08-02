@@ -2,10 +2,11 @@ import numpy as np
 import scipy
 import networkx as nx
 from scipy import linalg, spatial
-from core import graph, resourceretriever_async
+from core import graph
+import core.resourceretriever as resourceretriever
 import time, gc, sys, logging
 from core.worker_pool import Worker
-from core.resourceretriever_async import Resourceretriever
+from core.resourceretriever import Resourceretriever
 import math
 import io
 import grequests
@@ -175,7 +176,7 @@ class PathFinder:
                 #print ('error ratio:')                
                 #print (np.divide(len(unimportant & important)*100,len(important)))
                 unimportant = res[k:]
-                self.resources = resourceretriever_async.removeUnimportantResources(unimportant, self.resources)            
+                self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 self.logger.info('Updated resources amount: %s' % str(len(self.resources)))

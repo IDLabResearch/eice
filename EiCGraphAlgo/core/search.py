@@ -12,7 +12,7 @@ from core.worker_pool import Worker
 import math
 import ujson
 from core.pathfinder_async import PathFinder
-import core.resourceretriever_async as resourceretriever
+import core.resourceretriever as resourceretriever
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
@@ -337,8 +337,8 @@ class FallbackSearcher:
 
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")python profiling like webgrind
-#searcher = Searcher()
-#print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz',blacklist))
+searcher = Searcher()
+print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
