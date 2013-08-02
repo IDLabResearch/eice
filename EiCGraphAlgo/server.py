@@ -11,6 +11,7 @@ import tornado.httpserver
 import logging.config
 import configparser
 from handlers import handlers_module
+import threading
 
 #logging.basicConfig(filename='example.log',level=logging.INFO)
 logging.config.fileConfig('logging.conf')
@@ -93,7 +94,5 @@ def main():
     tornado.ioloop.IOLoop.instance().start()
     logging.getLogger('root').info ("Server running on: %s" % sys.platform)
 
-    
-    
 if __name__ == '__main__':
     main()

@@ -9,7 +9,7 @@ from core.worker_pool import Worker
 from core.resourceretriever import Resourceretriever
 import math
 import io
-import grequests
+import requests
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -114,8 +114,8 @@ class PathFinder:
         
         if len(reqs) > 0: 
             for res in reqs:
-                rs = (grequests.get(u) for u in res['urls'])
-                resps = grequests.map(rs)
+                rs = (requests.get(u) for u in res['urls'])
+                resps = rs
                 for rp in resps:
                     item = [res['resources'], rp, self.resources_by_parent, additionalResources, blacklist]
                     self.worker.queueFunction(self.resourceretriever.processMultiResource, item)

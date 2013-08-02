@@ -20,7 +20,6 @@ import requests
 import re
 import ujson
 
-
 #Define properties to ignore:
 blacklist = frozenset([
              '<http://dbpedia.org/ontology/wikiPageWikiLink>',
@@ -97,9 +96,8 @@ try:
 except:
         logger.error ("SPARQL Service down")
         sparql = None
-        
-print ("EiCE Server running on: %s :)" % sys.platform)
-print ("EiCE Async plugin running on: %s :)" % sys.platform)
+    
+print ("EiCE Server Async running on: %s :)" % sys.platform)
 
 class Resourceretriever:
     
@@ -108,267 +106,6 @@ class Resourceretriever:
         self.config = config
         self.solrs = solrs
         self.auth = None
-    
-    def _build_request(self, query):
-        """ Check solr query and put convenient format """
-        assert 'q' in query
-        mysolr.compat.compat_args(query)
-        query['wt'] = mysolr.compat.get_wt()
-        return query
-    
-    def search(self,url=False,resource='select', **kwargs):
-        """Queries Solr with the given kwargs and returns a SolrResponse object.
-
-        **Parameters**
-        
-        resource : Request dispatcher. 'select' by default.
-        
-        kwargs : Dictionary containing any of the available Solr query parameters described in 
-                http://wiki.apache.org/solr/CommonQueryParameters.
-                q is a mandatory parameter.
-        """
-        #print ('building request')
-        query = self._build_request(kwargs)
-        #print (query)
-        if url:
-            #print (url)
-            http_response = requests.post(urljoin(url, resource),
-                                          data=query, auth=self.auth)
-            #print (http_response)
-            solr_response = SolrResponse(http_response)
-            
-            
-        else:
-            solr_response = False
-        #print('returning response')
-        return solr_response
-        
-    def processResourceLocalInverse(self,source,response):
-        """Process subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
-        try:
-            if len(response.documents) > 0:
-                nt = ""
-                for document in response.documents:
-                    nt += document['ntriple']
-                #print('hello')
-                nt_cleaned = cleanInversResultSetFast(nt,source)
-                return nt_cleaned
-            
-            else:
-                return False
-        except: 
-            #self.logger.error('Could not fetch resource inverse %s' % resource)
-            return False  
-    
-    def processResourceLocal(self,resource,response):
-        """Process properties and children from a resource given a URI in the configured local INDEX"""
-        try:
-            if len(response['docs']) > 0:
-                nt = response['docs'][0]['ntriple'].split('.\n')[:-1]
-                #print(nt)
-                #print('hello1')
-                nt_cleaned = cleanResultSet(nt)
-                #print('hello2')
-                tl = list()
-                tl.append(resource)
-                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
-                tl.append(response['docs'][0]['type'].strip(' .\n'))
-                #print(response.documents[0]['type'])#.strip(' .\n'))
-                #print('hello')
-                #print (len(nt_cleaned))
-                nt_cleaned[len(nt_cleaned)] = tl
-                #print (nt_cleaned)
-                return nt_cleaned
-            else:
-                return False
-            
-        except: 
-            #self.logger.error('Could not fetch resource %s' % resource)
-            return False  
-        
-    def getResourceLocalDeprecated(self, resource):
-        """DEPRECATED Fetch properties and children from a resource given a URI in the configured local INDEX"""
-        source = resource.strip('<>')
-        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple','timeAllowed':'5000'}
-        response = self.solrs[0].search(**query)
-        if response.status==200 and len(response.documents) > 0:
-            nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-            nt_cleaned = cleanResultSet(nt)
-            return nt_cleaned
-        
-        else:
-            return False
-        
-    def dbPediaIndexLookup(self, value, kind=""):
-        """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured INDEX"""
-        server = self.config.get('services', 'lookup')
-        gateway = '{0}/api/search.asmx/KeywordSearch?QueryClass={1}&QueryString={2}'.format(server,kind,value)
-        request = urllib.parse.quote(gateway, ':/=?<>"*&')
-        self.logger.debug ('Request {0}'.format(request))
-        #raw_output = urllib.request.urlopen(request).read()
-        raw_output = requests.get(gateway)
-        root = lxml.objectify.fromstring(raw_output)
-        results = dict()
-    
-        r = dict()
-        klasse = "Miscelaneaous"
-    
-    
-        try:
-            for result in root.Result:
-                results[result.Label[0]] = result.URI[0]
-            klasse = root.Result[0].Classes.Class[0].Label[0].text
-            
-            if value in results:
-                r['uri'] = "<%s>" % (results[value])
-                r['label'] = value
-            else: 
-                r['uri'] = "<%s>" % (root.Result.URI[0])
-                r['label'] = value
-           
-            try:
-                links = len(self.getResourceLocal(r['uri']))
-            except:
-                links = 0
-                
-            r['links'] = links
-        
-        except:
-            klasse = "misc"
-        
-        r['type'] = klasse
-    
-        return r
-    
-    def dbPediaLookup(self, value, kind=""):
-        """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured SPARQL endpoint"""
-        s = sparqlQueryByLabel(value, kind)
-        if s:
-            l = self.getResourceLocal(s['uri'].strip("<>"))
-        if s and l:
-            s['links'] = len(l)
-            for triple in l:
-                if l[triple][1] in blacklist:
-                    s['links'] = s['links'] - 1
-        else:
-            s = self.dbPediaIndexLookup(value, kind)
-        return s
-    
-    def getResourceLocalWithType(self, resource):
-        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
-        source = resource.strip('<>')
-        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type label','timeAllowed':'10000'}
-        response = self.solrs[0].search(**query)
-        if response.status==200 and len(response.documents) > 0:
-            nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-            nt_cleaned = cleanResultSet(nt)
-            return nt_cleaned
-        
-        else:
-            return False
-    
-    def getResourceLocal(self,resource):
-        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
-        source = resource.strip('<>')
-        query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type','timeAllowed':'100'}
-        #print (solrs)
-        response = self.search(url=self.solrs[0],**query)
-        try:
-            if response.status==200 and len(response.documents) > 0:
-                nt = response.documents[0]['ntriple'].split('.\n')[:-1]
-                nt_cleaned = cleanResultSet(nt)
-                tl = list()
-                tl.append('<%s>' % resource)
-                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
-                tl.append(response.documents[0]['type'].strip(' .\n'))
-                #print(response.documents[0]['type'])#.strip(' .\n'))
-                nt_cleaned[len(nt_cleaned)] = tl
-                return nt_cleaned
-            
-            else:
-                nt_cleaned = False
-                nt = list()
-                for solr in self.solrs[1:]:
-                    if len(nt) == 0:
-                        response = self.search(url=solr,**query)
-                        if response.status==200 and len(response.documents) > 0:
-                            nt += response.documents[0]['ntriple'].split('.\n')[:-1]
-                nt_cleaned = cleanResultSet(nt)
-                tl = list()
-                tl.append('<%s>' % resource)
-                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
-                tl.append(response.documents[0]['type'].strip(' .\n'))
-                #print(response.documents[0]['type'])#.strip(' .\n'))
-                nt_cleaned[len(nt_cleaned)] = tl
-                return nt_cleaned
-        except: 
-            #self.logger.error('Could not fetch resource %s' % resource)
-            return False  
-    
-    def getResourceLocalInverse(self,resource):
-        """Fetch subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
-        source = resource.strip('<>')
-        query={'q':'','nq':'* * <{0}>'.format(source),'qt':'siren','fl':'id ntriple','timeAllowed':'100'}
-        #print(query)
-        response = self.search(url=self.solrs[0],**query)
-        #print(response)
-        try:
-            if response.status==200 and len(response.documents) > 0:
-                nt = ""
-                for document in response.documents:
-                    nt += document['ntriple']
-                nt_cleaned = cleanInversResultSetFast(nt,source)
-                return nt_cleaned
-            
-            else:
-                nt_cleaned = False
-                nt = ""
-                for solr in self.solrs[1:]:
-                    if len(nt) == 0:
-                        response = self.search(url=solr,**query)
-                        if response.status==200 and len(response.documents) > 0:
-                            for document in response.documents:
-                                nt += document['ntriple']
-                nt_cleaned = cleanInversResultSetFast(nt,source)
-                return nt_cleaned
-        except: 
-            #self.logger.error('Could not fetch resource inverse %s' % resource)
-            return False  
-        
-    def getResource(self,resource):
-        """Wrapper function to find properties of a resource given the URI in the configured INDEX(es)"""
-        #print ('getting resource')
-        response = dict()
-        try:
-            inverse = False
-            #print ('getting resource local')
-            local = self.getResourceLocal(resource)
-            if local:
-                response.update(local)
-                
-            if use_inverse == 'True' and len(response) > 0:
-                #print ('direct links %s for resource: %s' %((len(response)), resource))
-                inverse = self.getResourceLocalInverse(resource)
-                if inverse:
-                    base = len(response)
-                    
-                    for key in inverse:
-                        response[int(key)+base] = inverse[key]
-                    #print ('total links %s for resource: %s' %((len(response)), resource))
-    
-            else:
-                #logger.warning("resource %s not in local index" % resource)        
-                if use_remote == 'True':
-                    self.logger.warning("Fetching %s remotely instead" % resource)
-                    response = getResourceRemote(resource)
-                else:
-                    response = False
-        except:
-            self.logger.error ('connection error: could not connect to index. Check the index log files for more info.')
-            print(sys.exc_info())
-            response = False
-            
-        return response
     
     def genUrls(self, resource):
         resource = resource.strip('<>')
@@ -447,30 +184,89 @@ class Resourceretriever:
                     #Add backward link
                     addDirectedLink(targetRes, resource, predicate, inverse, resourcesByParent)
                     additionalResources.add(targetRes)
-
-    def processResource(self, resource, resp, resourcesByParent, additionalResources, blacklist, inverse = False):   
-        resp = resp.json()['response']
-        newResources = []
-        if inverse:
-            newResources = self.processResourceLocalInverse(resource, resp)
-        else:
-            newResources = self.processResourceLocal(resource, resp)
-        if newResources:
-            for tripleKey, triple in newResources.items():
-                inverse = False
-                if resource == triple[0]:
-                    targetRes = triple[2]
-                else:
-                    targetRes = triple[0]
-                    inverse = True
-                predicate = triple[1]
+                    
+    def processResourceLocalInverse(self,resource,response):
+        """Fetch subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
+        source = resource.strip('<>')
+        response = ujson.decode(response.content)['response']
+        try:
+            if len(response['docs']) > 0:
+                nt = ""
+                for document in response['docs']:
+                    nt += document['ntriple']
+                nt_cleaned = cleanInversResultSetFast(nt,source)
+                return nt_cleaned
+        except: 
+            #self.logger.error('Could not fetch resource inverse %s' % resource)
+            return False  
+                    
+    def getResource(self, resource, use_inverse=True):
+        try:
+            urls = self.genUrls(resource)
+            response = dict()
+            #print ('getting resource local')
+            rs = (requests.get(u) for u in urls)
+            resps = rs
+            for resp in resps:
+                local = self.processResourceLocal(resource, resp)
+                if local:
+                    base = len(response)
+                    
+                    for key in local:
+                        response[int(key)+base] = local[key]
                 
-                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
-                    #Add forward link  
-                    addDirectedLink(resource, targetRes, predicate, not inverse, resourcesByParent)
-                    #Add backward link
-                    addDirectedLink(targetRes, resource, predicate, inverse, resourcesByParent)
-                    additionalResources.add(targetRes)
+            if use_inverse == 'True' and len(response) > 0:
+                inv_urls = self.genInverseUrls(resource)
+                rs = (requests.get(u) for u in inv_urls)
+                resps = rs
+                for resp in resps:
+                    inverse = self.processResourceLocalInverse(resource, resp)
+                    if inverse:
+                        base = len(response)
+                        for key in inverse:
+                            response[int(key)+base] = inverse[key]
+        except:
+            self.logger.error ('connection error: could not connect to index. Check the index log files for more info.')
+            print(sys.exc_info())
+            response = False
+            
+        return response
+
+    def processResourceLocal(self,resource,response):
+        """Fetch properties and children from a resource given a URI in the configured local INDEX"""
+        source = resource.strip('<>')
+        response = ujson.decode(response.content)['response']
+        try:
+            if len(response['docs']) > 0:
+                nt = response['docs'][0]['ntriple'].split('.\n')[:-1]
+                nt_cleaned = cleanResultSet(nt)
+                tl = list()
+                tl.append('<%s>' % resource)
+                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
+                tl.append(response['docs'][0]['type'].strip(' .\n'))
+                #print(response.documents[0]['type'])#.strip(' .\n'))
+                nt_cleaned[len(nt_cleaned)] = tl
+                return nt_cleaned
+            
+            else:
+                nt_cleaned = False
+                nt = list()
+                for solr in self.solrs[1:]:
+                    if len(nt) == 0:
+                        response = self.search(url=solr,**query)
+                        if response.status==200 and len(response.documents) > 0:
+                            nt += response.documents[0]['ntriple'].split('.\n')[:-1]
+                nt_cleaned = cleanResultSet(nt)
+                tl = list()
+                tl.append('<%s>' % resource)
+                tl.append('<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>')
+                tl.append(response.documents[0]['type'].strip(' .\n'))
+                #print(response.documents[0]['type'])#.strip(' .\n'))
+                nt_cleaned[len(nt_cleaned)] = tl
+                return nt_cleaned
+        except: 
+            #self.logger.error('Could not fetch resource %s' % resource)
+            return False  
                     
     def describeResource(self, resource):
         """Wrapper function to describe a resource given a URI either using INDEX lookup or via a SPARQL query"""
@@ -810,10 +606,11 @@ def chunks(l, n):
 #print (getResource(res))
 #resourceretriever = Resourceretriever()
 #print (resourceretriever.describeResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
+#print (resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
 #start = time.perf_counter()
 #print(resourceretriever.getResourceLocal('http://dblp.l3s.de/d2r/resource/authors/Changqing_Li'))
 #print (time.perf_counter() - start)
-#print(resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling'))
+#print(resourceretriever.getResource('http://dbpedia.org/resource/Belgium'))
 #print(resourceretriever.getResourceLocalInverse('http://dbpedia.org/resource/Elio_Di_Rupo'))
 #bPediaLookup('Belgium')
 #resourceretriever = Resourceretriever()
