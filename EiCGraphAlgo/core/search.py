@@ -1,4 +1,4 @@
-from core import resourceretriever,randompath,graph
+from core import randompath,graph
 import time
 import gc
 import logging
@@ -12,6 +12,7 @@ from core.worker_pool import Worker
 import math
 import ujson
 from core.pathfinder_async import PathFinder
+import core.resourceretriever_async as resourceretriever
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
