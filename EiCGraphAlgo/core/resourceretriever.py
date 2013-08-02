@@ -115,6 +115,33 @@ class Resourceretriever:
         mysolr.compat.compat_args(query)
         query['wt'] = mysolr.compat.get_wt()
         return query
+    
+    def search(self,url=False,resource='select', **kwargs):
+        """Queries Solr with the given kwargs and returns a SolrResponse object.
+
+        **Parameters**
+        
+        resource : Request dispatcher. 'select' by default.
+        
+        kwargs : Dictionary containing any of the available Solr query parameters described in 
+                http://wiki.apache.org/solr/CommonQueryParameters.
+                q is a mandatory parameter.
+        """
+        #print ('building request')
+        query = self._build_request(kwargs)
+        #print (query)
+        if url:
+            #print (url)
+            http_response = requests.post(urljoin(url, resource),
+                                          data=query, auth=self.auth)
+            #print (http_response)
+            solr_response = SolrResponse(http_response)
+            
+            
+        else:
+            solr_response = False
+        #print('returning response')
+        return solr_response
         
     def processResourceLocalInverse(self,source,response):
         """Process subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
@@ -338,7 +365,7 @@ class Resourceretriever:
                     response = False
         except:
             self.logger.error ('connection error: could not connect to index. Check the index log files for more info.')
-            #print(sys.exc_info())
+            print(sys.exc_info())
             response = False
             
         return response
