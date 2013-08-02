@@ -7,7 +7,6 @@ import time, gc, sys, logging
 from core.worker_pool import Worker
 from core.resourceretriever_async import Resourceretriever
 import math
-import pycurl
 import io
 import grequests
 
