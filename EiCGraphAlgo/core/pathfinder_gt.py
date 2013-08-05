@@ -6,9 +6,10 @@ import graph_tool.all as gt
 from scipy import linalg, spatial
 from core import graph_gt, resourceretriever_gt
 import time, gc, sys, logging
-from core.worker_pool import Worker
+from core.worker_threaded import Worker
 from core.resourceretriever_gt import Resourceretriever
 import operator
+import grequests
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -100,26 +101,56 @@ class PathFinder:
         #print('total')
         #print(i)
         
-        self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
+        #self.worker.startQueue(self.resourceretriever.fetchResource, num_of_threads=32)
+        
+        #if len(additionalRes) == 0: 
+            
+        #    for resource in prevResources:
+        #        self.added.add(resource)
+        #        item = [resource, additionalResources, blacklist]
+        #        self.worker.queueFunction(self.resourceretriever.fetchResource, item)
+            
+        #    self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
+        
+        #else:
+        #    self.logger.info('Special search iteration: Deep search')
+        #    for resource in additionalRes:
+        #        self.added.add(resource)
+        #        item = [resource, additionalResources, blacklist]
+        #        self.worker.queueFunction(self.resourceretriever.fetchResource, item)
+                
+        #    self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
+            
+        
+        
+        reqs = list()
         
         if len(additionalRes) == 0: 
             
             for resource in prevResources:
                 self.added.add(resource)
-                item = [resource, additionalResources, blacklist]
-                self.worker.queueFunction(self.resourceretriever.fetchResource, item)
-            
-            self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
-        
+            for url in self.resourceretriever.genMultiUrls(prevResources):
+                reqs.append(url)
+                        
         else:
             self.logger.info('Special search iteration: Deep search')
             for resource in additionalRes:
                 self.added.add(resource)
-                item = [resource, additionalResources, blacklist]
-                self.worker.queueFunction(self.resourceretriever.fetchResource, item)
-                
-            self.worker.waitforFunctionsFinish(self.resourceretriever.fetchResource)
-            
+            for url in self.resourceretriever.genMultiUrls(additionalRes):
+                reqs.append(url)
+
+        self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)
+        
+        if len(reqs) > 0: 
+            for res in reqs:
+                rs = (grequests.get(u) for u in res['urls'])
+                resps = grequests.map(rs)
+                #todo move http gets in threads vs async grequests
+                for rp in resps:
+                #for rp in res['urls']:
+                    item = [res, rp, self.resources_by_parent, additionalResources, blacklist]
+                    self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
+        self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
         
         toAddResources = list(additionalResources.keys() - prevResources) 
         #print('to add resources')

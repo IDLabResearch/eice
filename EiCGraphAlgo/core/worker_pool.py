@@ -4,13 +4,13 @@ Created on 25-mei-2012
 @author: ldevocht
 '''
 import gevent
-from gevent import monkey
 from gevent import Greenlet
 from gevent.pool import Pool
 from gevent import queue
-
+#from gevent import monkey
 #monkey.patch_socket()
 #monkey.patch_thread()
+
 
 NUM_OF_THREADS = 24
 

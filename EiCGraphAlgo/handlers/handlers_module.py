@@ -12,7 +12,6 @@ import generateplots
 from core.resourceretriever import Resourceretriever
 from core.search import Searcher, DeepSearcher
 import core.search_gt as sgt
-import threading
 from multiprocessing import Process, Queue
 
 
@@ -95,7 +94,7 @@ class NeighbourLookupHandler(MainHandler):
     def initialize(self):
         #self.resourceretriever = Resourceretriever()
         self.r = dict()
-        
+
     def get(self):
         uris = self.get_argument("uri", "")
         items = uris.split(",http://")
@@ -104,15 +103,15 @@ class NeighbourLookupHandler(MainHandler):
         
         def retrieve_neighbours(q):
             logger.debug ('Neighbourlookup started %s' % uris)
-            resourceretriever = Resourceretriever()
+            resR = resourceretriever.Resourceretriever()
             for item in items: 
                 try:
                     if not 'http://' in item:
                         uri = 'http://%s' % item.strip('<>')
                     else:
                         uri = item.strip('<>')
-                    #print(uri)  
-                    responses[uri] = resourceretriever.getResource(uri)
+                    print(uri)  
+                    responses[uri] = resR.getResource(uri)
                 except:
                     responses[uri] = {}
                     logger.error(sys.exc_info())

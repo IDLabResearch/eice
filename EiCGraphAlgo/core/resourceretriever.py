@@ -116,13 +116,14 @@ class Resourceretriever:
     
     def genMultiUrls(self, resources):
         multi_urls = []
-        resource_chunks = chunks(list(resources), 10)
+        resource_chunks = chunks(list(resources), 16)
         for resource_chunk in resource_chunks:
             queryParts = []
             for resource in resource_chunk:
-                resource = resource.strip('<>!+')
-                resource = urllib.parse.quote(resource, ':/=?<>"*&')
-                queryParts.append("<%s> * * OR * * <%s>" % (resource,resource))
+                resource = resource.strip('<>!+&')
+                resource = urllib.parse.quote(resource, ':\/=?<>"*')
+                if not ('&' in resource or '#' in resource):
+                    queryParts.append("<%s> * * OR * * <%s>" % (resource,resource))
             query = " OR ".join(queryParts)
             bases = []
             for solr in self.solrs:
@@ -156,34 +157,47 @@ class Resourceretriever:
             bases.append("%sselect?nq=* * <%s>&fl=id ntriple type&wt=json&qt=siren" % (solr,resource))
         return bases
     
-    def processMultiResource(self, resources, resp, resourcesByParent, additionalResources, blacklist, inverse = False):   
+    def processMultiResource(self, res, rp, resourcesByParent, additionalResources, blacklist, inverse = False):
+        resources = res['resources']   
         try:
-            resp = ujson.decode(resp.content)['response']
+        #    if len(url) < 2048:
+        #        resp = requests.get(url)
+        #        if (resp.status_code == 200):
+        #            resp = ujson.decode(resp.content)['response']
+        #    else:
+        #        urls = url.split('select?')
+        #        params = urls[1].split('&')
+        #        payload = {}
+        #        for p in params:
+        #            parts = p.split('=')
+        #            payload[parts[0]] = parts[1]
+        #        resp = requests.post("%sselect" % urls[0], data=payload)
+        #       if (resp.status_code == 200):
+        #          resp = ujson.decode(resp.content)['response']
+            resp = ujson.decode(rp.content)['response']
+            newResources = []
+            newResources = self.processMultiResourceLocal(resources, resp)
+            if newResources:
+                for tripleKey, triple in newResources.items():
+                    inverse = False
+                    if triple[0] in resources:
+                        targetRes = triple[2]
+                        resource = triple[0]
+                    else:
+                        targetRes = triple[0]
+                        resource = triple[2]
+                        inverse = True
+                    predicate = triple[1]
+                    
+                    if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
+                        #Add forward link  
+                        addDirectedLink(resource, targetRes, predicate, not inverse, resourcesByParent)
+                        #Add backward link
+                        addDirectedLink(targetRes, resource, predicate, inverse, resourcesByParent)
+                        additionalResources.add(targetRes)          
         except:
-            logger.error('error for %s' % resp.request.url)
             logger.error('error in retrieving %s' % resources)
-            print('error in retrieving %s' % resources)
             logger.error(sys.exc_info())
-        newResources = []
-        newResources = self.processMultiResourceLocal(resources, resp)
-        if newResources:
-            for tripleKey, triple in newResources.items():
-                inverse = False
-                if triple[0] in resources:
-                    targetRes = triple[2]
-                    resource = triple[0]
-                else:
-                    targetRes = triple[0]
-                    resource = triple[2]
-                    inverse = True
-                predicate = triple[1]
-                
-                if isResource(targetRes) and (predicate not in blacklist) and targetRes.startswith('<') and targetRes.endswith('>') and any(domain in targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
-                    #Add forward link  
-                    addDirectedLink(resource, targetRes, predicate, not inverse, resourcesByParent)
-                    #Add backward link
-                    addDirectedLink(targetRes, resource, predicate, inverse, resourcesByParent)
-                    additionalResources.add(targetRes)
                     
     def processResourceLocalInverse(self,resource,response):
         """Fetch subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""

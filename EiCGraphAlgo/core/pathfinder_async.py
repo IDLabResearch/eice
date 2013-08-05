@@ -5,11 +5,12 @@ from scipy import linalg, spatial
 from core import graph
 import core.resourceretriever as resourceretriever
 import time, gc, sys, logging
-from core.worker_pool import Worker
+from core.worker_threaded import Worker
 from core.resourceretriever import Resourceretriever
 import math
 import io
 import requests
+import grequests
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -114,14 +115,14 @@ class PathFinder:
         
         if len(reqs) > 0: 
             for res in reqs:
-                rs = (requests.get(u) for u in res['urls'])
-                resps = rs
+                rs = (grequests.get(u) for u in res['urls'])
+                resps = grequests.map(rs)
+                #todo move http gets in threads vs async grequests
                 for rp in resps:
-                    item = [res['resources'], rp, self.resources_by_parent, additionalResources, blacklist]
-                    self.worker.queueFunction(self.resourceretriever.processMultiResource, item)
-                
-            self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
-        
+                #for rp in res['urls']:
+                    item = [res, rp, self.resources_by_parent, additionalResources, blacklist]
+                    self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
+        self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
         

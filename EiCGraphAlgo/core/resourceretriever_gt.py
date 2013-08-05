@@ -12,12 +12,13 @@ import logging
 import sys
 import configparser
 import os
-import rdflib
 import sys
 import tempfile
 import requests
+import rdflib
 from urllib.parse import urljoin
 import graph_tool.all as gt
+import re
 
 #Define properties to ignore:
 blacklist = frozenset([
@@ -104,9 +105,8 @@ except:
 #`------'`------'""")
 print ("EiCE GT plugin running on: %s :)" % sys.platform)
 
-class Triple:
-    pass    
-    
+class Triple(object):
+    pass
 
 class Resourceretriever:
     
@@ -160,7 +160,7 @@ class Resourceretriever:
                 nt = ""
                 for document in response.documents:
                     nt += document['ntriple']
-                nt_cleaned = cleanInversResultSet(nt,source)
+                nt_cleaned = cleanInversResultSetFast(nt,source)
                 return nt_cleaned
             
             else:
@@ -172,7 +172,7 @@ class Resourceretriever:
                         if response.status==200 and len(response.documents) > 0:
                             for document in response.documents:
                                 nt += document['ntriple']
-                nt_cleaned = cleanInversResultSet(nt,source)
+                nt_cleaned = cleanInversResultSetFast(nt,source)
                 return nt_cleaned
         except: 
             #self.logger.error('Could not fetch resource inverse %s' % resource)
@@ -304,6 +304,83 @@ class Resourceretriever:
             
         return response
     
+    def genMultiUrls(self, resources):
+        multi_urls = []
+        resource_chunks = chunks(list(resources), 5)
+        for resource_chunk in resource_chunks:
+            queryParts = []
+            for resource in resource_chunk:
+                resource = resource.strip('<>!+&')
+                resource = urllib.parse.quote(resource, ':\/=?<>"*')
+                if not ('&' in resource or '#' in resource):
+                    queryParts.append("<%s> * * OR * * <%s>" % (resource,resource))
+            query = " OR ".join(queryParts)
+            bases = []
+            for solr in self.solrs:
+                bases.append("%sselect?nq=%s&fl=id ntriple type&wt=json&qt=siren" % (solr,query))
+            #for base in bases:
+            #    print(len(base))
+            multi_urls.append({'resources' : resource_chunk, 'urls' : bases})
+        return multi_urls
+    
+    def processMultiResourceLocal(self, resources, resp):
+        """Process subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
+        #print (resp)
+        try:
+            if len(resp['docs']) > 0:
+                nt = ""
+                for document in resp['docs']:
+                    nt += document['ntriple']
+                nt_cleaned = cleanMultiResultSet(nt,resources)
+                return nt_cleaned
+            
+            else:
+                return False
+        except: 
+            #self.logger.error('Could not fetch resource inverse %s' % resource)
+            return False
+    
+    def genInverseUrls(self, resource):
+        resource = resource.strip('<>')
+        bases = []
+        for solr in self.solrs:
+            bases.append("%sselect?nq=* * <%s>&fl=id ntriple type&wt=json&qt=siren" % (solr,resource))
+        return bases
+    
+    
+    
+    def processMultiResource(self, res, rp, resourcesByParent, additionalResources, blacklist, inverse = False):
+        resources = res['resources']   
+        try:
+            resp = ujson.decode(rp.content)['response']
+            newResources = []
+            results = False
+            newResources = self.processMultiResourceLocal(resources, resp)
+            if newResources:
+                results = dict()
+                for tripleKey, triple in newResources.items():
+                    result = Triple()
+                    if triple[0] in resources:
+                        result.source = triple[0]
+                        result.targetRes = triple[2]
+                        result.inverse = True
+                    else:
+                        result.targetRes = triple[0]
+                        result.source = triple[2]
+                        result.inverse = False
+                    result.predicate = triple[1]
+                    if not result.source in results:
+                        results[result.source] = set()
+                    if isResource(result.targetRes) and (result.predicate not in blacklist) and result.targetRes.startswith('<') and result.targetRes.endswith('>') and any(domain in result.targetRes for domain in valid_domains): #and 'dbpedia' in targetRes:
+                        results[result.source].add(result)
+                        
+                for resource in results:
+                    if not resource in additionalResources:
+                        additionalResources[resource] = set()
+                    additionalResources[resource] = additionalResources[resource].union(results[resource])
+        except:
+            logger.error('error in retrieving %s' % resources)
+            logger.error(sys.exc_info())
     
     def dbPediaLookup(self, value, kind=""):
         """Wrapper function to find connectivity and URI given a value of a resource and optional kind of resource in the configured SPARQL endpoint"""
@@ -508,6 +585,22 @@ def sparqlQueryByLabel(value, type=""):
     else:
         return False
 
+def cleanInversResultSetFast(resultSet, target):
+    resultSets = re.split(' .\n',resultSet)
+    try:    
+        nt_cleaned = dict()
+        i = 0
+        for row in resultSets[:-1]:
+            triple = re.split(' ',row)
+            if triple[2] == "<%s>" % target:
+                nt_cleaned[i] = triple
+                i += 1
+    except:
+        #print (sys.exc_info())
+        #logger.warning('Parsing inverse failed for %s' % target)
+        nt_cleaned = False
+    return nt_cleaned        
+
 def cleanInversResultSet(resultSet, target):
     memory_store = rdflib.plugin.get('IOMemory', rdflib.graph.Store)()
     g=rdflib.Graph(memory_store)
@@ -545,6 +638,22 @@ def cleanResultSet(resultSet):
         i += 1
     return nt_cleaned  
     
+def cleanMultiResultSet(resultSet, targets):#
+    resultSets = re.split(' .\n',resultSet)
+    try:    
+        nt_cleaned = dict()
+        i = 0
+        for row in resultSets[:-1]:
+            triple = re.split(' ',row)
+            if triple[2] in targets or triple[0] in targets:
+                nt_cleaned[i] = triple
+                i += 1
+    except:
+        #print (sys.exc_info())
+        #logger.warning('Parsing inverse failed for %s' % target)
+        nt_cleaned = False
+    return nt_cleaned
+
 def getResourceRemote(resource):
     """Fetch properties and children from a resource given a URI in the configured remote INDEX"""
     source = resource.strip('<>')
@@ -645,6 +754,9 @@ def importantResources(u, rank):
         maxindex = u_abs.argmax()
         important.add(maxindex)
     return important
+
+def chunks(l, n):
+    return [l[i:i+n] for i in range(0, len(l), n)]
 
 
 #print (sindiceMatch('David Guetta','person'))
