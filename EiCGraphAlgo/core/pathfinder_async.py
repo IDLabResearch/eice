@@ -10,7 +10,7 @@ from core.resourceretriever import Resourceretriever
 import math
 import io
 import requests
-import grequests
+import concurrent.futures
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -34,6 +34,7 @@ class PathFinder:
         self.resourceretriever = Resourceretriever()
         self.iteration = 0
         self.initMatrix(s1, s2)
+        self.session = requests.session()
 
     def initMatrix(self, source1, source2):
         """Initialization of the adjacency matrix based on input source and destination."""
@@ -111,18 +112,32 @@ class PathFinder:
         # This code copied from pycurl docs, modified to explicitly
         # set num_handles before the outer while loop.
         
-        self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)
-        
         if len(reqs) > 0: 
-            for res in reqs:
-                rs = (grequests.get(u) for u in res['urls'])
-                resps = grequests.map(rs)
+            #rs = (grequests.get(u) for u in res['urls'])
+            #resps = grequests.map(rs, session=self.session)
+            resps = set()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+                for res in reqs:
+                    # Start the load operations and mark each future with its URL
+                    future_to_url = {executor.submit(requests.get, url): url for url in res['urls']}
+                    for future in concurrent.futures.as_completed(future_to_url):
+                        url = future_to_url[future]
+                        try:
+                            resps.add(future.result())
+                        except Exception as exc:
+                            self.logger.error('%r generated an exception: %s' % (url, exc))
+                        else:
+                            self.logger.debug('retrieved results for %r' % (url))
                 #todo move http gets in threads vs async grequests
-                for rp in resps:
-                #for rp in res['urls']:
-                    item = [res, rp, self.resources_by_parent, additionalResources, blacklist]
-                    self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
-        self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
+                
+            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)    
+            
+            for rp in resps:
+            #for rp in res['urls']:
+                item = [res, rp, self.resources_by_parent, additionalResources, blacklist]
+                self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
+            
+            self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
         

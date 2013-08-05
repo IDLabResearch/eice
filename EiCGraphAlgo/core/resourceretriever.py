@@ -16,7 +16,6 @@ import tempfile
 import requests
 import time
 from urllib.parse import urljoin
-import requests
 import re
 import ujson
 
@@ -106,6 +105,7 @@ class Resourceretriever:
         self.config = config
         self.solrs = solrs
         self.auth = None
+        self.session = requests.session()
     
     def genUrls(self, resource):
         resource = resource.strip('<>')
@@ -116,7 +116,7 @@ class Resourceretriever:
     
     def genMultiUrls(self, resources):
         multi_urls = []
-        resource_chunks = chunks(list(resources), 16)
+        resource_chunks = chunks(list(resources), 6)
         for resource_chunk in resource_chunks:
             queryParts = []
             for resource in resource_chunk:

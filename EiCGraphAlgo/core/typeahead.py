@@ -22,7 +22,10 @@ logger = logging.getLogger('pathFinder')
 lookup_server = config.get('services', 'lookup_index')
 #lookup_solr = Solr(lookup_server)
 
-class TypeAhead:        
+class TypeAhead:
+    def __init__(self):
+        self.session = requests.session()
+                
     def dbPediaPrefix(self, prefix):
         server = config.get('services', 'lookup')
         gateway = '{0}/api/search.asmx/PrefixSearch?MaxHits=7&QueryString={1}'.format(server,prefix)
@@ -31,13 +34,13 @@ class TypeAhead:
         #rq = grequests.get(requestUrl)
         #response = grequests.map([rq])
         #raw_output = response[0].content
-        raw_output = urllib.request.urlopen(requestUrl,timeout=2).read()
+        #raw_output = urllib.request.urlopen(requestUrl,timeout=2).read()
         #s = requests.Session()
         #s.headers.update({'Connection': 'close'})
-        #r = s.get(requestUrl)
+        r = self.session.get(requestUrl)
         #(s.headers)
         #print(r.headers)
-        #raw_output = r.content
+        raw_output = r.content
         root = lxml.objectify.fromstring(raw_output)
         results = list()
         if hasattr(root, 'Result'):
@@ -79,7 +82,7 @@ class TypeAhead:
                 #query={'q':'lookup:"{0}*"'.format(re.escape(prefix).lower()),'fl':'url label type','timeAllowed':'100','rows':'7'}
                 #response = lookup_solr.search(**query)
                 query = '%sselect?q=lookup:"%s*"&fl=url label type&wt=json' % (lookup_server,re.escape(prefix).lower())
-                rsp = requests.get(query)
+                rsp = self.session.get(query)
                 #response = grequests.map([rq])
                 response = ujson.decode(rsp.content)['response']
                 if len(response['docs']) > 0:

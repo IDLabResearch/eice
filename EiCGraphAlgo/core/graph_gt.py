@@ -43,56 +43,64 @@ def listPath(resolvedPath,resolvedLinks):
             del resolvedEdges[0]
     return listedPath
 
-def pathExists(M,source,target):
-    """Checks whether an adjacency matrix M contains a path or not"""
-    #print('Checking if path exists')
-    dist = gt.shortest_distance(M,source=source,target=target)
-    return dist < 100
-
-def pathLength(pathFinder):
-    """Checks the length of a path if it exists in the given PathFinder class"""
-    G = pathFinder.getGraph()
-    target = pathFinder.target
-    source = pathFinder.source
-    try:
-        if pathExists(G,source,target):
-            G, weight = buildWeightedGraph(pathFinder)
-            touch_v = G.new_vertex_property("bool")
-            touch_e = G.new_edge_property("bool")
-            dist, pred = gt.astar_search(G, source, weight,
-                                 VisitorExample(touch_v, touch_e, target),
-                                 heuristic=lambda v: pathFinder.jaccard(v, target))
-            return dist
-        else:
-            return -1
-    except:
-        logger.error (sys.exc_info())
-        return None
-
-def path(pathFinder):
-    """Computes the astar path if it exists in the given PathFinder class"""
-    G = pathFinder.getGraph()
-    target = pathFinder.target
-    source = pathFinder.source
-    try:
-        if pathExists(G,source,target):
-            G, weight = buildWeightedGraph(pathFinder)
-            #for vertex in G.vertices():
-            #    print (vertex)
-            touch_v = G.new_vertex_property("bool")
-            touch_e = G.new_edge_property("bool")
-            dist, pred = gt.astar_search(G, source, weight,
-                                 VisitorExample(touch_v, touch_e, target),       
-                                 heuristic=lambda v: pathFinder.jaccard(v, target))
-            #print ([pred])
-            return [pred]
-            #return list(nx.all_simple_paths(G,0,1,cutoff=8))
-        else:
+class Graph():
+    def pathExists(self, pathFinder):
+        """Checks whether an adjacency matrix M contains a path or not"""
+        G = pathFinder.getGraph()
+        target = pathFinder.target
+        source = pathFinder.source
+        logger.debug('Checking if path exists between %s and %s' % (source,target))
+        try:
+            dist = gt.shortest_distance(G,source=source,target=target)
+        except:
+            logger.error (sys.exc_info())
+        logger.debug('Found distance %s' % dist)
+        return dist < 100
+    
+    def pathLength(self, pathFinder):
+        """Checks the length of a path if it exists in the given PathFinder class"""
+        G = pathFinder.getGraph()
+        target = pathFinder.target
+        source = pathFinder.source
+        try:
+            if self.pathExists(pathFinder):
+                G, weight = buildWeightedGraph(pathFinder)
+                touch_v = G.new_vertex_property("bool")
+                touch_e = G.new_edge_property("bool")
+                dist, pred = gt.astar_search(G, source, weight,
+                                     VisitorExample(touch_v, touch_e, target),
+                                     heuristic=lambda v: pathFinder.jaccard(v, target))
+                return dist
+            else:
+                return -1
+        except:
+            logger.error (sys.exc_info())
             return None
-        
-    except:
-        logger.error (sys.exc_info())
-        return None
+    
+    def path(self, pathFinder):
+        """Computes the astar path if it exists in the given PathFinder class"""
+        G = pathFinder.getGraph()
+        target = pathFinder.target
+        source = pathFinder.source
+        try:
+            if self.pathExists(pathFinder):
+                G, weight = buildWeightedGraph(pathFinder)
+                #for vertex in G.vertices():
+                #    print (vertex)
+                touch_v = G.new_vertex_property("bool")
+                touch_e = G.new_edge_property("bool")
+                dist, pred = gt.astar_search(G, source, weight,
+                                     VisitorExample(touch_v, touch_e, target),       
+                                     heuristic=lambda v: pathFinder.jaccard(v, target))
+                #print ([pred])
+                return [pred]
+                #return list(nx.all_simple_paths(G,0,1,cutoff=8))
+            else:
+                return None
+            
+        except:
+            logger.error (sys.exc_info())
+            return None
     
 def buildWeightedGraph(pathFinder):
     """Computes the weights for the links in the given PathFinder class"""

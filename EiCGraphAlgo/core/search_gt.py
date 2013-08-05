@@ -17,30 +17,6 @@ logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
 
 blacklist = resourceretriever_gt.blacklist
-#Select source and target
-
-# 0 Hops
-#s1 = resourceretriever.dbPediaLookup("Dublin", "place")['uri']
-#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
-# 1 Hop
-#s1 = resourceretriever.sindiceFind2("<label>", '"Synthesizer"', "")['uri']
-#s2 = resourceretriever.sindiceFind2("<name>", '"Guetta"', "person")['uri']
-# 2 hops
-#s1 = resourceretriever.dbPediaLookup("Gerry Breen", "")['uri']
-#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
-#s1 = resourceretriever.dbPediaLookup("Elton John", "person")['uri']
-#s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")['uri']
-# 3 hops
-# s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
-# s2 = resourceretriever.dbPediaLookup("France", "place")['uri']
-# 4 hops
-#s1 = resourceretriever.dbPediaLookup("Barack Obama", "person")['uri']
-#s2 = resourceretriever.dbPediaLookup("Osama Bin Laden", "person")['uri']
-# s1 = resourceretriever.dbPediaLookup("Usain Bolt", "")
-# s2 = resourceretriever.dbPediaLookup("Jacques Rogge", "")
-# 5 hops
-#s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
-#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
 
 class Searcher:
     def __init__(self):
@@ -105,7 +81,7 @@ class Searcher:
                 return False
             
                 
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 20,user_context=False,kp=75):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 50,user_context=False,kp=75):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -144,11 +120,12 @@ class Searcher:
         
         #Iteration 1
         
-        paths = graph_gt.path(p)
+        paths = p.graph.path(p)
         
         #Following iterations
         while True:
             if not paths == None:
+                logger.debug('len of found paths %s' % paths)
                 if len(paths) > 0:
                     break
 
@@ -157,7 +134,7 @@ class Searcher:
             gc.collect()
             m = p.iterateMatrix(blacklist=search_blacklist,kp=kp)
             halt_path = time.clock()
-            paths = graph_gt.path(p)
+            paths = p.graph.path(p)
             self.logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
 
             if p.iteration == k:
@@ -388,12 +365,12 @@ class FallbackSearcher:
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")
 searcher = Searcher()
-#print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz',blacklist))
+print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
 print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))#print (searcher.search('http://www.cibaoblog.com/tag/jose-enrique/','http://www.cibaoblog.com/tag/josephine/',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
-#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
+#print (searcher.search('http://www.cibaoblog.com/tag/jose-enrique/','http://www.cibaoblog.com/tag/josephine/',blacklist))#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
+print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
 #print (searcher.search_ida('<http://dbpedia.org/resource/Belgium>','<http://dbpedia.org/resource/Elio_Di_Rupo>',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Elio_Di_Rupo','http://dbpedia.org/resource/Belgium',blacklist))
 #print (searcher.search('http://localhost/selvers','http://localhost/welf',blacklist))

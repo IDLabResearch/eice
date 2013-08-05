@@ -19,6 +19,8 @@ import rdflib
 from urllib.parse import urljoin
 import graph_tool.all as gt
 import re
+import concurrent.futures
+
 
 #Define properties to ignore:
 blacklist = frozenset([
@@ -115,6 +117,7 @@ class Resourceretriever:
         self.config = config
         self.solrs = solrs
         self.auth = None
+        self.session = requests.session()
     
     def _build_request(self, query):
         """ Check solr query and put convenient format """
@@ -306,7 +309,7 @@ class Resourceretriever:
     
     def genMultiUrls(self, resources):
         multi_urls = []
-        resource_chunks = chunks(list(resources), 5)
+        resource_chunks = chunks(list(resources), 6)
         for resource_chunk in resource_chunks:
             queryParts = []
             for resource in resource_chunk:

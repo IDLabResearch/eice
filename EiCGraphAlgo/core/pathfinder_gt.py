@@ -5,11 +5,13 @@ import math
 import graph_tool.all as gt
 from scipy import linalg, spatial
 from core import graph_gt, resourceretriever_gt
+from core.graph_gt import Graph
 import time, gc, sys, logging
 from core.worker_threaded import Worker
 from core.resourceretriever_gt import Resourceretriever
 import operator
-import grequests
+import requests
+import concurrent.futures
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -33,6 +35,8 @@ class PathFinder:
         self.initMatrix(s1, s2)
         self.unimportant = set()
         self.added = set()
+        self.session = requests.session()
+        self.graph = Graph()
 
     def initMatrix(self, source1, source2):
         """Initialization of the adjacency matrix based on input source and destination."""
@@ -55,7 +59,7 @@ class PathFinder:
         self.iteration += 1
         return self.stateGraph
 
-    def iterateMatrix(self, blacklist=set(), additionalRes = set(),kp=250):
+    def iterateMatrix(self, blacklist=set(), additionalRes = set(),kp=75):
         """Iteration phase,
         During this phase the children of the current bottom level nodes are fetched and added to the hashed set.
         
@@ -138,21 +142,32 @@ class PathFinder:
                 self.added.add(resource)
             for url in self.resourceretriever.genMultiUrls(additionalRes):
                 reqs.append(url)
-
-        self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)
         
         if len(reqs) > 0: 
-            for res in reqs:
-                rs = (grequests.get(u) for u in res['urls'])
-                resps = grequests.map(rs)
-                #todo move http gets in threads vs async grequests
-                for rp in resps:
-                #for rp in res['urls']:
-                    item = [res, rp, self.resources_by_parent, additionalResources, blacklist]
-                    self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
-        self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
+            resps = set()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+                for res in reqs:
+                    # Start the load operations and mark each future with its URL
+                    future_to_url = {executor.submit(requests.get, url): url for url in res['urls']}
+                    for future in concurrent.futures.as_completed(future_to_url):
+                        url = future_to_url[future]
+                        try:
+                            resps.add(future.result())
+                        except Exception as exc:
+                            self.logger.error('%r generated an exception: %s' % (url, exc))
+                        else:
+                            self.logger.debug('%r page' % (url))
+          
+            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)
+                            
+            for rp in resps:
+            #for rp in res['urls']:
+                item = [res, rp, self.resources_by_parent, additionalResources, blacklist]
+                self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
         
-        toAddResources = list(additionalResources.keys() - prevResources) 
+            self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
+        
+        #toAddResources = list(additionalResources.keys() - prevResources) 
         #print('to add resources')
         #print(len(toAddResources))
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
@@ -161,7 +176,7 @@ class PathFinder:
         
         #self.logger.info('Updated indexed resources with parents {0}'.format(str(len(self.resources_by_parent.list_properties()))))    
             
-        self.logger.info ('Total resources: %s' % str(len(toAddResources)))
+        self.logger.info ('Total resources: %s' % str(len(prevResources)))
 
         self.checked_resources += len(additionalResources)
             
@@ -183,7 +198,10 @@ class PathFinder:
         #Check for singular values to reduce dimensions of existing resources
         #gt.graph_draw(self.stateGraph, vertex_text=self.stateGraph.vertex_index, vertex_font_size=10,
         #           output_size=(800,800), output="two-nodes.pdf")
-        if not graph_gt.pathExists(self.stateGraph,self.source,self.target) and self.iteration > 1:
+        #pathExists = self.graph.pathExists(self)
+        #self.logger.debug('path exists: %s' % pathExists)
+        self.logger.debug('current iteration: %s' % self.iteration)
+        if self.iteration > 1:
             try:
                 self.logger.info ('reducing matrix')
                 #print ('reducing matrix, max important nodes')
@@ -218,8 +236,10 @@ class PathFinder:
                 #print('Updated resources amount: %s' % str(len(self.stateGraph.vertices())))
                 #print(len(self.unimportant))
             except:
-                self.logger.error ('Pathfinding reductione error')
+                self.logger.error ('Pathfinding reduction error')
                 self.logger.error (sys.exc_info())
+        else:
+            self.logger.info ('no rank reducing')
         
         self.logger.info ('total %s' % str(time.clock()-start))
         self.logger.info ('=== === ===')
