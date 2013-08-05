@@ -14,7 +14,6 @@ from core.search import Searcher, DeepSearcher
 import core.search_gt as sgt
 from multiprocessing import Process, Queue
 
-
 logger = logging.getLogger('handler')
 
 class MainHandler(tornado.web.RequestHandler):
@@ -110,7 +109,6 @@ class NeighbourLookupHandler(MainHandler):
                         uri = 'http://%s' % item.strip('<>')
                     else:
                         uri = item.strip('<>')
-                    print(uri)  
                     responses[uri] = resR.getResource(uri)
                 except:
                     responses[uri] = {}
@@ -268,7 +266,6 @@ class CachedPathHandler(MainHandler):
 class SearchGTHandler(MainHandler):
     
     def initialize(self):
-        self.cpf = cached_pathfinder.CachedPathFinder()
         self.r = dict()
         
     def get(self):
@@ -373,7 +370,6 @@ class SearchAllHandler(MainHandler):
 class SearchHandler(MainHandler):
     
     def initialize(self):
-        self.cpf = cached_pathfinder.CachedPathFinder()
         self.r = dict()
         
     def get(self):
