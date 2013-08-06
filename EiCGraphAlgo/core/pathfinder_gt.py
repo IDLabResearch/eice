@@ -31,7 +31,6 @@ class PathFinder:
         self.unimportant = set()
         self.added = set()
         self.session = requests.session()
-        self.graph = Graph()
 
     def initMatrix(self, source1, source2):
         """Initialization of the adjacency matrix based on input source and destination."""
@@ -139,27 +138,31 @@ class PathFinder:
                 reqs.append(url)
         
         if len(reqs) > 0: 
-            resps = set()
-            with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+            resps = list()
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
                 for res in reqs:
                     # Start the load operations and mark each future with its URL
                     future_to_url = {executor.submit(requests.get, url): url for url in res['urls']}
                     for future in concurrent.futures.as_completed(future_to_url):
                         url = future_to_url[future]
                         try:
-                            resps.add(future.result())
+                            response = dict()
+                            response['resources'] = res['resources']
+                            response['results'] = future.result()
+                            resps.append(response)
                         except Exception as exc:
                             self.logger.error('%r generated an exception: %s' % (url, exc))
                         else:
-                            self.logger.debug('%r page' % (url))
-          
-            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)
-                            
+                            self.logger.debug('retrieved results for %r' % (url))
+                #todo move http gets in threads vs async grequests
+                
+            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)    
+            
             for rp in resps:
             #for rp in res['urls']:
-                item = [res, rp, self.resources_by_parent, additionalResources, blacklist]
+                item = [rp['resources'], rp['results'], self.resources_by_parent, additionalResources, blacklist]
                 self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
-        
+            
             self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
         
         #toAddResources = list(additionalResources.keys() - prevResources) 

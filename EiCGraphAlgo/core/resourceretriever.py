@@ -61,7 +61,7 @@ class Resourceretriever:
     
     def genMultiUrls(self, resources):
         multi_urls = []
-        print (len(resources))
+        #print (len(resources))
         resource_chunks = utils.chunks(list(resources), 1)
         for resource_chunk in resource_chunks:
             queryParts = []
@@ -76,18 +76,19 @@ class Resourceretriever:
                 bases.append("%sselect?nq=%s&fl=id ntriple type&wt=json&qt=siren" % (solr,query))
             #for base in bases:
             #    print(len(base))
-            multi_urls.append({'resources' : resource_chunk, 'urls' : bases})
+            multi_urls.append({'resources' : set(resource_chunk), 'urls' : bases})
         return multi_urls
     
     def processMultiResourceLocal(self, resources, resp):
         """Process subjects and predicate linking to a given URI, the URI as object in the configured local INDEX"""
-        #print (resp)
         try:
+            #print("number of docs %s" % len(resp['docs']))
             if len(resp['docs']) > 0:
                 nt = ""
                 for document in resp['docs']:
                     nt += document['ntriple']
                 nt_cleaned = cleanMultiResultSet(nt,resources)
+                #print("results in %s new resources" % len(nt_cleaned))
                 return nt_cleaned
             
             else:
@@ -104,7 +105,7 @@ class Resourceretriever:
         return bases
     
     def processMultiResource(self, res, rp, resourcesByParent, additionalResources, blacklist, inverse = False):
-        resources = res['resources']   
+        resources = res   
         try:
         #    if len(url) < 2048:
         #        resp = requests.get(url)
@@ -123,8 +124,10 @@ class Resourceretriever:
             resp = ujson.decode(rp.content)['response']
             newResources = []
             newResources = self.processMultiResourceLocal(resources, resp)
+
             if newResources:
-                print ('%s new resources fetched' % len(newResources))
+                #l = 0
+                #print ('%s new resources fetched' % len(newResources))
                 for tripleKey, triple in newResources.items():
                     inverse = False
                     if triple[0] in resources:
@@ -141,7 +144,9 @@ class Resourceretriever:
                         addDirectedLink(resource, targetRes, predicate, not inverse, resourcesByParent)
                         #Add backward link
                         addDirectedLink(targetRes, resource, predicate, inverse, resourcesByParent)
-                        additionalResources.add(targetRes)          
+                        #l += 1
+                        additionalResources.add(targetRes)
+                #print ('results in %s new links' % l)
         except:
             logger.error('error in retrieving %s' % resources)
             logger.error(sys.exc_info())
@@ -188,7 +193,7 @@ class Resourceretriever:
                             response[int(key)+base] = inverse[key]
         except:
             self.logger.error ('connection error: could not connect to index. Check the index log files for more info.')
-            print(sys.exc_info())
+            #print(sys.exc_info())
             response = False
             
         return response
@@ -334,6 +339,8 @@ def sparqlQueryByLabel(value, type=""):
 
 def cleanMultiResultSet(resultSet, targets):#
     resultSets = re.split(' .\n',resultSet)
+    #print('new triples: %s' % len(resultSets))
+    #print('for targets: %s' % targets)
     try:    
         nt_cleaned = dict()
         i = 0

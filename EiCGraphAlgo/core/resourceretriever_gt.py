@@ -65,7 +65,7 @@ class Resourceretriever:
     
     def genMultiUrls(self, resources):
         multi_urls = []
-        resource_chunks = utils.chunks(list(resources), 6)
+        resource_chunks = utils.chunks(list(resources), 3)
         for resource_chunk in resource_chunks:
             queryParts = []
             for resource in resource_chunk:
@@ -100,7 +100,7 @@ class Resourceretriever:
             return False
     
     def processMultiResource(self, res, rp, resourcesByParent, additionalResources, blacklist, inverse = False):
-        resources = res['resources']   
+        resources = res
         try:
             resp = ujson.decode(rp.content)['response']
             newResources = []

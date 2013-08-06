@@ -22,7 +22,7 @@ def listPath(resolvedPath,resolvedLinks):
             del resolvedEdges[0]
     return listedPath
 
-def pathExists(self, pathFinder):
+def pathExists(pathFinder):
     """Checks whether an adjacency matrix M contains a path or not"""
     G = pathFinder.getGraph()
     target = pathFinder.target
@@ -35,13 +35,13 @@ def pathExists(self, pathFinder):
     logger.debug('Found distance %s' % dist)
     return dist < 100
 
-def pathLength(self, pathFinder):
+def pathLength(pathFinder):
     """Checks the length of a path if it exists in the given PathFinder class"""
     G = pathFinder.getGraph()
     target = pathFinder.target
     source = pathFinder.source
     try:
-        if self.pathExists(pathFinder):
+        if pathExists(pathFinder):
             G, weight = buildWeightedGraph(pathFinder)
             touch_v = G.new_vertex_property("bool")
             touch_e = G.new_edge_property("bool")
@@ -55,13 +55,13 @@ def pathLength(self, pathFinder):
         logger.error (sys.exc_info())
         return None
 
-def path(self, pathFinder):
+def path(pathFinder):
     """Computes the astar path if it exists in the given PathFinder class"""
     G = pathFinder.getGraph()
     target = pathFinder.target
     source = pathFinder.source
     try:
-        if self.pathExists(pathFinder):
+        if pathExists(pathFinder):
             G, weight = buildWeightedGraph(pathFinder)
             #for vertex in G.vertices():
             #    print (vertex)

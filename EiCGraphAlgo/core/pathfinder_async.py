@@ -105,7 +105,7 @@ class PathFinder:
         if len(reqs) > 0: 
             #rs = (grequests.get(u) for u in res['urls'])
             #resps = grequests.map(rs, session=self.session)
-            resps = set()
+            resps = list()
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
                 for res in reqs:
                     # Start the load operations and mark each future with its URL
@@ -113,25 +113,28 @@ class PathFinder:
                     for future in concurrent.futures.as_completed(future_to_url):
                         url = future_to_url[future]
                         try:
-                            resps.add(future.result())
+                            response = dict()
+                            response['resources'] = res['resources']
+                            response['results'] = future.result()
+                            resps.append(response)
                         except Exception as exc:
                             self.logger.error('%r generated an exception: %s' % (url, exc))
                         else:
                             self.logger.debug('retrieved results for %r' % (url))
                 #todo move http gets in threads vs async grequests
                 
-            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=8)    
+            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)    
             
             for rp in resps:
             #for rp in res['urls']:
-                item = [res, rp, self.resources_by_parent, additionalResources, blacklist]
+                item = [rp['resources'], rp['results'], self.resources_by_parent, additionalResources, blacklist]
                 self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
             
             self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
             
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
-        print(toAddResources)
+       
         gc.collect()
         
         self.logger.info('Updated indexed resources with parents {0}'.format(str(len(self.resources_by_parent))))    
@@ -139,14 +142,14 @@ class PathFinder:
         n = len(self.resources)
         
         self.logger.debug ('Total resources before update: %s' % str(n))
-        print ('Total resources before update: %s' % str(n))
+        #print ('Total resources before update: %s' % str(n))
         
         for resource in toAddResources:
             self.resources[n] = resource
             n = n + 1
             
         self.logger.debug ('Total resources after update: %s' % str(n))
-        print ('Total resources after update: %s' % str(n))
+        #print ('Total resources after update: %s' % str(n))
 
         self.checked_resources += len(additionalResources)
             
@@ -168,9 +171,9 @@ class PathFinder:
                 self.logger.info ('reducing matrix')
                 self.logger.debug (len(self.stateGraph))
                 #k = self.iteration*kp
-                k = int(kp*math.pow(1.3,self.iteration))
+                k = int(kp*math.pow(1.2,self.iteration))
                 #print ('reducing matrix, max important nodes')
-                print (k)
+                #print (k)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
@@ -191,13 +194,14 @@ class PathFinder:
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 self.logger.info('Updated resources amount: %s' % str(len(self.resources)))
-                print ('Updated resources amount after reduction: %s' % str(len(self.resources)))
+                #print ('Updated resources amount after reduction: %s' % str(len(self.resources)))
             except:
                 self.logger.error ('Graph is empty')
                 self.logger.error (sys.exc_info())
         
         self.logger.info ('total %s' % str(time.clock()-start))
         self.logger.info ('=== === ===')
+        #print ('=== === ===')
         self.iteration+=1
         return self.stateGraph
     

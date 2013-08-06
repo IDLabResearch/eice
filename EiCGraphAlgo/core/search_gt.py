@@ -111,7 +111,7 @@ class Searcher:
         
         #Iteration 1
         
-        paths = p.graph.path(p)
+        paths = p.findPath()
         
         #Following iterations
         while True:
@@ -125,7 +125,7 @@ class Searcher:
             gc.collect()
             m = p.iterateMatrix(blacklist=search_blacklist,kp=kp)
             halt_path = time.clock()
-            paths = p.graph.path(p)
+            paths = p.findPath()
             self.logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
 
             if p.iteration == k:
@@ -355,15 +355,15 @@ class FallbackSearcher:
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")
-searcher = Searcher()
+#searcher = Searcher()
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
-print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Japan',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Japan','http://dbpedia.org/resource/Tokyo',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Paris','http://dbpedia.org/resource/Barack_Obama',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Republic_Of_Congo',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Japan',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Japan','http://dbpedia.org/resource/Tokyo',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Paris','http://dbpedia.org/resource/Barack_Obama',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Republic_Of_Congo',blacklist))
 #print (searcher.search('http://www.cibaoblog.com/tag/jose-enrique/','http://www.cibaoblog.com/tag/josephine/',blacklist))#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
 #print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
 #print (searcher.search_ida('<http://dbpedia.org/resource/Belgium>','<http://dbpedia.org/resource/Elio_Di_Rupo>',blacklist))

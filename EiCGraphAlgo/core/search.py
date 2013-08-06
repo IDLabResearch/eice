@@ -1,7 +1,7 @@
 import time,gc,logging,pickle,os,sys,math
 from urllib.parse import urlparse
 from core.worker_pool import Worker
-from core.deprecated_pathfinder import PathFinder
+from core.pathfinder_async import PathFinder
 from core import randompath, graph
 from core import config_search
 
@@ -301,15 +301,15 @@ class FallbackSearcher:
 
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")python profiling like webgrind
-searcher = Searcher()
+#searcher = Searcher()
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz',blacklist))
-print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Japan',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Japan','http://dbpedia.org/resource/Tokyo',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Paris','http://dbpedia.org/resource/Barack_Obama',blacklist))
-print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Republic_Of_Congo',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Japan',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Japan','http://dbpedia.org/resource/Tokyo',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Paris','http://dbpedia.org/resource/Barack_Obama',blacklist))
+#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Republic_Of_Congo',blacklist))
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://localhost/selvers','http://localhost/welf',blacklist))
 
