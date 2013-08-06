@@ -2,10 +2,11 @@ import numpy as np
 import scipy
 import networkx as nx
 from scipy import linalg, spatial
-from core import graph, resourceretriever
+from core import graph
+import core.deprecated_resourceretriever as resourceretriever
 import time, gc, sys, logging
 from core.worker_pool import Worker
-from core.resourceretriever import Resourceretriever
+from core.deprecated_resourceretriever import Resourceretriever
 import math
 
 class PathFinder:
@@ -301,7 +302,10 @@ class PathFinder:
             item = q.get()
             self.resourceretriever.fetchResource(item[0], item[1], item[2], item[3])
             q.task_done()
-                
+
+    def findPath(self):
+        return graph.path(self)
+    
     def getResourcesByParent(self):
         return self.resources_by_parent
      

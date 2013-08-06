@@ -1,54 +1,21 @@
-from core import randompath,graph
-import time
-import gc
-import logging
-import pickle
-import os, sys
-import handlers.time_out
-import scipy
+import time,gc,logging,pickle,os,sys,math
 from urllib.parse import urlparse
-from handlers.time_out import TimeoutError
 from core.worker_pool import Worker
-import math
-import ujson
-from core.pathfinder_async import PathFinder
-import core.resourceretriever as resourceretriever
+from core.deprecated_pathfinder import PathFinder
+from core import randompath, graph
+from core import config_search
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
 
-blacklist = resourceretriever.blacklist
-#Select source and target
-
-# 0 Hops
-#s1 = resourceretriever.dbPediaLookup("Dublin", "place")['uri']
-#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
-# 1 Hop
-#s1 = resourceretriever.sindiceFind2("<label>", '"Synthesizer"', "")['uri']
-#s2 = resourceretriever.sindiceFind2("<name>", '"Guetta"', "person")['uri']
-# 2 hops
-#s1 = resourceretriever.dbPediaLookup("Gerry Breen", "")['uri']
-#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
-#s1 = resourceretriever.dbPediaLookup("Elton John", "person")['uri']
-#s2 = resourceretriever.dbPediaLookup("Cornish%20language", "language")['uri']
-# 3 hops
-# s1 = resourceretriever.dbPediaLookup("David Guetta", "person")['uri']
-# s2 = resourceretriever.dbPediaLookup("France", "place")['uri']
-# 4 hops
-#s1 = resourceretriever.dbPediaLookup("Barack Obama", "person")['uri']
-#s2 = resourceretriever.dbPediaLookup("Osama Bin Laden", "person")['uri']
-# s1 = resourceretriever.dbPediaLookup("Usain Bolt", "")
-# s2 = resourceretriever.dbPediaLookup("Jacques Rogge", "")
-# 5 hops
-#s1 = resourceretriever.dbPediaLookup("Greenwich Theatre", "")['uri']
-#s2 = resourceretriever.dbPediaLookup("Ireland", "place")['uri']
+blacklist = config_search.blacklist
 
 class Searcher:
     def __init__(self):
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
         
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 25,user_context=False,kp=75):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 20,user_context=False,kp=75):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -82,13 +49,10 @@ class Searcher:
             p.iterateMatrix(search_blacklist,kp=kp)
         else:
             p = givenP
-            p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes,kp=kp)
-
-        paths = None #Initially no paths exist
-        
+            p.iterateMatrix(blacklist=search_blacklist,additionalRes=additionalRes,kp=kp)        
         #Iteration 1
         
-        paths = graph.path(p)
+        paths = p.findPath()
         
         #Following iterations
         while True:
@@ -101,7 +65,7 @@ class Searcher:
             gc.collect()
             m = p.iterateMatrix(blacklist=search_blacklist,kp=kp)
             halt_path = time.clock()
-            paths = graph.path(p)
+            paths = p.findPath()
             self.logger.info ('Looking for path: %s' % str(time.clock()-halt_path))
 
             if p.iteration == k:
@@ -337,11 +301,15 @@ class FallbackSearcher:
 
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")python profiling like webgrind
-#searcher = Searcher()
+searcher = Searcher()
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Gorillaz',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
+print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Japan',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Japan','http://dbpedia.org/resource/Tokyo',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Paris','http://dbpedia.org/resource/Barack_Obama',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Republic_Of_Congo',blacklist))
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Ireland',blacklist))
 #print (searcher.search('http://localhost/selvers','http://localhost/welf',blacklist))
 

@@ -1,16 +1,10 @@
+import scipy, math, io, requests, concurrent.futures, time, gc, sys, logging
 import numpy as np
-import scipy
 import networkx as nx
 from scipy import linalg, spatial
-from core import graph
-import core.resourceretriever as resourceretriever
-import time, gc, sys, logging
 from core.worker_threaded import Worker
 from core.resourceretriever import Resourceretriever
-import math
-import io
-import requests
-import concurrent.futures
+from core import graph
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -107,16 +101,12 @@ class PathFinder:
                 self.added.add(resource)
             for url in self.resourceretriever.genMultiUrls(additionalRes):
                 reqs.append(url)
-                
-        # Perform multi-request.
-        # This code copied from pycurl docs, modified to explicitly
-        # set num_handles before the outer while loop.
         
         if len(reqs) > 0: 
             #rs = (grequests.get(u) for u in res['urls'])
             #resps = grequests.map(rs, session=self.session)
             resps = set()
-            with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
                 for res in reqs:
                     # Start the load operations and mark each future with its URL
                     future_to_url = {executor.submit(requests.get, url): url for url in res['urls']}
@@ -130,7 +120,7 @@ class PathFinder:
                             self.logger.debug('retrieved results for %r' % (url))
                 #todo move http gets in threads vs async grequests
                 
-            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)    
+            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=8)    
             
             for rp in resps:
             #for rp in res['urls']:
@@ -138,20 +128,25 @@ class PathFinder:
                 self.worker.queueFunction(self.resourceretriever.processMultiResource, item)    
             
             self.worker.waitforFunctionsFinish(self.resourceretriever.processMultiResource)
+            
         toAddResources = list(additionalResources - prevResources)    
         #toAddResources = filter(resourceretriever.isResource, toAddResources)
-        
+        print(toAddResources)
         gc.collect()
         
         self.logger.info('Updated indexed resources with parents {0}'.format(str(len(self.resources_by_parent))))    
         
         n = len(self.resources)
         
+        self.logger.debug ('Total resources before update: %s' % str(n))
+        print ('Total resources before update: %s' % str(n))
+        
         for resource in toAddResources:
             self.resources[n] = resource
             n = n + 1
             
-        self.logger.info ('Total resources: %s' % str(n))
+        self.logger.debug ('Total resources after update: %s' % str(n))
+        print ('Total resources after update: %s' % str(n))
 
         self.checked_resources += len(additionalResources)
             
@@ -173,9 +168,9 @@ class PathFinder:
                 self.logger.info ('reducing matrix')
                 self.logger.debug (len(self.stateGraph))
                 #k = self.iteration*kp
-                k = int(kp*math.pow(1.2,self.iteration))
+                k = int(kp*math.pow(1.3,self.iteration))
                 #print ('reducing matrix, max important nodes')
-                #print (k)
+                print (k)
                 h = (nx.pagerank_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 #h = (nx.hits_scipy(nx.Graph(self.stateGraph), max_iter=100, tol=1e-07))
                 res = list(sorted(h, key=h.__getitem__, reverse=True))
@@ -192,11 +187,11 @@ class PathFinder:
                 #print ('error ratio:')                
                 #print (np.divide(len(unimportant & important)*100,len(important)))
                 unimportant = res[k:]
-                self.resources = resourceretriever.removeUnimportantResources(unimportant, self.resources)            
+                self.resources = self.removeUnimportantResources(unimportant)            
                 halt3 = time.clock()
                 self.logger.info ('rank reducing: %s' % str(halt3 - halt2))
                 self.logger.info('Updated resources amount: %s' % str(len(self.resources)))
-                #print ('Updated resources amount: %s' % str(len(self.resources)))
+                print ('Updated resources amount after reduction: %s' % str(len(self.resources)))
             except:
                 self.logger.error ('Graph is empty')
                 self.logger.error (sys.exc_info())
@@ -287,7 +282,7 @@ class PathFinder:
             
         for link in respbB:
             predB.add(link['uri'])
-        return scipy.spatial.distance.jaccard(np.array(predA), np.array(predB))    
+        return spatial.distance.jaccard(np.array(predA), np.array(predB))    
         #return 1-np.divide(len(predA & predB),len(predA | predB))       
     
     def buildGraph(self, i, n):
@@ -329,6 +324,19 @@ class PathFinder:
             self.logger.error (self.resources)
             self.logger.error (sys.exc_info())
             
+    def removeUnimportantResources(self, unimportant):
+        updated_resources = dict()
+        for u in unimportant:
+            #Never delete grandmother and grandfather, even if they become insignificant
+            if u > 1: 
+                del self.resources[u]
+        i = 0
+        for r in self.resources:
+            updated_resources[i] = self.resources[r]
+            i += 1        
+        resources = updated_resources
+        return resources
+            
     
     def resourceFetcher(self):
         q = self.worker.getQueue(self.resourceFetcher)
@@ -336,6 +344,9 @@ class PathFinder:
             item = q.get()
             self.resourceretriever.fetchResource(item[0], item[1], item[2], item[3])
             q.task_done()
+            
+    def findPath(self):
+        return graph.path(self)
                 
     def getResourcesByParent(self):
         return self.resources_by_parent

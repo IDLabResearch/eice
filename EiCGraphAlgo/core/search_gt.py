@@ -1,28 +1,20 @@
-from core import pathfinder_gt,resourceretriever_gt,randompath,graph_gt
-import time
-import gc
-import logging
-import pickle
-import os, sys
-import handlers.time_out
-import scipy
+import time, math, gc, logging, pickle, os, sys
 from urllib.parse import urlparse
-from handlers.time_out import TimeoutError
 #from core.worker_pool import Worker
 from core.worker_threaded import Worker
-import logging.config
-import math
+from core.resourceretriever_gt import Resourceretriever
+from core import pathfinder_gt,randompath,graph_gt,config_search
 
 logger = logging.getLogger('pathFinder')
 query_log = logging.getLogger('query')
 
-blacklist = resourceretriever_gt.blacklist
+blacklist = config_search.blacklist
 
 class Searcher:
     def __init__(self):
         self.logger = logging.getLogger('pathFinder')
         self.query_log = logging.getLogger('query')
-        self.resourceretriever = resourceretriever_gt.Resourceretriever()
+        self.resourceretriever = Resourceretriever()
     
     def search_ida(self, start,dest,search_blacklist=blacklist,k = 4):
         node_properties = dict()
@@ -79,9 +71,8 @@ class Searcher:
                 return solution
             if math.isinf(cost_limit):
                 return False
-            
                 
-    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 50,user_context=False,kp=75):
+    def search(self, start,dest,search_blacklist=blacklist,givenP=None,additionalRes=set(),k = 20,user_context=False,kp=75):
         """Searches a path between two resources start and dest
     
         **Parameters**
@@ -364,11 +355,15 @@ class FallbackSearcher:
 #print (DeepSearcher().searchAllPaths('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Japan',blacklist))
 #print (DeepSearcher().searchDeep('http://dbpedia.org/resource/Ireland','http://dbpedia.org/resource/Brussels',blacklist))
 #print("search")
-#searcher = Searcher()
+searcher = Searcher()
 #print (searcher.search('http://dblp.l3s.de/d2r/resource/authors/Tok_Wang_Ling','http://dblp.l3s.de/d2r/resource/publications/conf/cikm/LiL05a',blacklist))
 #print (searcher.search('http://dbpedia.org/resource/Brussels','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
-#print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
+print (searcher.search('http://dbpedia.org/resource/New_York','http://dbpedia.org/resource/Ireland',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Japan',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Japan','http://dbpedia.org/resource/Tokyo',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Ohio','http://dbpedia.org/resource/Tokyo',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Paris','http://dbpedia.org/resource/Barack_Obama',blacklist))
+print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Republic_Of_Congo',blacklist))
 #print (searcher.search('http://www.cibaoblog.com/tag/jose-enrique/','http://www.cibaoblog.com/tag/josephine/',blacklist))#print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Brussels',blacklist,user_context='http://dbpedia.org/resource/Elio_Di_Rupo'))
 #print (searcher.search('http://dbpedia.org/resource/Belgium','http://dbpedia.org/resource/Elio_Di_Rupo',blacklist))
 #print (searcher.search_ida('<http://dbpedia.org/resource/Belgium>','<http://dbpedia.org/resource/Elio_Di_Rupo>',blacklist))

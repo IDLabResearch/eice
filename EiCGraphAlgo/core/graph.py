@@ -1,11 +1,8 @@
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-import sys
-import math
-import random
-from itertools import islice, chain
-import logging
+import sys, math, logging
+from core import utils
 
 logger = logging.getLogger('pathFinder')
 
@@ -26,21 +23,6 @@ def resolvePath(path,resources):
     for step in path:
         resolvedPath.append(resources[step])
     return resolvedPath
-
-def batch(iterable, size):
-    sourceiter = iter(iterable)
-    while True:
-        batchiter = islice(sourceiter, size)
-        yield chain([next(batchiter)], batchiter)
-
-def rolling_window(seq, window_size):
-    it = iter(seq)
-    win = [next(it) for cnt in range(window_size)] # First window
-    yield win
-    for e in it: # Subsequent windows
-        win[:-1] = win[1:]
-        win[-1] = e
-        yield win
         
 def resolveLinks(resolvedPath,resourcesByParent):
     """Resolves the links in a path between two resources.
@@ -56,7 +38,7 @@ def resolveLinks(resolvedPath,resourcesByParent):
     
     """
     resolvedLinks = list()
-    for iterator in rolling_window(resolvedPath, 2):
+    for iterator in utils.rolling_window(resolvedPath, 2):
         steps = list(iterator)
         #logger.debug (steps)
         if len(steps) == 2:
@@ -67,7 +49,7 @@ def listPath(resolvedPath,resourcesByParent):
     """Converts a resolved path containing hashes of the resources to the actual URIs of each resource"""
     resolvedEdges = list()
     listedPath = list()
-    for iterator in rolling_window(resolvedPath, 2):
+    for iterator in utils.rolling_window(resolvedPath, 2):
         steps = list(iterator)
         #logger.debug (steps)
         if len(steps) == 2:
@@ -99,7 +81,7 @@ def pathLength(pathFinder):
         if nx.has_path(G, 0, 1):
             return nx.astar_path_length(G,0,1,pathFinder.jaccard,weight='weight')
         else:
-            return -1
+            return None
     except:
         logger.error (sys.exc_info())
         return None

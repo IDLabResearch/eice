@@ -180,9 +180,9 @@ class Resourceretriever:
         """Fetch properties and children from a resource given a URI in the configured local INDEX"""
         source = resource.strip('<>')
         query={'nq':'<{0}> * *'.format(source),'qt':'siren','q':'','fl':'id ntriple type','timeAllowed':'100'}
-        print (solrs)
+        #print (solrs)
         response = self.search(url=self.solrs[0],**query)
-        print ('done')
+        #print ('done')
         try:
             if response.status==200 and len(response.documents) > 0:
                 nt = response.documents[0]['ntriple'].split('.\n')[:-1]

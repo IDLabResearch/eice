@@ -1,17 +1,12 @@
 import numpy as np
-import scipy
-import math
+import scipy, math, requests, concurrent.futures
 #import networkx as nx
 import graph_tool.all as gt
 from scipy import linalg, spatial
-from core import graph_gt, resourceretriever_gt
-from core.graph_gt import Graph
+from core import graph_gt
 import time, gc, sys, logging
 from core.worker_threaded import Worker
 from core.resourceretriever_gt import Resourceretriever
-import operator
-import requests
-import concurrent.futures
 
 class PathFinder:
     """This class contains the adjacency matrix and provides interfaces to interact with it.
@@ -435,12 +430,31 @@ class PathFinder:
             #self.logger.error (self.resources)
             #self.logger.error (sys.exc_info())
             
+    def removeUnimportantResources(self, unimportant, resources):
+        unimportant_vertices = list()
+        for u in reversed(sorted(unimportant)):
+            #Never delete grandmother and grandfather, even if they become insignificant
+            if u > 1:
+                unimportant_vertices.append(self.stateGraph.vertex(u))
+        gv = gt.GraphView(self.stateGraph,vfilt=lambda x: x not in unimportant_vertices)
+        #stateGraph = gt.Graph(gv,prune=True)
+        
+        #for u in unimportant_vertices:
+        #    stateGraph.remove_vertex(u)
+            
+        #print (stateGraph.vertex(0))
+        #print (stateGraph.vertex(1))            
+        return gv
+            
     def resourceFetcher(self):
         q = self.worker.getQueue(self.resourceFetcher)
         while True:
             item = q.get()
             self.resourceretriever.fetchResource(item[0], item[1], item[2], item[3])
             q.task_done()
+    
+    def findPath(self):
+        return graph_gt.path(self)
                 
     def getResourcesByParent(self):
         return self.resources_by_parent
