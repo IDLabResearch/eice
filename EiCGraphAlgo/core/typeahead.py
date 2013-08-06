@@ -3,21 +3,11 @@ Created on 17-sep.-2012
 
 @author: ldevocht
 '''
-import urllib.request
-import urllib.parse
-import lxml.objectify
-import logging
-import configparser
-import os
+import urllib.parse, lxml.objectify, logging, configparser, re, ujson, requests
 from core.resourceretriever import Resourceretriever
-from core import resourceretriever
-import time
-import re
-import ujson
-import requests
-
+from core import resourceretriever, config_search
 config = resourceretriever.config
-mapping = resourceretriever.mappings
+mappings = resourceretriever.mappings
 logger = logging.getLogger('pathFinder')
 lookup_server = config.get('services', 'lookup_index')
 #lookup_solr = Solr(lookup_server)
@@ -63,7 +53,7 @@ class TypeAhead:
                     n_hits = 0
                     if local_hits:
                         for triple in local_hits:
-                            if local_hits[triple][1] not in resourceretriever.blacklist:
+                            if local_hits[triple][1] not in config_search.blacklist:
                                 n_hits += 1
                         if n_hits > 8:
                             results.append(item)
