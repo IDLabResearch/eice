@@ -181,7 +181,7 @@ class Resourceretriever:
                     for key in local:
                         response[int(key)+base] = local[key]
                 
-            if use_inverse == 'True' and len(response) > 0:
+            if use_inverse == True:
                 inv_urls = self.genInverseUrls(resource)
                 rs = (requests.get(u) for u in inv_urls)
                 resps = rs
@@ -420,5 +420,6 @@ def addDirectedLink(source, target, predicate, inverse, resourcesByParent):
 #print(resourceretriever.getResourceLocalInverse('http://dbpedia.org/resource/Elio_Di_Rupo'))
 #bPediaLookup('Belgium')
 #resourceretriever = Resourceretriever()
+#print (resourceretriever.getResource('http://dblp.l3s.de/d2r/resource/authors/Laurens_De_Vocht', True))
 #print(resourceretriever.genUrls('http://dblp.l3s.de/d2r/resource/authors/Selver_Softic'))
 #print(resourceretriever.genMultiUrls(['http://dblp.l3s.de/d2r/resource/authors/Selver_Softic','http://dbpedia.org/resource/Elio_Di_Rupo']))
