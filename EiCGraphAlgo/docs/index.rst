@@ -1,9 +1,9 @@
-.. Pathfinding Service Documentation documentation master file, created by
+.. Everything is Connented Engine Service Documentation documentation master file, created by
    sphinx-quickstart on Wed Nov 28 14:58:50 2012.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Pathfinding Service's documentation!
+Welcome to Everything is Connented Engine Service's documentation!
 =============================================================
 
 Contents:
@@ -34,6 +34,19 @@ Contents:
    
 .. autoclass:: Resourceretriever
     :members: 
+
+.. automodule:: utils
+    :members: 
+
+Architecture
+=============
+
+.. figure:: eice_overview.png
+   :scale: 50 %
+   :alt: Architcture overview of the Everything is Connected Engine
+
+   The architecture implements the blackboard design pattern.
+
     
 Indices and tables
 ==================
