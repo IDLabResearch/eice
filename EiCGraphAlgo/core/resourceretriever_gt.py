@@ -65,21 +65,28 @@ class Resourceretriever:
     
     def genMultiUrls(self, resources):
         multi_urls = []
-        resource_chunks = utils.chunks(list(resources), 3)
+        #print (len(resources))
+        resource_chunks = utils.chunks(list(resources), 8)
+        rows = 25
         for resource_chunk in resource_chunks:
             queryParts = []
+            invQueries = []
             for resource in resource_chunk:
                 resource = resource.strip('<>!+&')
                 resource = urllib.parse.quote(resource, ':\/=?<>"*')
                 if not ('&' in resource or '#' in resource):
-                    queryParts.append("<%s> * * OR * * <%s>" % (resource,resource))
+                    queryParts.append("<%s> * *" % (resource))
+                    invQueries.append("* * <%s>&rows=%s" % (resource,rows))
             query = " OR ".join(queryParts)
             bases = []
             for solr in self.solrs:
                 bases.append("%sselect?nq=%s&fl=id ntriple type&wt=json&qt=siren" % (solr,query))
+                if not 'siren2' in solr:
+                    for invQuery in invQueries:
+                        bases.append("%sselect?nq=%s&fl=id ntriple type&wt=json&qt=siren" % (solr,invQuery))
             #for base in bases:
             #    print(len(base))
-            multi_urls.append({'resources' : resource_chunk, 'urls' : bases})
+            multi_urls.append({'resources' : set(resource_chunk), 'urls' : bases})
         return multi_urls
     
     def processMultiResourceLocal(self, resources, resp):

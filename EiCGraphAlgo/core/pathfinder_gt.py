@@ -156,7 +156,7 @@ class PathFinder:
                             self.logger.debug('retrieved results for %r' % (url))
                 #todo move http gets in threads vs async grequests
                 
-            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=16)    
+            self.worker.startQueue(self.resourceretriever.processMultiResource, num_of_threads=64)    
             
             for rp in resps:
             #for rp in res['urls']:
