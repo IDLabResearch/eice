@@ -376,6 +376,7 @@ class SearchHandler(MainHandler):
         source = self.get_argument("from", "")
         destination = self.get_argument("to", "")
         user_context = self.get_argument("user_context", False)
+        f = self.get_argument("format", False)
         failed = False
         
         try:
@@ -428,18 +429,39 @@ class SearchHandler(MainHandler):
                 else:
                     self.r = q.get()
                     
-                    
+            if f == "nt":
+                ntriples = pathToNTriples(self.r['path'])
+                self.set_header("Access-Control-Allow-Origin", "*")
+                self.set_header("Content-Type", "text/plain")
+                self.set_header("charset", "utf8")
+                self.write(ntriples)
+            else:
+                self.set_header("Access-Control-Allow-Origin", "*")
+                self.set_header("Content-Type", "application/json")
+                self.set_header("charset", "utf8")
+                self.write(ujson.dumps(self.r))
+                          
         except AttributeError:
             self.set_status(400)
             logger.error (sys.exc_info())
             self.r = 'Invalid arguments :/ Check the server log files if problem persists.'
+            self.write(ujson.dumps(self.r))
         except:
             self.set_status(404)
             logger.error (sys.exc_info())
             self.r = 'Something went wrong x( Probably either the start or destination URI is a dead end. Check the server log files for more information.'
+            self.write(ujson.dumps(self.r))
 
-        self.set_header("Access-Control-Allow-Origin", "*")
-        self.set_header("Content-Type", "application/json")
-        self.set_header("charset", "utf8")
-        self.write(ujson.dumps(self.r))
         self.finish()
+        
+def pathToNTriples(pathOriginal):
+    path = pathOriginal
+    ntriples = ""
+    for i in range(2,len(path),2):
+        if path[i-1]['inverse'] == False:
+            ntriples += "<%s> <%s> <%s> ." % (path[i-2]['uri'],path[i-1]['uri'],path[i]['uri'])
+        else:
+            ntriples += "<%s> <%s> <%s> ." % (path[i]['uri'],path[i-1]['uri'],path[i-2]['uri'])
+        if i < len(path)-1:
+            ntriples += "\n"
+    return ntriples
