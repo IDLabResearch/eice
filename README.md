@@ -1,8 +1,7 @@
 The Everything is Connected Engine (EiCE) install guide
 ==================================
-This document will guide you through all the necessary steps to install the Everything is Connected Engine 1.0. All sources for Section 1, 2 and 3 of this document are Open Source and can be found on the Web. The sources for Section 4 are proprietary to iMinds - Multimedia Lab and are available under license. 
+This document will guide you through all the necessary steps to install the Everything is Connected Engine 1.0. All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, exept for some, are proprietary to iMinds - Multimedia Lab and are available under license. 
 
-Indexer: 
 Pathfinding: git@github.com:mmlab/eice.git
 
 ## 1.	Install SIREn
@@ -114,7 +113,11 @@ If problems would occur, see $CATALINA_BASE/logs/catalina.out
 
 ## 2	Configuring the indexing
 
-In the folder "indexer", make sure you will find the following files:
+Unpack ``indexer.tar``, supplied in the home directory of these sources.
+
+	tar xvzf indexer.tar
+
+In the folder "indexer", make sure you will find, amongst others, the following files:
 
 	required_siren_schema_with_lookup.xml
 	required_siren_schema.xml
