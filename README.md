@@ -176,7 +176,7 @@ Make sure the jar-file ``siren-eostool-0.2.2-SNAPSHOT-assembly.jar`` is present 
 
 In case the above jar is incompatible with the system it's running on, a custom build might be required. This application is a customized version of the SIREn Entity Tool. The source code is made available on github: 
 
-	git clone git@github.com:scoppens/eic-entity-tool.git
+	git clone git@github.com:mielvds/eic-entity-tool.git
 	
 
 ## 4. Running the pathfinding service
