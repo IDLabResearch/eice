@@ -47,7 +47,7 @@ remove siren webapp directory
 	rm -rf $CATALINA_BASE/webapps/siren
 
 ### 1.3	Copying Context File
-Create the folder $CATALINA_BASE/conf/Catalina/localhost/
+Create the folder ``$CATALINA_BASE/conf/Catalina/localhost/``
 
 	sudo mkdir -p $CATALINA_BASE/conf/Catalina/localhost
 
@@ -57,12 +57,12 @@ Copy siren.xml to:
 
 ### 1.4	Configure Solr/SIREn Webapp
 
-Set an environment variable SOLR_HOME pointing to the folder /your/local/path/siren-solr/example/solr
+Set an environment variable ``SOLR_HOME`` pointing to the folder ``/your/local/path/siren-solr/example/solr``
 
 	export SOLR_HOME=/your/local/path/siren-solr/example/solr
 
 
-Edit siren.xml to both set the path of the war file and SOLR_HOME correctly
+Edit siren.xml to both set the path of the war file and ``SOLR_HOME`` correctly
 
 	<Context docBase="/your/local/path/siren-solr/example/apache-solr-3.5.0.war" debug="0" crossContext="true" >
 		<Environment name="solr/home" type="java.lang.String" value="/your/local/path/siren-solr/example/solr" override="true" />
@@ -70,7 +70,7 @@ Edit siren.xml to both set the path of the war file and SOLR_HOME correctly
 
 ### 1.5	Copying SIREn libs
 
-You can build SIREn using Maven in the main folder. First, make sure the JAVA_HOME is set correctly to the right JDK.
+You can build SIREn using Maven in the main folder. First, make sure the ``JAVA_HOME`` is set correctly to the right JDK.
 
 Next, the "caliper" dependency is no longer available. Change the pom.xml to the prior 0.5-rc1 version:
 
@@ -96,7 +96,7 @@ Copy ``siren-core-0.2.3-SNAPSHOT.jar``,
 
 ### 1.6	Change File Permissions
 
-Ensure that tomcat has full file permissions on SOLR_HOME:
+Ensure that tomcat has full file permissions on ``SOLR_HOME``:
 
 	chown -R tomcat6:tomcat6 $SOLR_HOME chown -R tomcat6:tomcat6 $SOLR_HOME
 
@@ -109,7 +109,7 @@ Start tomcat
 You should be able to access the Solr admin page at 
   [http://localhost:8080/siren/]()
   
-If problems would occur, see $CATALINA_BASE/logs/catalina.out
+If problems would occur, see ``$CATALINA_BASE/logs/catalina.out``
 
 ## 2	Configuring the indexing
 
@@ -124,7 +124,7 @@ In the folder "indexer", make sure you will find, amongst others, the following 
 
 These are possible index configurations for SIREn. They need to be modified if specific search functionality is required.
 
-Replace the schema.xml in $SOLR_HOME/conf/ with the configuration file of your choosing.
+Replace the schema.xml in ``$SOLR_HOME/conf/`` with the configuration file of your choosing.
 
 	cp required_siren_schema.xml $SOLR_HOME/conf/schema.xml
 	
