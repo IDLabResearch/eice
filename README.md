@@ -1,6 +1,11 @@
-The Everything is Connected Engine (EiCE) install guide
+The Everything is Connected Engine 
 ==================================
-This document will guide you through all the necessary steps to install the Everything is Connected Engine 1.0. All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, exept for some, are proprietary to iMinds - Multimedia Lab and are available under license. 
+
+
+# (EiCE) install guide
+
+This document will guide you through all the necessary steps to install the Everything is Connected Engine 1.0. 
+All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, exept for some, are copyrighted by iMinds - Multimedia Lab and are available under GPLv3 license. 
 
 Pathfinding: git@github.com:mmlab/eice.git
 
