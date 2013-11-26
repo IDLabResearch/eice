@@ -4,12 +4,10 @@ This repository contains the code to the Everything is Connected Engine, the ser
 
 # Additional documentation and publications
 
-* Presentation about the whole application: 
-	Slides http://www.slideshare.net/MielSande/presentation-isi2-26181326
-	Webcast http://webcasterms1.isi.edu/mediasite/SilverlightPlayer/Default.aspx?peid=45b27e6ddec34405a638789183ac85421d
-* Discovering Meaningful Connections between Resources in the Web of Data
-	L De Vocht, S Coppens, R Verborgh, M Vander Sande, E Mannens, R Van de Walle
-	Proceedings of the 6th Workshop on Linked Data on the Web
+* [Discovering Meaningful Connections between Resources in the Web of Data](http://ceur-ws.org/Vol-996/papers/ldow2013-paper-04.pdf) - L De Vocht et al., <i>Proceedings of the 6th Workshop on Linked Data on the Web</i>
+* Presentation at [USC-ISI](http://www.isi.edu): 
+	[Slides](http://www.slideshare.net/MielSande/presentation-isi2-26181326)
+	[Webcast](http://webcasterms1.isi.edu/mediasite/SilverlightPlayer/Default.aspx?peid=45b27e6ddec34405a638789183ac85421d)
 
 #  install guide
 
