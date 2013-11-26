@@ -5,6 +5,7 @@ This repository contains the code to the Everything is Connected Engine, the ser
 ## License
 
 Copyright 2012, Multimedia Lab - Ghent University - iMinds
+
 Licensed under GPL Version 3 license <http://www.gnu.org/licenses/gpl.html> .
 
 ## Additional documentation and publications
