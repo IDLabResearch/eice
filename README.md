@@ -4,7 +4,10 @@ This repository contains the code to the Everything is Connected Engine, the ser
 
 # Additional documentation and publications
 
-* [Discovering Meaningful Connections between Resources in the Web of Data](http://ceur-ws.org/Vol-996/papers/ldow2013-paper-04.pdf) - L De Vocht et al., <i>Proceedings of the 6th Workshop on Linked Data on the Web</i>
+* [Discovering Meaningful Connections between Resources in the Web of Data](http://ceur-ws.org/Vol-996/papers/ldow2013-paper-04.pdf)
+L. De Vocht et al., <i>Proceedings of the 6th Workshop on Linked Data on the Web</i>
+* [Everything is Connected: Using Linked Data for Multimedia Narration of Connections between Concepts](http://iswc2012.semanticweb.org/sites/default/files/paper_10.pdf)
+M. Vander Sande et al. <i>Best Demo award ISWC2012 </i>
 * Presentation at [USC-ISI](http://www.isi.edu): 
 	[Slides](http://www.slideshare.net/MielSande/presentation-isi2-26181326)
 	[Webcast](http://webcasterms1.isi.edu/mediasite/SilverlightPlayer/Default.aspx?peid=45b27e6ddec34405a638789183ac85421d)
