@@ -18,7 +18,7 @@ M. Vander Sande et al. <i>Best Demo award ISWC2012 </i>
 	[Slides](http://www.slideshare.net/MielSande/presentation-isi2-26181326)
 	[Webcast](http://webcasterms1.isi.edu/mediasite/SilverlightPlayer/Default.aspx?peid=45b27e6ddec34405a638789183ac85421d)
 
-#  install guide
+#  Install guide
 
 This document will guide you through all the necessary steps to install the Everything is Connected Engine 1.0. 
 All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, exept for some, are copyrighted by iMinds - Multimedia Lab and are available under GPLv3 license. 
