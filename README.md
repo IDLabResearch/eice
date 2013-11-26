@@ -21,7 +21,7 @@ M. Vander Sande et al. <i>Best Demo award ISWC2012 </i>
 #  Install guide
 
 This document will guide you through all the necessary steps to install the Everything is Connected Engine 1.0. 
-All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, exept for some, are copyrighted by iMinds - Multimedia Lab and are available under GPLv3 license. 
+All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, except for some, are copyrighted by iMinds - Multimedia Lab and are available under GPLv3 license. 
 
 Pathfinding: git@github.com:mmlab/eice.git
 
