@@ -1,8 +1,17 @@
-The Everything is Connected Engine 
+The Everything is Connected Engine (EiCE)
 ==================================
+This repository contains the code to the Everything is Connected Engine, the server behind the http://everythingisconnected.be application. EIC is a Linked Data application for automatically generating a story between two concepts in the Web of Data, based on formally described links. A path between two concepts is obtained by browsing linked open datasets; the path is then enriched with multimedia presentation material for each node in order to obtain a full multimedia presentation of the found path. An efficient technique combining pre-processing and indexing of RDF datasets is used, which is able to find paths in a couple of seconds.
 
+# Additional documentation and publications
 
-# (EiCE) install guide
+* Presentation about the whole application: 
+	Slides http://www.slideshare.net/MielSande/presentation-isi2-26181326
+	Webcast http://webcasterms1.isi.edu/mediasite/SilverlightPlayer/Default.aspx?peid=45b27e6ddec34405a638789183ac85421d
+* Discovering Meaningful Connections between Resources in the Web of Data
+	L De Vocht, S Coppens, R Verborgh, M Vander Sande, E Mannens, R Van de Walle
+	Proceedings of the 6th Workshop on Linked Data on the Web
+
+#  install guide
 
 This document will guide you through all the necessary steps to install the Everything is Connected Engine 1.0. 
 All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, exept for some, are copyrighted by iMinds - Multimedia Lab and are available under GPLv3 license. 
