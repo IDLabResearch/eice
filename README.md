@@ -8,6 +8,10 @@ Copyright 2012, Multimedia Lab - Ghent University - iMinds
 
 Licensed under GPL Version 3 license <http://www.gnu.org/licenses/gpl.html> .
 
+## Client
+
+The Everything Is Connected client was released under the same license and can be found here: https://github.com/mmlab/eic-gui
+
 ## Additional documentation and publications
 
 * [Discovering Meaningful Connections between Resources in the Web of Data](http://ceur-ws.org/Vol-996/papers/ldow2013-paper-04.pdf)
