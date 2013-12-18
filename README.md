@@ -6,7 +6,7 @@ This repository contains the code to the Everything is Connected Engine, the ser
 
 Copyright 2012, Multimedia Lab - Ghent University - iMinds
 
-Licensed under GPL Version 3 license <http://www.gnu.org/licenses/gpl.html> .
+Licensed under AGPL Version 3 license <http://www.gnu.org/licenses/agpl-3.0.html> .
 
 ## Client
 
@@ -25,7 +25,7 @@ M. Vander Sande et al. <i>Best Demo award ISWC2012 </i>
 #  Install guide
 
 This document will guide you through all the necessary steps to install the Everything is Connected Engine 1.0. 
-All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, except for some, are copyrighted by iMinds - Multimedia Lab and are available under GPLv3 license. 
+All sources for Section 1 of this document are Open Source and can be found on the Web. The sources for Section 2,3,4, except for some, are copyrighted by iMinds - Multimedia Lab and are available under AGPLv3 license. 
 
 Pathfinding: git@github.com:mmlab/eice.git
 
